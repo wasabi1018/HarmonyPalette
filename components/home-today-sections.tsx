@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock3, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
 import type { Character } from "@/data/types";
@@ -93,8 +92,8 @@ export function HomeTodaySections() {
   const [selectedDate, setSelectedDate] = useState(() => japanDate());
   const today = japanDate(now);
   const currentTime = japanTime(now);
-  const todayGreetings = entries
-    .filter((entry) => entry.kind === "greeting" && entry.date === today)
+  const todayAppearances = entries
+    .filter((entry) => entry.date <= today && (entry.endDate ?? entry.date) >= today)
     .sort((left, right) => `${left.startTime}-${left.title}`.localeCompare(`${right.startTime}-${right.title}`, "ja"));
   const selectedSchedules = entries
     .filter((entry) => entry.date <= selectedDate && (entry.endDate ?? entry.date) >= selectedDate)
@@ -162,14 +161,10 @@ export function HomeTodaySections() {
 
   const characters = mergeCharactersWithNames(
     catalogCharacters,
-    [...todayGreetings, ...selectedSchedules].flatMap((entry) => getEntryCharacterNames(entry)),
+    [...todayAppearances, ...selectedSchedules].flatMap((entry) => getEntryCharacterNames(entry)),
   );
 
   const characterById = new Map(characters.map((character) => [character.id, character]));
-  const appearingIds = new Set(todayGreetings.flatMap((entry) => entry.characterIds));
-  const appearingNames = new Set(todayGreetings.flatMap((entry) => getEntryCharacterNames(entry)));
-  const todayCharacters = characters
-    .filter((character) => appearingIds.has(character.id) || appearingNames.has(character.name));
 
   const latestUpdatedAt = selectedSchedules
     .map((entry) => entry.updatedAt)
@@ -184,59 +179,56 @@ export function HomeTodaySections() {
     return sortCharacterNames(names, characters);
   };
 
-  const nextForCharacter = (character: Character) => todayGreetings.find((entry) => (
+  const availableAppearances = todayAppearances.filter((entry) => (
+    entry.status !== "completed" && timelineEndTime(entry) > currentTime
+  ));
+
+  const appearancesForCharacter = (character: Character) => availableAppearances.filter((entry) => (
     entry.characterIds.includes(character.id) || namesForEntry(entry).includes(character.name)
   ));
+
+  const todayCharacterCards = characters
+    .map((character) => ({ character, appearances: appearancesForCharacter(character) }))
+    .filter(({ appearances }) => appearances.length > 0)
+    .sort((left, right) => {
+      const byTime = left.appearances[0].startTime.localeCompare(right.appearances[0].startTime);
+      return byTime || left.character.name.localeCompare(right.character.name, "ja");
+    });
 
   return (
     <>
       <section id="today-characters" className="mx-auto max-w-[1200px] scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8">
         <SectionHeading
-          eyebrow="TODAY, I CAN MEET"
           title="今日会えるキャラクター"
-          description="公開済みスケジュールから、今日の登場予定を表示しています。"
           href="/characters"
+          linkLabel="キャラクターから探す"
         />
-        {todayCharacters.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {todayCharacters.slice(0, 8).map((character) => {
-              const next = nextForCharacter(character);
-              return (
-                <Link
-                  key={character.id}
-                  href={`/schedule?character=${encodeURIComponent(character.name)}`}
-                  className="group rounded-[20px] border border-pink/10 bg-white p-3.5 shadow-soft transition-all hover:-translate-y-0.5 hover:border-pink/30 hover:shadow-card sm:p-4"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <CharacterAvatar character={character} size="sm" />
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-black leading-[1.3] text-ink sm:text-[15px]">{character.name}</p>
-                      <p className="mt-0.5 text-[10px] font-bold text-[#4b9c7d] sm:text-[11px]">今日会える予定</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 rounded-xl bg-[#fff8fb] px-3 py-2.5">
-                    <p className="text-[9px] font-black tracking-[0.1em] text-ink/35">NEXT GREETING</p>
-                    <p className="mt-1 text-[13px] font-black text-ink">
-                      {next?.startTime || "時間を確認中"}
-                      <span className="ml-1.5 block truncate text-[10px] font-medium text-ink/45 sm:inline">{next?.location}</span>
-                    </p>
-                  </div>
-                  <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-black text-pink group-hover:underline">
-                    予定を見る <ArrowRight size={13} aria-hidden="true" />
+        {todayCharacterCards.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+            {todayCharacterCards.map(({ character }) => (
+              <a
+                key={character.id}
+                href={`/schedule?character=${encodeURIComponent(character.name)}&from=${today}&to=${today}#schedule-results`}
+                className="group flex min-h-[68px] items-center gap-2.5 rounded-[18px] border border-pink/10 bg-white p-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-pink/30 hover:shadow-card"
+              >
+                <CharacterAvatar character={character} size="xs" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12px] font-black leading-[1.35] text-ink sm:text-[13px]">{character.name}</p>
+                  <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-black text-pink group-hover:underline">
+                    予定を見る <ArrowRight size={11} aria-hidden="true" />
                   </span>
-                </Link>
-              );
-            })}
+                </div>
+              </a>
+            ))}
           </div>
         ) : (
           <p className="rounded-2xl border border-dashed border-pink/20 bg-white px-4 py-7 text-center text-[12px] font-bold text-ink/50">
             今日の公開済みキャラクター予定はまだありません。
           </p>
         )}
-        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl border border-lavender/15 bg-[#f7f3fb] px-4 py-3 text-[11px] font-bold leading-5 text-ink/60">
-          <span className="inline-flex items-center gap-1.5 text-lavender"><Sparkles size={14} aria-hidden="true" />ファンスタジオ</span>
+        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-bold leading-4 text-ink/50">
+          <span className="inline-flex items-center gap-1 text-lavender"><Sparkles size={12} aria-hidden="true" />公開済み予定</span>
           <span>取込後に確認・公開した予定を反映します。</span>
-          <span className="text-ink/35">最新情報は公式サイトもご確認ください。</span>
         </div>
       </section>
 

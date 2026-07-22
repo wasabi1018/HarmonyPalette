@@ -13,7 +13,11 @@ export const metadata: Metadata = {
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ character?: string | string[] }>;
+  searchParams: Promise<{
+    character?: string | string[];
+    from?: string | string[];
+    to?: string | string[];
+  }>;
 }) {
   const params = await searchParams;
   const requestedCharacters = Array.isArray(params.character)
@@ -22,6 +26,12 @@ export default async function SchedulePage({
       ? [params.character]
       : [];
   const initialCharacters = Array.from(new Set(requestedCharacters.map((name) => name.trim()).filter(Boolean)));
+  const dateParam = (value?: string | string[]) => {
+    const candidate = Array.isArray(value) ? value[0] : value;
+    return candidate && /^\d{4}-\d{2}-\d{2}$/.test(candidate) ? candidate : undefined;
+  };
+  const initialFromDate = dateParam(params.from);
+  const initialToDate = dateParam(params.to);
 
   return (
     <div className="mx-auto max-w-[1180px] px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
@@ -33,7 +43,11 @@ export default async function SchedulePage({
           <Link href="/admin/schedule" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-[12px] font-black text-white shadow-soft"><Settings2 size={15} aria-hidden="true" />予定を追加・削除</Link>
         </div>
       </section>
-      <ScheduleBrowser initialCharacters={initialCharacters} />
+      <ScheduleBrowser
+        initialCharacters={initialCharacters}
+        initialFromDate={initialFromDate}
+        initialToDate={initialToDate}
+      />
       <div className="mt-7"><OfficialNotice /></div>
     </div>
   );

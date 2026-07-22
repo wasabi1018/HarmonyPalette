@@ -24,11 +24,20 @@ function formatGroupDate(date: string) {
     .format(new Date(`${date}T00:00:00`));
 }
 
-export function ScheduleBrowser({ initialCharacters = [] }: { initialCharacters?: string[] }) {
+export function ScheduleBrowser({
+  initialCharacters = [],
+  initialFromDate,
+  initialToDate,
+}: {
+  initialCharacters?: string[];
+  initialFromDate?: string;
+  initialToDate?: string;
+}) {
   const entries = useScheduleEntries();
   const characters = useCharacters();
-  const [fromDate, setFromDate] = useState(sampleDate);
-  const [toDate, setToDate] = useState(addDays(sampleDate, 13));
+  const hasInitialDateRange = Boolean(initialFromDate || initialToDate);
+  const [fromDate, setFromDate] = useState(initialFromDate ?? sampleDate);
+  const [toDate, setToDate] = useState(initialToDate ?? (initialFromDate ? initialFromDate : addDays(sampleDate, 13)));
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>(initialCharacters);
   const [matchMode, setMatchMode] = useState<MatchMode>("any");
   const [kind, setKind] = useState("all");
@@ -37,7 +46,7 @@ export function ScheduleBrowser({ initialCharacters = [] }: { initialCharacters?
   const [query, setQuery] = useState("");
   const [sortAscending, setSortAscending] = useState(true);
   const [characterPanelOpen, setCharacterPanelOpen] = useState(false);
-  const [activePeriod, setActivePeriod] = useState<Period>("14");
+  const [activePeriod, setActivePeriod] = useState<Period | "custom">(hasInitialDateRange ? "custom" : "14");
 
   const bounds = useMemo(() => {
     const dates = entries.flatMap((entry) => [entry.date, entry.endDate ?? entry.date]).sort();
@@ -54,8 +63,10 @@ export function ScheduleBrowser({ initialCharacters = [] }: { initialCharacters?
     const url = new URL(window.location.href);
     url.searchParams.delete("character");
     selectedCharacters.forEach((name) => url.searchParams.append("character", name));
+    url.searchParams.set("from", fromDate);
+    url.searchParams.set("to", toDate);
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-  }, [selectedCharacters]);
+  }, [fromDate, selectedCharacters, toDate]);
 
   const filteredEntries = useMemo(() => entries.filter((entry) => {
     const entryEnd = entry.endDate ?? entry.date;
@@ -143,8 +154,8 @@ export function ScheduleBrowser({ initialCharacters = [] }: { initialCharacters?
 
           <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/50">予定の種類</span><div className="relative"><select value={kind} onChange={(event) => { setKind(event.target.value); setScheduleType("all"); }} className="min-h-11 w-full appearance-none rounded-xl border border-ink/10 bg-[#fffafd] px-3 pr-9 text-[13px] font-bold text-ink outline-none focus:border-pink"><option value="all">すべて</option><option value="greeting">グリーティング</option><option value="event">イベント</option></select><ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-pink" aria-hidden="true" /></div></label>
           <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/50">イベント・種別</span><div className="relative"><select value={scheduleType} onChange={(event) => setScheduleType(event.target.value)} className="min-h-11 w-full appearance-none rounded-xl border border-ink/10 bg-[#fffafd] px-3 pr-9 text-[13px] font-bold text-ink outline-none focus:border-pink"><option value="all">すべて</option>{scheduleTypes.map((item) => <option key={item} value={item}>{item}</option>)}</select><ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-pink" aria-hidden="true" /></div></label>
-          <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/50">開始日</span><input type="date" value={fromDate} onChange={(event) => { setFromDate(event.target.value); setActivePeriod("all"); }} className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink" /></label>
-          <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/50">終了日</span><input type="date" value={toDate} onChange={(event) => { setToDate(event.target.value); setActivePeriod("all"); }} className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink" /></label>
+          <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/50">開始日</span><input type="date" value={fromDate} onChange={(event) => { setFromDate(event.target.value); setActivePeriod("custom"); }} className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink" /></label>
+          <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/50">終了日</span><input type="date" value={toDate} onChange={(event) => { setToDate(event.target.value); setActivePeriod("custom"); }} className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink" /></label>
         </div>
 
         <div className="mt-3 grid gap-3 border-t border-pink/10 pt-3 lg:grid-cols-[1fr_1fr]">
@@ -170,7 +181,7 @@ export function ScheduleBrowser({ initialCharacters = [] }: { initialCharacters?
 
       <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fff6f9] px-3 py-2.5 text-[11px] font-bold leading-5 text-ink/55"><Filter size={14} className="shrink-0 text-pink" aria-hidden="true" />ファンスタジオは、同じ日の同じキャラクターを1枚にまとめています。通常の姿と特別な姿は、時間ごとに確認できます。</div>
 
-      <section className="mt-4 grid gap-4" aria-live="polite">
+      <section id="schedule-results" className="mt-4 grid scroll-mt-24 gap-4" aria-live="polite">
         {groups.length > 0 ? groups.map(([date, dayEntries]) => (
           <div key={date} className="rounded-[22px] border border-pink/10 bg-[#fffdfd] p-3 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="grid h-11 w-11 place-items-center rounded-[14px] bg-pink text-[12px] font-black text-white shadow-[0_6px_14px_rgba(239,102,143,0.22)]"><CalendarDays size={18} aria-hidden="true" /></span><div><h3 className="text-[15px] font-black text-ink">{formatGroupDate(date)}</h3><p className="text-[10px] font-bold text-ink/40">{date.replaceAll("-", "/")}</p></div></div><span className="text-[11px] font-black text-ink/40">{dayEntries.length}件</span></div>

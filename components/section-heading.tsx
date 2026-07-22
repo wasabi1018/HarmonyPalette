@@ -8,7 +8,7 @@ export function SectionHeading({
   href,
   linkLabel = "もっと見る",
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description?: string;
   href?: string;
@@ -17,9 +17,11 @@ export function SectionHeading({
   return (
     <div className="mb-5 flex flex-col gap-2.5 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p className="mb-1.5 text-[10px] font-black tracking-[0.18em] text-pink sm:text-[11px]">
-          {eyebrow}
-        </p>
+        {eyebrow && (
+          <p className="mb-1.5 text-[10px] font-black tracking-[0.18em] text-pink sm:text-[11px]">
+            {eyebrow}
+          </p>
+        )}
         <h2 className="font-display text-[23px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[27px]">
           {title}
         </h2>
