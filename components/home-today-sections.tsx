@@ -89,6 +89,7 @@ export function HomeTodaySections() {
   const entries = useScheduleEntries();
   const catalogCharacters = useCharacters();
   const [now, setNow] = useState(() => new Date());
+  const [isClockReady, setIsClockReady] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => japanDate());
   const today = japanDate(now);
   const currentTime = japanTime(now);
@@ -121,9 +122,41 @@ export function HomeTodaySections() {
     "0px",
   ].join(" ");
   const timelineBoundaryIndex = new Map(timelineBoundaries.map((time, index) => [time, index]));
+  const currentTimeMinutes = timeToMinutes(currentTime);
+  const currentTimelinePosition = isClockReady && selectedDate === today && timelineSegments.length > 0
+    ? (() => {
+        const segmentIndex = timelineSegments.findIndex((segment, index) => {
+          const segmentStart = timeToMinutes(segment.startTime);
+          const segmentEnd = timeToMinutes(segment.endTime);
+          return currentTimeMinutes >= segmentStart && (
+            currentTimeMinutes < segmentEnd
+            || (index === timelineSegments.length - 1 && currentTimeMinutes === segmentEnd)
+          );
+        });
+
+        if (segmentIndex >= 0) {
+          const segment = timelineSegments[segmentIndex];
+          const segmentStart = timeToMinutes(segment.startTime);
+          const segmentDuration = timeToMinutes(segment.endTime) - segmentStart;
+          return {
+            row: segmentIndex + 1,
+            offset: ((currentTimeMinutes - segmentStart) / segmentDuration) * 100,
+          };
+        }
+
+        return currentTimeMinutes < timeToMinutes(timelineSegments[0].startTime)
+          ? { row: 1, offset: 0 }
+          : { row: timelineSegments.length, offset: 100 };
+      })()
+    : null;
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    const updateClock = () => {
+      setNow(new Date());
+      setIsClockReady(true);
+    };
+    updateClock();
+    const timer = window.setInterval(updateClock, 30_000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -283,6 +316,29 @@ export function HomeTodaySections() {
                   </time>
                   <span className="absolute -right-[4px] top-0 h-[7px] w-[7px] -translate-y-1/2 rounded-full border-2 border-white bg-pink" aria-hidden="true" />
                 </div>
+
+                {currentTimelinePosition && (
+                  <div
+                    className="pointer-events-none relative z-20"
+                    style={{ gridColumn: "1 / -1", gridRow: String(currentTimelinePosition.row) }}
+                  >
+                    <div
+                      className="absolute inset-x-0 flex -translate-y-1/2 items-center"
+                      style={{ top: `${currentTimelinePosition.offset}%` }}
+                    >
+                      <time
+                        dateTime={currentTime}
+                        aria-label={`現在時刻 ${currentTime}`}
+                        className="shrink-0 rounded-full bg-[#e5487e] px-1.5 py-1 text-[9px] font-black leading-none tabular-nums text-white shadow-sm sm:text-[10px]"
+                      >
+                        <span className="hidden sm:inline">現在 </span>{currentTime}
+                      </time>
+                      <span className="relative h-0 flex-1 border-t-2 border-[#e5487e] shadow-[0_1px_2px_rgba(229,72,126,0.35)]" aria-hidden="true">
+                        <span className="absolute -right-0.5 -top-[4px] h-1.5 w-1.5 rounded-full bg-[#e5487e]" />
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {eventGroups.map((group) => {
                   const startLine = (timelineBoundaryIndex.get(group.startTime) ?? 0) + 1;
