@@ -52,6 +52,37 @@ function specialAppearance(entry: ScheduleEntry) {
   return entry.title.match(/（([^）]*姿[^）]*)）/)?.[1] ?? null;
 }
 
+function timeToMinutes(time: string) {
+  const [hour, minute] = time.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+function minutesToTime(minutes: number) {
+  const safeMinutes = Math.min(Math.max(minutes, 0), 23 * 60 + 59);
+  return `${String(Math.floor(safeMinutes / 60)).padStart(2, "0")}:${String(safeMinutes % 60).padStart(2, "0")}`;
+}
+
+function timelineEndTime(entry: ScheduleEntry) {
+  return entry.endTime ?? minutesToTime(timeToMinutes(entry.startTime) + 30);
+}
+
+function groupTimelineEntries(entries: ScheduleEntry[]) {
+  const groups = new Map<string, ScheduleEntry[]>();
+  entries.forEach((entry) => {
+    const endTime = timelineEndTime(entry);
+    const key = `${entry.startTime}-${endTime}`;
+    groups.set(key, [...(groups.get(key) ?? []), entry]);
+  });
+  return Array.from(groups.entries())
+    .map(([key, groupedEntries]) => ({
+      key,
+      startTime: groupedEntries[0].startTime,
+      endTime: timelineEndTime(groupedEntries[0]),
+      entries: groupedEntries,
+    }))
+    .sort((left, right) => `${left.startTime}-${left.endTime}`.localeCompare(`${right.startTime}-${right.endTime}`));
+}
+
 function displayToday(date: Date) {
   return new Intl.DateTimeFormat("ja-JP", {
     timeZone: "Asia/Tokyo",
@@ -80,7 +111,27 @@ export function HomeTodaySections() {
     .sort((left, right) => `${left.startTime}-${left.title}`.localeCompare(`${right.startTime}-${right.title}`, "ja"));
   const eventSchedules = todaySchedules.filter((entry) => !isFanStudioGreeting(entry));
   const fanStudioSchedules = todaySchedules.filter(isFanStudioGreeting);
-  const timelineTimes = Array.from(new Set(todaySchedules.map((entry) => entry.startTime))).sort();
+  const eventGroups = groupTimelineEntries(eventSchedules);
+  const fanStudioGroups = groupTimelineEntries(fanStudioSchedules).map((group) => ({
+    ...group,
+    entries: [...group.entries].sort((left, right) => left.location.localeCompare(right.location, "ja")),
+  }));
+  const timelineBoundaries = Array.from(new Set(todaySchedules.flatMap((entry) => [
+    entry.startTime,
+    timelineEndTime(entry),
+  ]))).sort();
+  const timelineSegments = timelineBoundaries.slice(0, -1).map((startTime, index) => ({
+    startTime,
+    endTime: timelineBoundaries[index + 1],
+  }));
+  const timelineRows = [
+    ...timelineSegments.map((segment) => {
+      const duration = timeToMinutes(segment.endTime) - timeToMinutes(segment.startTime);
+      return `minmax(${Math.max(48, duration * 1.8)}px, auto)`;
+    }),
+    "0px",
+  ].join(" ");
+  const timelineBoundaryIndex = new Map(timelineBoundaries.map((time, index) => [time, index]));
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
@@ -176,7 +227,7 @@ export function HomeTodaySections() {
             href="/schedule"
             linkLabel="全スケジュール"
           />
-          {timelineTimes.length > 0 ? (
+          {timelineSegments.length > 0 ? (
             <div className="overflow-hidden rounded-[18px] border border-pink/10 bg-white shadow-[0_8px_24px_rgba(118,73,86,0.05)]">
               <div className="grid grid-cols-[38px_minmax(0,1.1fr)_minmax(0,.9fr)] gap-1.5 border-b border-pink/10 bg-[#fffafd] px-2 py-2.5 sm:grid-cols-[64px_minmax(0,1.25fr)_minmax(0,.75fr)] sm:gap-3 sm:px-4 sm:py-3">
                 <div className="flex items-center gap-1 text-[9px] font-black text-ink/35 sm:text-[11px]">
@@ -193,30 +244,57 @@ export function HomeTodaySections() {
                 </div>
               </div>
 
-              <div className="px-2 py-1 sm:px-4 sm:py-2">
-                {timelineTimes.map((time, index) => {
-                  const eventsAtTime = eventSchedules.filter((entry) => entry.startTime === time);
-                  const greetingsAtTime = fanStudioSchedules
-                    .filter((entry) => entry.startTime === time)
-                    .sort((left, right) => left.location.localeCompare(right.location, "ja"));
-                  const greetingColumnsClass = greetingsAtTime.length >= 3
-                    ? "lg:grid-cols-3"
-                    : greetingsAtTime.length === 2
-                      ? "lg:grid-cols-2"
-                      : "lg:grid-cols-1";
-                  return (
-                    <div key={time} className={`grid min-h-[58px] grid-cols-[38px_minmax(0,1.1fr)_minmax(0,.9fr)] gap-1.5 py-1.5 sm:min-h-[70px] sm:grid-cols-[64px_minmax(0,1.25fr)_minmax(0,.75fr)] sm:gap-3 sm:py-2 ${index < timelineTimes.length - 1 ? "border-b border-pink/10" : ""}`}>
-                      <div className="relative border-r border-pink/20 pr-2 pt-1 text-right sm:pr-3">
-                        <time className="text-[10px] font-black leading-none tabular-nums text-ink/65 sm:text-[13px]">{time}</time>
-                        <span className="absolute -right-[4px] top-[9px] h-[7px] w-[7px] rounded-full border-2 border-white bg-pink sm:top-[10px]" aria-hidden="true" />
-                      </div>
+              <div
+                className="relative grid grid-cols-[38px_minmax(0,1.1fr)_minmax(0,.9fr)] px-2 pb-5 pt-1 sm:grid-cols-[64px_minmax(0,1.25fr)_minmax(0,.75fr)] sm:px-4 sm:pb-6 sm:pt-2"
+                style={{ gridTemplateRows: timelineRows }}
+              >
+                {timelineSegments.map((segment, index) => (
+                  <div key={segment.startTime} className="contents">
+                    <div
+                      className={`pointer-events-none z-0 border-t ${segment.startTime.endsWith(":00") ? "border-pink/20" : "border-dashed border-ink/10"}`}
+                      style={{ gridColumn: "1 / -1", gridRow: String(index + 1) }}
+                      aria-hidden="true"
+                    />
+                    <div
+                      className="relative z-[1] border-r border-pink/20 pr-2 pt-2 text-right sm:pr-3"
+                      style={{ gridColumn: "1", gridRow: String(index + 1) }}
+                    >
+                      <time className="text-[10px] font-black leading-none tabular-nums text-ink/65 sm:text-[13px]">{segment.startTime}</time>
+                      <span className="absolute -right-[4px] top-[10px] h-[7px] w-[7px] rounded-full border-2 border-white bg-pink" aria-hidden="true" />
+                    </div>
+                  </div>
+                ))}
 
-                      <div className="grid h-full auto-rows-fr content-start gap-1.5">
-                        {eventsAtTime.length > 0 ? eventsAtTime.map((entry) => {
+                <div
+                  className={`pointer-events-none z-0 h-0 border-t ${timelineBoundaries.at(-1)?.endsWith(":00") ? "border-pink/20" : "border-dashed border-ink/10"}`}
+                  style={{ gridColumn: "1 / -1", gridRow: String(timelineSegments.length + 1) }}
+                  aria-hidden="true"
+                />
+                <div
+                  className="relative z-[1] h-0 border-r border-pink/20 text-right"
+                  style={{ gridColumn: "1", gridRow: String(timelineSegments.length + 1) }}
+                >
+                  <time className="absolute right-2 top-0 -translate-y-1/2 text-[10px] font-black leading-none tabular-nums text-ink/65 sm:right-3 sm:text-[13px]">
+                    {timelineBoundaries.at(-1)}
+                  </time>
+                  <span className="absolute -right-[4px] top-0 h-[7px] w-[7px] -translate-y-1/2 rounded-full border-2 border-white bg-pink" aria-hidden="true" />
+                </div>
+
+                {eventGroups.map((group) => {
+                  const startLine = (timelineBoundaryIndex.get(group.startTime) ?? 0) + 1;
+                  const endLine = (timelineBoundaryIndex.get(group.endTime) ?? startLine) + 1;
+                  return (
+                    <div
+                      key={group.key}
+                      className="z-10 p-1.5 sm:p-2"
+                      style={{ gridColumn: "2", gridRow: `${startLine} / ${endLine}` }}
+                    >
+                      <div className="grid h-full auto-rows-fr gap-1.5">
+                        {group.entries.map((entry) => {
                           const status = entryStatus(entry, today, currentTime);
                           const names = namesForEntry(entry);
                           return (
-                            <article key={entry.id} className={`h-full min-w-0 rounded-xl border border-[#eed8aa] bg-[#fffaf0] p-2 sm:p-3 ${status?.label === "終了" ? "opacity-65" : ""}`}>
+                            <article key={entry.id} className={`h-full min-w-0 rounded-xl border border-[#eed8aa] bg-[#fffaf0] p-2 sm:p-3 ${status?.label === "終了" ? "saturate-50" : ""}`}>
                               <div className="flex items-start justify-between gap-1">
                                 <h3 className="min-w-0 text-[10px] font-black leading-[1.45] text-ink sm:text-[13px]">{entry.title}</h3>
                                 {status && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-black sm:px-2 sm:text-[9px] ${status.className}`}>{status.label}</span>}
@@ -229,11 +307,28 @@ export function HomeTodaySections() {
                               </p>
                             </article>
                           );
-                        }) : <span className="grid h-full place-items-center text-[10px] font-bold text-ink/15" aria-hidden="true">—</span>}
+                        })}
                       </div>
+                    </div>
+                  );
+                })}
 
-                      <div className={`grid h-full auto-rows-fr content-start gap-1.5 ${greetingColumnsClass}`}>
-                        {greetingsAtTime.length > 0 ? greetingsAtTime.map((entry) => {
+                {fanStudioGroups.map((group) => {
+                  const startLine = (timelineBoundaryIndex.get(group.startTime) ?? 0) + 1;
+                  const endLine = (timelineBoundaryIndex.get(group.endTime) ?? startLine) + 1;
+                  const greetingColumnsClass = group.entries.length >= 3
+                    ? "lg:grid-cols-3"
+                    : group.entries.length === 2
+                      ? "lg:grid-cols-2"
+                      : "lg:grid-cols-1";
+                  return (
+                    <div
+                      key={group.key}
+                      className="z-10 p-1.5 sm:p-2"
+                      style={{ gridColumn: "3", gridRow: `${startLine} / ${endLine}` }}
+                    >
+                      <div className={`grid h-full auto-rows-fr gap-1.5 ${greetingColumnsClass}`}>
+                        {group.entries.map((entry) => {
                           const status = entryStatus(entry, today, currentTime);
                           const names = namesForEntry(entry);
                           const appearance = specialAppearance(entry);
@@ -243,7 +338,7 @@ export function HomeTodaySections() {
                               .replace(/（[^）]*姿[^）]*）/g, "")
                               .replace(/\s*ファンスタジオグリーティング$/, "");
                           return (
-                            <article key={entry.id} className={`flex min-w-0 flex-col rounded-xl border p-2 sm:p-2.5 ${appearance ? "border-[#f1cb7b] bg-[#fff8e8]" : "border-lavender/15 bg-[#f8f5fc]"} ${status?.label === "終了" ? "opacity-65" : ""}`}>
+                            <article key={entry.id} className={`flex min-w-0 flex-col rounded-xl border p-2 sm:p-2.5 ${appearance ? "border-[#f1cb7b] bg-[#fff8e8]" : "border-lavender/15 bg-[#f8f5fc]"} ${status?.label === "終了" ? "saturate-50" : ""}`}>
                               <div className="flex items-start justify-between gap-1">
                                 <h3 className="min-w-0 break-words text-[10px] font-black leading-[1.4] text-ink sm:text-[12px]">{displayName}</h3>
                                 {status && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-black sm:px-2 sm:text-[9px] ${status.className}`}>{status.label}</span>}
@@ -258,7 +353,7 @@ export function HomeTodaySections() {
                               </p>
                             </article>
                           );
-                        }) : <span className="grid h-full place-items-center text-[10px] font-bold text-ink/15" aria-hidden="true">—</span>}
+                        })}
                       </div>
                     </div>
                   );
