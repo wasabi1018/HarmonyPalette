@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { CalendarDays, Check, ChevronDown, Filter, RotateCcw, Search, Settings2, SlidersHorizontal, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, Check, ChevronDown, Clock3, Filter, MapPin, RotateCcw, Search, Settings2, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
+import type { Character } from "@/data/types";
 import { sampleDate } from "@/data/site-data";
 import { ScheduleEntryCard } from "@/components/schedule-entry-card";
 import { sortCharacterNames, useCharacters } from "@/lib/character-store";
-import { getEntryCharacterNames, useScheduleEntries } from "@/lib/schedule-store";
+import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
+import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 
 type MatchMode = "any" | "all";
 type Period = "all" | "7" | "14" | "30";
@@ -22,12 +24,12 @@ function formatGroupDate(date: string) {
     .format(new Date(`${date}T00:00:00`));
 }
 
-export function ScheduleBrowser() {
+export function ScheduleBrowser({ initialCharacters = [] }: { initialCharacters?: string[] }) {
   const entries = useScheduleEntries();
   const characters = useCharacters();
   const [fromDate, setFromDate] = useState(sampleDate);
   const [toDate, setToDate] = useState(addDays(sampleDate, 13));
-  const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
+  const [selectedCharacters, setSelectedCharacters] = useState<string[]>(initialCharacters);
   const [matchMode, setMatchMode] = useState<MatchMode>("any");
   const [kind, setKind] = useState("all");
   const [scheduleType, setScheduleType] = useState("all");
@@ -48,6 +50,13 @@ export function ScheduleBrowser() {
     ...entries.flatMap((entry) => getEntryCharacterNames(entry)),
   ], characters), [characters, entries]);
 
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("character");
+    selectedCharacters.forEach((name) => url.searchParams.append("character", name));
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [selectedCharacters]);
+
   const filteredEntries = useMemo(() => entries.filter((entry) => {
     const entryEnd = entry.endDate ?? entry.date;
     const matchesDate = entry.date <= toDate && entryEnd >= fromDate;
@@ -59,7 +68,7 @@ export function ScheduleBrowser() {
     const matchesType = scheduleType === "all" || entry.scheduleType === scheduleType;
     const matchesLocation = location === "all" || entry.location === location;
     const keyword = query.trim().toLocaleLowerCase("ja");
-    const matchesQuery = keyword === "" || `${entry.title}${entry.description}${entry.location}${entry.scheduleType}`.toLocaleLowerCase("ja").includes(keyword);
+    const matchesQuery = keyword === "" || `${entry.title}${entry.location}${entry.scheduleType}${entryCharacterNames.join("")}`.toLocaleLowerCase("ja").includes(keyword);
     return matchesDate && matchesCharacters && matchesKind && matchesType && matchesLocation && matchesQuery;
   }).sort((a, b) => {
     const result = `${a.date}-${a.startTime}`.localeCompare(`${b.date}-${b.startTime}`);
@@ -150,7 +159,7 @@ export function ScheduleBrowser() {
 
         <div className="mt-3 flex flex-col gap-3 border-t border-pink/10 pt-3 lg:flex-row lg:items-end lg:justify-between">
           <div><p className="text-[11px] font-black text-ink/50">表示期間</p><div className="mt-2 flex flex-wrap gap-2">{([['all', '全期間'], ['7', '7日間'], ['14', '14日間'], ['30', '30日間']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => applyPeriod(value)} className={`min-h-9 rounded-full border px-3 text-[11px] font-black ${activePeriod === value ? "border-pink bg-pink text-white" : "border-ink/10 bg-white text-ink/60"}`}>{label}</button>)}</div></div>
-          <label className="block w-full lg:max-w-md"><span className="mb-1.5 block text-[11px] font-black text-ink/50">キーワード</span><div className="relative"><Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-pink" aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="予定名・場所・説明から検索" className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] pl-10 pr-3 text-[13px] font-bold text-ink outline-none placeholder:text-ink/30 focus:border-pink" /></div></label>
+          <label className="block w-full lg:max-w-md"><span className="mb-1.5 block text-[11px] font-black text-ink/50">キーワード</span><div className="relative"><Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-pink" aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="予定名・キャラクター・場所から検索" className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] pl-10 pr-3 text-[13px] font-bold text-ink outline-none placeholder:text-ink/30 focus:border-pink" /></div></label>
         </div>
       </section>
 
@@ -159,13 +168,13 @@ export function ScheduleBrowser() {
         <div className="flex items-center gap-2"><span className="rounded-full bg-pink/10 px-3 py-2 text-[13px] font-black text-pink">{filteredEntries.length}件</span><button type="button" onClick={() => setSortAscending((value) => !value)} className="min-h-10 rounded-full border border-ink/10 px-3 text-[11px] font-black text-ink/60">時間の{sortAscending ? "早い順" : "遅い順"}</button></div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fff6f9] px-3 py-2.5 text-[11px] font-bold leading-5 text-ink/55"><Filter size={14} className="shrink-0 text-pink" aria-hidden="true" />イベントとグリーティングを同じ日付順で確認できます。登録内容はサンプルまたはブラウザー保存データです。</div>
+      <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fff6f9] px-3 py-2.5 text-[11px] font-bold leading-5 text-ink/55"><Filter size={14} className="shrink-0 text-pink" aria-hidden="true" />ファンスタジオは、同じ日の同じキャラクターを1枚にまとめています。通常の姿と特別な姿は、時間ごとに確認できます。</div>
 
       <section className="mt-4 grid gap-4" aria-live="polite">
         {groups.length > 0 ? groups.map(([date, dayEntries]) => (
           <div key={date} className="rounded-[22px] border border-pink/10 bg-[#fffdfd] p-3 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="grid h-11 w-11 place-items-center rounded-[14px] bg-pink text-[12px] font-black text-white shadow-[0_6px_14px_rgba(239,102,143,0.22)]"><CalendarDays size={18} aria-hidden="true" /></span><div><h3 className="text-[15px] font-black text-ink">{formatGroupDate(date)}</h3><p className="text-[10px] font-bold text-ink/40">{date.replaceAll("-", "/")}</p></div></div><span className="text-[11px] font-black text-ink/40">{dayEntries.length}件</span></div>
-            <div className="grid gap-3 md:grid-cols-2">{dayEntries.map((entry) => <ScheduleEntryCard key={entry.id} entry={entry} />)}</div>
+            <ScheduleDayGrid entries={dayEntries} characters={characters} />
           </div>
         )) : (
           <div className="rounded-[24px] border border-dashed border-pink/25 bg-white p-10 text-center"><ListEmptyIcon /><p className="mt-3 font-black text-ink">条件に一致する予定がありません</p><button type="button" onClick={reset} className="mt-4 min-h-11 rounded-full bg-pink px-5 text-[12px] font-black text-white">条件をリセット</button></div>
@@ -179,4 +188,71 @@ export function ScheduleBrowser() {
 
 function ListEmptyIcon() {
   return <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-pink/10 text-pink"><CalendarDays size={22} aria-hidden="true" /></div>;
+}
+
+function ScheduleDayGrid({ entries, characters }: { entries: ScheduleEntry[]; characters: Character[] }) {
+  const fanStudioByCharacter = new Map<string, ScheduleEntry[]>();
+
+  entries.filter(isFanStudioGreeting).forEach((entry) => {
+    const names = getEntryCharacterNames(entry);
+    (names.length > 0 ? names : [fanStudioFallbackName(entry)]).forEach((name) => {
+      fanStudioByCharacter.set(name, [...(fanStudioByCharacter.get(name) ?? []), entry]);
+    });
+  });
+
+  const groupedCards = sortCharacterNames(Array.from(fanStudioByCharacter.keys()), characters).map((name) => ({
+    type: "fan-studio" as const,
+    key: `fan-studio:${name}`,
+    sortTime: fanStudioByCharacter.get(name)?.[0]?.startTime ?? "23:59",
+    name,
+    entries: [...(fanStudioByCharacter.get(name) ?? [])].sort((left, right) => `${left.startTime}-${left.title}`.localeCompare(`${right.startTime}-${right.title}`, "ja")),
+  }));
+  const regularCards = entries.filter((entry) => !isFanStudioGreeting(entry)).map((entry) => ({
+    type: "entry" as const,
+    key: entry.id,
+    sortTime: entry.startTime,
+    entry,
+  }));
+  const cards = [...regularCards, ...groupedCards].sort((left, right) => `${left.sortTime}-${left.key}`.localeCompare(`${right.sortTime}-${right.key}`, "ja"));
+
+  return (
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {cards.map((card) => card.type === "entry"
+        ? <ScheduleEntryCard key={card.key} entry={card.entry} />
+        : <FanStudioCharacterCard key={card.key} name={card.name} entries={card.entries} />)}
+    </div>
+  );
+}
+
+function FanStudioCharacterCard({ name, entries }: { name: string; entries: ScheduleEntry[] }) {
+  return (
+    <article className="rounded-2xl border border-lavender/20 bg-white p-4 shadow-[0_8px_24px_rgba(118,73,86,0.06)] sm:p-5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-lavender/10 px-2.5 py-1.5 text-[11px] font-black text-lavender">
+          <Sparkles size={13} aria-hidden="true" />ファンスタジオ
+        </span>
+        <span className="text-[10px] font-black text-ink/35">{entries.length}回</span>
+      </div>
+      <h3 className="mt-3 text-[17px] font-black leading-6 text-ink">{name}</h3>
+      <div className="mt-3 grid gap-2">
+        {entries.map((entry) => {
+          const appearance = specialAppearance(entry);
+          return (
+            <div key={entry.id} className={`rounded-xl border px-3 py-2.5 ${appearance ? "border-[#efd69f] bg-[#fffaf0]" : "border-lavender/15 bg-[#faf8fc]"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 text-[12px] font-black tabular-nums text-ink">
+                  <Clock3 size={13} className="text-pink" aria-hidden="true" />
+                  {entry.startTime}{entry.endTime ? `–${entry.endTime}` : "〜"}
+                </span>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black ${appearance ? "bg-[#f6b83f]/15 text-[#8c5a0c]" : "bg-lavender/10 text-lavender"}`}>
+                  {appearance && <Sun size={10} aria-hidden="true" />}{appearance ?? "通常の姿"}
+                </span>
+              </div>
+              <p className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-ink/45"><MapPin size={11} className="shrink-0" aria-hidden="true" />{shortFanStudioLocation(entry.location)}</p>
+            </div>
+          );
+        })}
+      </div>
+    </article>
+  );
 }

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, Clock3, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock3, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
 import type { Character } from "@/data/types";
 import { mergeCharactersWithNames, sortCharacterNames, useCharacters } from "@/lib/character-store";
+import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
 import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 import { CharacterAvatar } from "@/components/character-avatar";
 import { SectionHeading } from "@/components/section-heading";
@@ -24,32 +25,13 @@ function japanTime(date = new Date()) {
 
 function entryStatus(entry: ScheduleEntry, today: string, currentTime: string) {
   const entryEndDate = entry.endDate ?? entry.date;
-  if (entryEndDate < today || entry.status === "completed" || (entry.endTime && entry.endTime <= currentTime)) {
+  if (entryEndDate < today || entry.status === "completed" || (entryEndDate === today && entry.endTime && entry.endTime <= currentTime)) {
     return { label: "終了", className: "bg-ink/5 text-ink/45" };
   }
-  if (entry.date <= today && entry.startTime <= currentTime) {
+  if (entry.date <= today && entryEndDate >= today && entry.startTime <= currentTime) {
     return { label: "進行中", className: "bg-mint/15 text-[#35745f]" };
   }
   return null;
-}
-
-function isFanStudioGreeting(entry: ScheduleEntry) {
-  return entry.kind === "greeting" && (
-    entry.scheduleType.includes("ファンスタジオ")
-    || entry.location.includes("ファンスタジオ")
-    || entry.sourceId === "harmonyland-funstudio"
-  );
-}
-
-function shortFanStudioLocation(location: string) {
-  return location.replace("ファンスタジオ", "") || location;
-}
-
-function specialAppearance(entry: ScheduleEntry) {
-  const appearanceNote = entry.appearanceNotes?.find(Boolean);
-  if (appearanceNote) return appearanceNote;
-  if (entry.title.includes("日焼け")) return "日焼け姿";
-  return entry.title.match(/（([^）]*姿[^）]*)）/)?.[1] ?? null;
 }
 
 function timeToMinutes(time: string) {
@@ -83,13 +65,19 @@ function groupTimelineEntries(entries: ScheduleEntry[]) {
     .sort((left, right) => `${left.startTime}-${left.endTime}`.localeCompare(`${right.startTime}-${right.endTime}`));
 }
 
-function displayToday(date: Date) {
+function displayScheduleDate(date: string) {
   return new Intl.DateTimeFormat("ja-JP", {
     timeZone: "Asia/Tokyo",
     month: "long",
     day: "numeric",
     weekday: "short",
-  }).format(date);
+  }).format(new Date(`${date}T12:00:00+09:00`));
+}
+
+function addDays(date: string, days: number) {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
 }
 
 function displayUpdatedAt(value?: string) {
@@ -101,22 +89,23 @@ export function HomeTodaySections() {
   const entries = useScheduleEntries();
   const catalogCharacters = useCharacters();
   const [now, setNow] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(() => japanDate());
   const today = japanDate(now);
   const currentTime = japanTime(now);
   const todayGreetings = entries
     .filter((entry) => entry.kind === "greeting" && entry.date === today)
     .sort((left, right) => `${left.startTime}-${left.title}`.localeCompare(`${right.startTime}-${right.title}`, "ja"));
-  const todaySchedules = entries
-    .filter((entry) => entry.date <= today && (entry.endDate ?? entry.date) >= today)
+  const selectedSchedules = entries
+    .filter((entry) => entry.date <= selectedDate && (entry.endDate ?? entry.date) >= selectedDate)
     .sort((left, right) => `${left.startTime}-${left.title}`.localeCompare(`${right.startTime}-${right.title}`, "ja"));
-  const eventSchedules = todaySchedules.filter((entry) => !isFanStudioGreeting(entry));
-  const fanStudioSchedules = todaySchedules.filter(isFanStudioGreeting);
+  const eventSchedules = selectedSchedules.filter((entry) => !isFanStudioGreeting(entry));
+  const fanStudioSchedules = selectedSchedules.filter(isFanStudioGreeting);
   const eventGroups = groupTimelineEntries(eventSchedules);
   const fanStudioGroups = groupTimelineEntries(fanStudioSchedules).map((group) => ({
     ...group,
     entries: [...group.entries].sort((left, right) => left.location.localeCompare(right.location, "ja")),
   }));
-  const timelineBoundaries = Array.from(new Set(todaySchedules.flatMap((entry) => [
+  const timelineBoundaries = Array.from(new Set(selectedSchedules.flatMap((entry) => [
     entry.startTime,
     timelineEndTime(entry),
   ]))).sort();
@@ -140,7 +129,7 @@ export function HomeTodaySections() {
 
   const characters = mergeCharactersWithNames(
     catalogCharacters,
-    todaySchedules.flatMap((entry) => getEntryCharacterNames(entry)),
+    [...todayGreetings, ...selectedSchedules].flatMap((entry) => getEntryCharacterNames(entry)),
   );
 
   const characterById = new Map(characters.map((character) => [character.id, character]));
@@ -149,7 +138,7 @@ export function HomeTodaySections() {
   const todayCharacters = characters
     .filter((character) => appearingIds.has(character.id) || appearingNames.has(character.name));
 
-  const latestUpdatedAt = todaySchedules
+  const latestUpdatedAt = selectedSchedules
     .map((entry) => entry.updatedAt)
     .filter(Boolean)
     .sort((left, right) => right.localeCompare(left))[0];
@@ -182,7 +171,7 @@ export function HomeTodaySections() {
               return (
                 <Link
                   key={character.id}
-                  href="/schedule"
+                  href={`/schedule?character=${encodeURIComponent(character.name)}`}
                   className="group rounded-[20px] border border-pink/10 bg-white p-3.5 shadow-soft transition-all hover:-translate-y-0.5 hover:border-pink/30 hover:shadow-card sm:p-4"
                 >
                   <div className="flex items-center gap-2.5">
@@ -222,11 +211,26 @@ export function HomeTodaySections() {
         <div className="rounded-[26px] border border-pink/10 bg-[#fff6f9] p-3.5 sm:p-6">
           <SectionHeading
             eyebrow="TODAY'S SCHEDULE"
-            title="今日のスケジュール"
-            description={`${displayToday(now)}のイベントと、会えるキャラクターを時間順にまとめています。`}
+            title={selectedDate === today ? "今日のスケジュール" : `${displayScheduleDate(selectedDate)}のスケジュール`}
+            description={`${displayScheduleDate(selectedDate)}のイベントと、会えるキャラクターを時間順にまとめています。`}
             href="/schedule"
             linkLabel="全スケジュール"
           />
+          <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-pink/10 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+            <div className="flex items-center gap-2 text-[12px] font-black text-ink/60">
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-pink/10 text-pink"><CalendarDays size={16} aria-hidden="true" /></span>
+              確認したい日を選択
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={() => setSelectedDate((date) => addDays(date, -1))} aria-label="前日のスケジュール" className="grid h-10 w-10 place-items-center rounded-xl border border-ink/10 bg-white text-ink/60 transition-colors hover:border-pink/30 hover:text-pink"><ChevronLeft size={17} aria-hidden="true" /></button>
+              <label className="relative min-w-[170px] flex-1 sm:flex-none">
+                <span className="sr-only">対象日</span>
+                <input type="date" value={selectedDate} onChange={(event) => event.target.value && setSelectedDate(event.target.value)} className="min-h-10 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[12px] font-black text-ink outline-none focus:border-pink" />
+              </label>
+              <button type="button" onClick={() => setSelectedDate((date) => addDays(date, 1))} aria-label="翌日のスケジュール" className="grid h-10 w-10 place-items-center rounded-xl border border-ink/10 bg-white text-ink/60 transition-colors hover:border-pink/30 hover:text-pink"><ChevronRight size={17} aria-hidden="true" /></button>
+              <button type="button" onClick={() => setSelectedDate(today)} disabled={selectedDate === today} className="min-h-10 rounded-xl bg-pink/10 px-3 text-[11px] font-black text-pink disabled:cursor-default disabled:opacity-40">今日</button>
+            </div>
+          </div>
           {timelineSegments.length > 0 ? (
             <div className="overflow-hidden rounded-[18px] border border-pink/10 bg-white shadow-[0_8px_24px_rgba(118,73,86,0.05)]">
               <div className="grid grid-cols-[38px_minmax(0,1.1fr)_minmax(0,.9fr)] gap-1.5 border-b border-pink/10 bg-[#fffafd] px-2 py-2.5 sm:grid-cols-[64px_minmax(0,1.25fr)_minmax(0,.75fr)] sm:gap-3 sm:px-4 sm:py-3">
@@ -334,9 +338,7 @@ export function HomeTodaySections() {
                           const appearance = specialAppearance(entry);
                           const displayName = names.length > 0
                             ? names.join("・")
-                            : entry.title
-                              .replace(/（[^）]*姿[^）]*）/g, "")
-                              .replace(/\s*ファンスタジオグリーティング$/, "");
+                            : fanStudioFallbackName(entry);
                           return (
                             <article key={entry.id} className={`flex min-w-0 flex-col rounded-xl border p-2 sm:p-2.5 ${appearance ? "border-[#f1cb7b] bg-[#fff8e8]" : "border-lavender/15 bg-[#f8f5fc]"} ${status?.label === "終了" ? "saturate-50" : ""}`}>
                               <div className="flex items-start justify-between gap-1">
@@ -362,14 +364,14 @@ export function HomeTodaySections() {
             </div>
           ) : (
             <p className="rounded-2xl border border-dashed border-pink/20 bg-white px-4 py-7 text-center text-[12px] font-bold text-ink/50">
-              今日の公開済みスケジュールはまだありません。
+              {displayScheduleDate(selectedDate)}の公開済みスケジュールはまだありません。
             </p>
           )}
           <p className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-bold text-ink/45">
             <Clock3 size={13} aria-hidden="true" />
             最終更新：{displayUpdatedAt(latestUpdatedAt)}
             <span className="text-ink/20">|</span>
-            {todaySchedules.some((entry) => entry.isImported) ? "公式参照データ" : "サンプル・手入力データ"}
+            {selectedSchedules.some((entry) => entry.isImported) ? "公式参照データ" : "サンプル・手入力データ"}
           </p>
         </div>
       </section>

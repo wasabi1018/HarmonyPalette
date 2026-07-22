@@ -21,9 +21,8 @@ export function ScheduleEntryCard({ entry }: { entry: ScheduleEntry }) {
         </span>
         <span className="rounded-full bg-[#f5f2f4] px-2.5 py-1.5 text-ink/60">{entry.scheduleType}</span>
         {entry.isSample && <span className="rounded-full border border-ink/10 px-2.5 py-1.5 text-ink/45">サンプル</span>}
-        {entry.isImported && <span className="rounded-full border border-mint/30 bg-mint/10 px-2.5 py-1.5 text-[#35745f]">公式参照JSON</span>}
         {entry.verificationStatus === "year-inferred" && <span className="rounded-full border border-[#f1d59c] bg-[#fff9ec] px-2.5 py-1.5 text-[#8a652c]">年は推定</span>}
-        {!isEvent && <span className="ml-auto rounded-full bg-mint/15 px-2.5 py-1.5 text-[#35745f]">{statusLabel[entry.status]}</span>}
+        {!isEvent && entry.status !== "completed" && <span className="ml-auto rounded-full bg-mint/15 px-2.5 py-1.5 text-[#35745f]">{statusLabel[entry.status]}</span>}
       </div>
 
       <h3 className="mt-3 text-[16px] font-black leading-6 text-ink sm:text-[17px]">{entry.title}</h3>
@@ -35,9 +34,7 @@ export function ScheduleEntryCard({ entry }: { entry: ScheduleEntry }) {
         {isEvent && entry.endDate && <span className="inline-flex items-center gap-2 sm:col-span-2"><CalendarRange size={15} className="text-pink" aria-hidden="true" />{entry.date.replaceAll("-", "/")}〜{entry.endDate.replaceAll("-", "/")}</span>}
       </div>
 
-      {entry.description && <p className="mt-4 border-t border-pink/10 pt-3 text-[12px] leading-6 text-ink/55">{entry.description}</p>}
-
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] font-bold text-ink/40">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-pink/10 pt-3 text-[11px] font-bold text-ink/40">
         <span>出典：{entry.sourceName || "登録情報"}{entry.sourceReference ? `・${entry.sourceReference}` : ""}</span>
         {entry.officialUrl && (
           <a href={entry.officialUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-pink hover:underline">

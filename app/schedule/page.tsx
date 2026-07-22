@@ -10,7 +10,19 @@ export const metadata: Metadata = {
   alternates: { canonical: "/schedule" },
 };
 
-export default function SchedulePage() {
+export default async function SchedulePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ character?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const requestedCharacters = Array.isArray(params.character)
+    ? params.character
+    : params.character
+      ? [params.character]
+      : [];
+  const initialCharacters = Array.from(new Set(requestedCharacters.map((name) => name.trim()).filter(Boolean)));
+
   return (
     <div className="mx-auto max-w-[1180px] px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
       <nav aria-label="パンくずリスト" className="mb-3 flex items-center gap-1 text-[11px] font-bold text-ink/40"><Link href="/" className="hover:text-pink">ホーム</Link><ChevronRight size={12} aria-hidden="true" /><span aria-current="page">スケジュール</span></nav>
@@ -21,7 +33,7 @@ export default function SchedulePage() {
           <Link href="/admin/schedule" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-[12px] font-black text-white shadow-soft"><Settings2 size={15} aria-hidden="true" />予定を追加・削除</Link>
         </div>
       </section>
-      <ScheduleBrowser />
+      <ScheduleBrowser initialCharacters={initialCharacters} />
       <div className="mt-7"><OfficialNotice /></div>
     </div>
   );
