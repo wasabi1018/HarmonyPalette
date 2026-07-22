@@ -1,0 +1,38 @@
+"use client";
+
+import Link from "next/link";
+import { CalendarDays, ChevronRight, Home, MapPinned, Menu, Users, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { mainNavigation } from "@/lib/navigation";
+
+const items = [
+  { label: "ホーム", href: "/", icon: Home },
+  { label: "今日の予定", href: "/schedule", icon: CalendarDays },
+  { label: "キャラクター", href: "/characters", icon: Users },
+  { label: "周辺情報", href: "/around", icon: MapPinned },
+  { label: "メニュー", href: "#menu", icon: Menu },
+];
+
+export function MobileNav() {
+  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  return (
+    <>
+      {menuOpen && <div className="fixed inset-x-3 bottom-[82px] z-40 rounded-[24px] border border-pink/15 bg-white/95 p-4 shadow-[0_10px_36px_rgba(85,58,78,0.16)] backdrop-blur-xl lg:hidden"><div className="mb-3 flex items-center justify-between"><p className="text-sm font-black text-ink">メニュー</p><button type="button" aria-label="メニューを閉じる" onClick={() => setMenuOpen(false)} className="grid h-8 w-8 place-items-center rounded-full bg-pink/10 text-pink"><X size={16} aria-hidden="true" /></button></div><div className="grid grid-cols-2 gap-2">{mainNavigation.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="flex items-center justify-between rounded-xl bg-[#fff9fb] px-3 py-3 text-xs font-black text-ink"><span>{item.label}</span><ChevronRight size={14} className="text-pink" aria-hidden="true" /></Link>)}</div></div>}
+      <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-5 rounded-[24px] border border-pink/15 bg-white/95 p-2 shadow-[0_10px_36px_rgba(85,58,78,0.16)] backdrop-blur-xl lg:hidden" aria-label="モバイル用下部ナビゲーション">
+      {items.map(({ label, href, icon: Icon }) => {
+        const active = href !== "#menu" && pathname === href;
+        if (href === "#menu") return <button key={label} type="button" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} className={`flex min-h-[50px] flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black transition-colors ${menuOpen ? "bg-pink/10 text-pink" : "text-ink/55 hover:bg-pink/5 hover:text-pink"}`}>
+          <Icon size={19} strokeWidth={menuOpen ? 2.5 : 2} aria-hidden="true" />
+          {label}
+        </button>;
+        return <Link key={label} href={href} className={`flex min-h-[50px] flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black transition-colors ${active ? "bg-pink/10 text-pink" : "text-ink/55 hover:bg-pink/5 hover:text-pink"}`}>
+          <Icon size={19} strokeWidth={active ? 2.5 : 2} aria-hidden="true" />
+          {label}
+        </Link>;
+      })}
+      </nav>
+    </>
+  );
+}

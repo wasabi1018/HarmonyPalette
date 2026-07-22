@@ -1,0 +1,8 @@
+<svg width="720" height="420" viewBox="0 0 720 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="720" height="420" rx="32" fill="#EEF9F6"/>
+  <circle cx="110" cy="100" r="55" fill="#F5C96E" opacity=".75"/><circle cx="620" cy="110" r="70" fill="#B69AD6" opacity=".5"/>
+  <path d="M0 315C140 250 220 350 365 285C505 222 591 305 720 245V420H0V315Z" fill="#A9DDBF"/>
+  <path d="M260 290V180L360 100L460 180V290H260Z" fill="#EE87AC"/><path d="M235 187L360 70L485 187L462 202L360 108L258 202L235 187Z" fill="#DCA7D5"/>
+  <rect x="326" y="225" width="68" height="65" rx="12" fill="#FFF5D9"/><circle cx="360" cy="170" r="22" fill="#FFF5D9"/>
+  <text x="360" y="366" text-anchor="middle" fill="#6B5960" font-family="Arial, sans-serif" font-size="24" font-weight="700">SAMPLE EVENT VISUAL</text>
+</svg>

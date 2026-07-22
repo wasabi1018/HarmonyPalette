@@ -1,0 +1,6 @@
+<svg width="720" height="420" viewBox="0 0 720 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="720" height="420" rx="32" fill="#F0F8FC"/>
+  <circle cx="360" cy="175" r="105" fill="#BCE2F2"/><path d="M360 88C311 88 272 124 272 169C272 236 360 312 360 312C360 312 448 236 448 169C448 124 409 88 360 88Z" fill="#81BFE2"/>
+  <circle cx="360" cy="168" r="34" fill="white"/><circle cx="360" cy="168" r="12" fill="#EB6E98"/>
+  <text x="360" y="370" text-anchor="middle" fill="#6B5960" font-family="Arial, sans-serif" font-size="24" font-weight="700">SAMPLE SPOT IMAGE</text>
+</svg>

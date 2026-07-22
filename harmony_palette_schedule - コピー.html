@@ -1,0 +1,2298 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ef668f">
+
+<title>Harmony Palette｜グリーティングスケジュール</title>
+
+<!-- 画像生成 -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<!-- 複数月の画像をZIPにまとめる -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+<style>
+:root {
+  --pink: #ef668f;
+  --pink-dark: #dc5079;
+  --pink-light: #fff0f5;
+  --orange: #f5a55c;
+  --yellow: #f3c96e;
+  --green: #79c898;
+  --mint: #72c9bd;
+  --blue: #77b9df;
+  --purple: #b795d4;
+  --brown: #5b4943;
+  --text: #554846;
+  --muted: #8d7b78;
+  --line: #f0dce3;
+  --paper: #ffffff;
+  --shadow: 0 10px 28px rgba(139, 83, 96, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font-family:
+    "Yu Gothic",
+    "Hiragino Maru Gothic ProN",
+    "Noto Sans JP",
+    sans-serif;
+  background:
+    radial-gradient(
+      circle at 10% 5%,
+      rgba(239, 102, 143, 0.1),
+      transparent 24rem
+    ),
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(114, 201, 189, 0.12),
+      transparent 25rem
+    ),
+    linear-gradient(180deg, #ffffff, #fff8fb);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 14px 50px;
+}
+
+header,
+.filters,
+.day {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+/* ヘッダー */
+
+header {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border-radius: 26px;
+  text-align: center;
+}
+
+header::before,
+header::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+header::before {
+  top: -100px;
+  right: -70px;
+  width: 190px;
+  height: 190px;
+  background: #ffc5d6;
+}
+
+header::after {
+  bottom: -90px;
+  left: -60px;
+  width: 150px;
+  height: 150px;
+  background: #bfeade;
+}
+
+.logo {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.bow {
+  position: relative;
+  width: 74px;
+  height: 54px;
+  flex-shrink: 0;
+}
+
+.bow-left,
+.bow-right {
+  position: absolute;
+  top: 8px;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(145deg, #f984a5, #e8507c);
+}
+
+.bow-left {
+  left: 1px;
+  border-radius: 60% 38% 50% 60%;
+  transform: rotate(-14deg);
+}
+
+.bow-right {
+  right: 1px;
+  border-radius: 38% 60% 60% 50%;
+  transform: rotate(14deg);
+}
+
+.bow-center {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  background: #f26791;
+  transform: translateX(-50%);
+}
+
+h1 {
+  margin: 0;
+  color: var(--brown);
+  font-family: Georgia, "Yu Mincho", serif;
+  font-size: clamp(30px, 6vw, 54px);
+  line-height: 1.15;
+}
+
+.palette span:nth-child(1) {
+  color: var(--pink);
+}
+
+.palette span:nth-child(2) {
+  color: var(--orange);
+}
+
+.palette span:nth-child(3) {
+  color: var(--yellow);
+}
+
+.palette span:nth-child(4) {
+  color: var(--green);
+}
+
+.palette span:nth-child(5) {
+  color: var(--mint);
+}
+
+.palette span:nth-child(6) {
+  color: var(--blue);
+}
+
+.palette span:nth-child(7) {
+  color: var(--purple);
+}
+
+header p {
+  position: relative;
+  z-index: 1;
+  margin: 9px 0 0;
+  color: #75615d;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.header-description {
+  position: relative;
+  z-index: 1;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 検索エリア */
+
+.filters {
+  margin-top: 18px;
+  padding: 17px;
+  border-radius: 24px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(260px, 1.5fr)
+    minmax(160px, 1fr)
+    minmax(150px, 1fr)
+    minmax(150px, 1fr);
+  gap: 11px;
+}
+
+.field-label {
+  display: block;
+  margin: 0 0 6px 3px;
+  color: #8c6f76;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+select,
+input[type="date"] {
+  width: 100%;
+  min-height: 45px;
+  padding: 11px;
+  border: 1px solid #ead6dd;
+  border-radius: 13px;
+  outline: none;
+  background: #fffafd;
+  color: var(--text);
+}
+
+select:focus,
+input[type="date"]:focus,
+.character-selector[open] > summary {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 4px rgba(239, 102, 143, 0.12);
+}
+
+/* キャラクター複数選択 */
+
+.character-selector {
+  position: relative;
+  width: 100%;
+}
+
+.character-selector > summary {
+  position: relative;
+  min-height: 45px;
+  padding: 11px 38px 11px 13px;
+  overflow: hidden;
+  border: 1px solid #ead6dd;
+  border-radius: 13px;
+  background: #fffafd;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.character-selector > summary::-webkit-details-marker {
+  display: none;
+}
+
+.character-selector > summary::after {
+  content: "▼";
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  color: #a17c87;
+  font-size: 11px;
+  transform: translateY(-50%);
+}
+
+.character-selector[open] > summary::after {
+  content: "▲";
+}
+
+.character-options {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 7px);
+  left: 0;
+  width: min(440px, 90vw);
+  max-height: 410px;
+  padding: 12px;
+  overflow-y: auto;
+  border: 1px solid #ead6dd;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 15px 35px rgba(106, 65, 78, 0.18);
+}
+
+.character-option-actions {
+  position: sticky;
+  z-index: 2;
+  top: -12px;
+  display: flex;
+  gap: 7px;
+  margin-top: -10px;
+  padding: 10px 0;
+  background: #ffffff;
+}
+
+.character-option-actions button {
+  flex: 1;
+  padding: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: #f8edf1;
+  color: #805d68;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.character-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.character-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 39px;
+  padding: 8px 9px;
+  border: 1px solid #f0dfe5;
+  border-radius: 11px;
+  background: #fffafd;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.character-check:hover {
+  border-color: var(--pink);
+  background: #fff1f6;
+}
+
+.character-check.selected-option {
+  border-color: var(--pink);
+  background: var(--pink-light);
+  color: var(--pink-dark);
+}
+
+.character-check input {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--pink);
+}
+
+/* 検索方法 */
+
+.match-mode {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 1px dashed #ead6dd;
+}
+
+.match-mode-label {
+  width: 100%;
+  color: #8c6f76;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.match-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 1px solid #ead6dd;
+  border-radius: 999px;
+  background: #fffafd;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.match-radio input {
+  accent-color: var(--pink);
+}
+
+/* 操作ボタン */
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 13px;
+}
+
+.chips,
+.action-buttons {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.chip,
+.reset,
+.export-button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.chip {
+  border: 1px solid #ead6dd;
+  background: #ffffff;
+  color: var(--text);
+}
+
+.chip.on {
+  border-color: var(--pink);
+  background: var(--pink);
+  color: #ffffff;
+}
+
+.reset {
+  background: #f8edf1;
+  color: #805d68;
+}
+
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: linear-gradient(135deg, #ef668f, #f487a6);
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(239, 102, 143, 0.23);
+}
+
+.export-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.information {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 13px;
+}
+
+.information span {
+  padding: 6px 9px;
+  border: 1px solid #f0dfe5;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* 通常検索結果 */
+
+.summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 24px 3px 10px;
+}
+
+.summary h2 {
+  margin: 0;
+  font-size: 23px;
+}
+
+.summary small {
+  color: var(--muted);
+}
+
+.count {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--pink-light);
+  color: var(--pink-dark);
+  font-weight: 900;
+}
+
+#list {
+  display: grid;
+  gap: 14px;
+}
+
+.day {
+  padding: 16px;
+  border-radius: 22px;
+}
+
+.dayhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.date {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge {
+  display: grid;
+  place-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #ff8dac, #eb5a87);
+  color: #ffffff;
+  text-align: center;
+  font-weight: 900;
+  box-shadow: 0 7px 14px rgba(239, 102, 143, 0.25);
+}
+
+.badge b {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.badge small {
+  margin-top: 3px;
+  font-size: 10px;
+}
+
+.date-title {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.weekday {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.today-label {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: var(--pink-light);
+  color: var(--pink-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.events {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(200px, 1fr));
+  gap: 9px;
+}
+
+.event {
+  padding: 12px;
+  border: 1px solid #eee0e5;
+  border-radius: 15px;
+  background: #fffdfd;
+}
+
+.event-title {
+  margin-bottom: 9px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--event-color);
+}
+
+.names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.name {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--event-light);
+  color: #645258;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.name.selected {
+  outline: 2px solid var(--pink);
+  outline-offset: 1px;
+  background: var(--pink-light);
+  color: var(--pink-dark);
+}
+
+.daily-character::after {
+  content: "毎日";
+  margin-left: 5px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #59896b;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.empty {
+  padding: 40px 20px;
+  border: 1px dashed #e8ccd7;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #8c777c;
+  text-align: center;
+}
+
+.empty-icon {
+  margin-bottom: 7px;
+  font-size: 36px;
+}
+
+/* メッセージ */
+
+.export-status {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  right: 18px;
+  bottom: 18px;
+  max-width: calc(100vw - 36px);
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: #554846;
+  color: #ffffff;
+  box-shadow: 0 12px 30px rgba(57, 36, 42, 0.25);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.export-status.show {
+  display: block;
+}
+
+.export-status.error {
+  background: #bd3f5f;
+}
+
+footer {
+  margin-top: 24px;
+  color: #9b898d;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* カレンダー画像生成専用 */
+
+.calendar-export-host {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: -20000px;
+  width: 1200px;
+  background: #fff8fb;
+  pointer-events: none;
+}
+
+.calendar-export-sheet {
+  width: 1200px;
+  padding: 34px;
+  color: #554846;
+  background: #fff8fb;
+  font-family:
+    "Yu Gothic",
+    "Hiragino Maru Gothic ProN",
+    "Noto Sans JP",
+    sans-serif;
+}
+
+.calendar-export-header {
+  margin-bottom: 18px;
+  padding: 20px 24px;
+  border: 1px solid #f0dce3;
+  border-radius: 24px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 10px 28px rgba(139, 83, 96, 0.08);
+}
+
+.calendar-export-brand {
+  margin: 0;
+  color: #5b4943;
+  font-family: Georgia, "Yu Mincho", serif;
+  font-size: 42px;
+  line-height: 1.1;
+}
+
+.calendar-export-subtitle {
+  margin-top: 7px;
+  color: #75615d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.calendar-export-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 15px;
+  padding: 14px 16px;
+  border: 1px solid #f0dce3;
+  border-radius: 17px;
+  background: #ffffff;
+}
+
+.calendar-export-month {
+  flex-shrink: 0;
+  color: #5b4943;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.calendar-export-filter {
+  max-width: 760px;
+  color: #75615d;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: right;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-weekdays {
+  margin-bottom: 6px;
+}
+
+.calendar-weekday {
+  padding: 8px;
+  color: #816d69;
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.calendar-weekday.sunday {
+  color: #dc5079;
+}
+
+.calendar-weekday.saturday {
+  color: #598ab5;
+}
+
+.calendar-grid {
+  overflow: hidden;
+  border-top: 1px solid #ead6dd;
+  border-left: 1px solid #ead6dd;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.calendar-cell {
+  position: relative;
+  min-height: 164px;
+  padding: 9px;
+  overflow: hidden;
+  border-right: 1px solid #ead6dd;
+  border-bottom: 1px solid #ead6dd;
+  background: #ffffff;
+}
+
+.calendar-cell.is-empty,
+.calendar-cell.is-outside-range {
+  background: #fbf8fa;
+}
+
+.calendar-day-number {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 25px;
+  margin-bottom: 6px;
+}
+
+.calendar-day-number strong {
+  display: grid;
+  place-content: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  color: #554846;
+  font-size: 14px;
+}
+
+.calendar-cell.sunday .calendar-day-number strong {
+  color: #dc5079;
+}
+
+.calendar-cell.saturday .calendar-day-number strong {
+  color: #598ab5;
+}
+
+.calendar-today-badge {
+  padding: 3px 5px;
+  border-radius: 999px;
+  background: #fff0f5;
+  color: #dc5079;
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.calendar-items {
+  display: grid;
+  gap: 4px;
+}
+
+.calendar-item {
+  padding: 5px 6px;
+  overflow: hidden;
+  border-left: 4px solid var(--calendar-color);
+  border-radius: 7px;
+  background: var(--calendar-light);
+  color: #5e5050;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.calendar-item-event {
+  display: block;
+  overflow: hidden;
+  font-size: 9px;
+  font-weight: 900;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.calendar-item-characters {
+  display: block;
+  margin-top: 1px;
+  overflow: hidden;
+  color: #705f60;
+  font-size: 8px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.calendar-more {
+  padding: 4px 5px;
+  border-radius: 7px;
+  background: #f7edf1;
+  color: #80666e;
+  font-size: 9px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.calendar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border: 1px solid #f0dfe5;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #766367;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.calendar-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--legend-color);
+}
+
+.calendar-export-footer {
+  margin-top: 15px;
+  color: #9b898d;
+  font-size: 10px;
+  text-align: center;
+}
+
+@media (max-width: 850px) {
+  .filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  main {
+    padding: 10px 9px 38px;
+  }
+
+  header {
+    padding: 20px 12px;
+    border-radius: 22px;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .character-options {
+    position: fixed;
+    z-index: 101;
+    top: 50%;
+    left: 50%;
+    width: calc(100vw - 24px);
+    max-height: 75vh;
+    transform: translate(-50%, -50%);
+  }
+
+  .character-choices {
+    grid-template-columns: 1fr;
+  }
+
+  .character-selector[open]::before {
+    content: "";
+    position: fixed;
+    z-index: 99;
+    inset: 0;
+    background: rgba(75, 55, 61, 0.32);
+  }
+
+  .chips,
+  .action-buttons {
+    width: 100%;
+  }
+
+  .chip,
+  .reset,
+  .export-button {
+    flex: 1;
+  }
+
+  .events {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+<main>
+  <header>
+    <div class="logo">
+      <div class="bow" aria-hidden="true">
+        <span class="bow-left"></span>
+        <span class="bow-right"></span>
+        <span class="bow-center"></span>
+      </div>
+
+      <h1>
+        Harmony
+        <span class="palette">
+          <span>P</span><span>a</span><span>l</span><span>e</span><span>t</span><span>t</span><span>e</span>
+        </span>
+      </h1>
+    </div>
+
+    <p>ハーモニーランドの「楽しい！」がそろう場所</p>
+
+    <div class="header-description">
+      日付・イベント・複数のキャラクターからグリーティング予定を検索できます。
+    </div>
+  </header>
+
+  <section class="filters">
+    <div class="filter-grid">
+      <div>
+        <label class="field-label">キャラクター</label>
+
+        <details class="character-selector" id="characterSelector">
+          <summary id="characterSummary">
+            すべてのキャラクター
+          </summary>
+
+          <div class="character-options">
+            <div class="character-option-actions">
+              <button type="button" id="selectAllCharacters">
+                すべて選択
+              </button>
+
+              <button type="button" id="clearCharacters">
+                選択を解除
+              </button>
+            </div>
+
+            <div id="characterChoices" class="character-choices"></div>
+          </div>
+        </details>
+      </div>
+
+      <div>
+        <label class="field-label" for="event">イベント</label>
+
+        <select id="event">
+          <option value="">すべて</option>
+          <option value="W">おでむかえグリーティング</option>
+          <option value="B">ビンゴ</option>
+          <option value="F">ファンスタジオ</option>
+          <option value="H">はちゃめちゃグリーティング</option>
+          <option value="T">ハイタッチグリーティング</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="field-label" for="from">開始日</label>
+
+        <input
+          id="from"
+          type="date"
+          value="2026-07-22"
+          min="2026-07-22"
+          max="2026-09-15"
+        >
+      </div>
+
+      <div>
+        <label class="field-label" for="to">終了日</label>
+
+        <input
+          id="to"
+          type="date"
+          value="2026-09-15"
+          min="2026-07-22"
+          max="2026-09-15"
+        >
+      </div>
+    </div>
+
+    <div class="match-mode">
+      <div class="match-mode-label">
+        複数選択時の検索方法
+      </div>
+
+      <label class="match-radio">
+        <input type="radio" name="matchMode" value="any" checked>
+        いずれかに会える予定
+      </label>
+
+      <label class="match-radio">
+        <input type="radio" name="matchMode" value="all">
+        全員に会える予定
+      </label>
+    </div>
+
+    <div class="actions">
+      <div class="chips">
+        <button type="button" class="chip on" data-days="all">
+          全期間
+        </button>
+
+        <button type="button" class="chip" data-days="7">
+          7日間
+        </button>
+
+        <button type="button" class="chip" data-days="14">
+          14日間
+        </button>
+
+        <button type="button" class="chip" data-days="30">
+          30日間
+        </button>
+      </div>
+
+      <div class="action-buttons">
+        <button type="button" class="reset" id="reset">
+          条件をリセット
+        </button>
+
+        <button
+          type="button"
+          class="export-button"
+          id="exportCalendarImage"
+        >
+          ▦ カレンダー画像を保存
+        </button>
+      </div>
+    </div>
+
+    <div class="information">
+      <span>
+        マイメロ・クロミ・シナモロール・ポムポムプリンはファンスタジオで毎日会えます
+      </span>
+
+      <span>
+        複数月の場合はZIP形式でまとめて保存します
+      </span>
+    </div>
+  </section>
+
+  <div class="summary">
+    <div>
+      <h2 id="heading">スケジュール一覧</h2>
+      <small id="description"></small>
+    </div>
+
+    <div class="count" id="count"></div>
+  </div>
+
+  <div id="list"></div>
+
+  <footer>
+    Harmony Palette unofficial schedule viewer
+  </footer>
+</main>
+
+<div
+  class="export-status"
+  id="exportStatus"
+  role="status"
+  aria-live="polite"
+></div>
+
+<script>
+const rawSchedule = `
+2026-07-22|W=ウィッシュミーメル,ウサハナ;B=ディアダニエル;F=あひるのペックル,モップ;H=ハローキティ,ハローミミィ,メアリー（ママ）,ジョージ（パパ）
+2026-07-23|W=ウィッシュミーメル,ウサハナ;B=シナモロール;F=ディアダニエル,あひるのペックル;T=ハローキティ,ポムポムプリン,ポチャッコ
+2026-07-24|W=シナモロール,エスプレッソ;B=シナモロール;F=ディアダニエル,あひるのペックル;T=ハローキティ,ポムポムプリン,ポチャッコ
+2026-07-25|W=シナモロール,エスプレッソ;B=シナモロール;F=ディアダニエル,あひるのペックル;T=ハローキティ,ポムポムプリン,ポチャッコ
+2026-07-26|W=キキ,ララ;B=シナモロール;F=ディアダニエル,あひるのペックル;T=ハローキティ,ポムポムプリン,ポチャッコ
+2026-07-27|W=キキ,ララ;B=シナモロール;F=ディアダニエル,あひるのペックル;H=みるく,カプチーノ,エスプレッソ
+2026-07-28|W=キキ,ララ;B=シナモロール;F=ディアダニエル,あひるのペックル;T=ハローキティ,ポムポムプリン,ポチャッコ
+2026-07-29|W=マイスイートピアノ,ルビー;B=クロミ;F=ディアダニエル,みるく;T=ハローキティ,ポムポムプリン,ポチャッコ
+2026-07-30|W=マイスイートピアノ,ルビー;B=クロミ;F=あひるのペックル,みるく;T=ハローキティ,ポムポムプリン,ポチャッコ
+2026-07-31|W=マイスイートピアノ,ルビー;B=クロミ;F=ディアダニエル,みるく;T=ハローキティ,ポムポムプリン,ポチャッコ
+2026-08-01|W=バッドばつ丸,ハンギョドン;B=クロミ;F=あひるのペックル,コロコロクリリン;H=ポチャッコ,ハンギョドン,けろけろけろっぴ
+2026-08-02|W=バッドばつ丸,ハンギョドン;B=クロミ;F=ディアダニエル,コロコロクリリン;H=ポチャッコ,ハンギョドン,けろけろけろっぴ
+2026-08-03|W=バッドばつ丸,ハンギョドン;B=クロミ;F=ウサハナ,コロコロクリリン;H=ポチャッコ,ハンギョドン,けろけろけろっぴ
+2026-08-04|W=シフォン,みるく;B=クロミ;F=ウサハナ,コロコロクリリン;H=モカ,カプチーノ,エスプレッソ
+2026-08-05|W=シフォン,みるく;B=クロミ;F=ウサハナ,ディアダニエル;H=モカ,カプチーノ,エスプレッソ
+2026-08-06|W=シフォン,みるく;B=ポムポムプリン;F=ウサハナ,ディアダニエル;H=モカ,カプチーノ,エスプレッソ
+2026-08-07|W=マイメロディ,ウィッシュミーメル;B=ポムポムプリン;F=ウサハナ,ディアダニエル;H=モカ,カプチーノ,エスプレッソ
+2026-08-08|W=マイメロディ,ウィッシュミーメル;B=ポムポムプリン;F=ぼんぼんりぼん,あひるのペックル;H=モカ,シフォン,みるく
+2026-08-09|W=タキシードサム,ポチャッコ;B=ポムポムプリン;F=ぼんぼんりぼん,あひるのペックル;H=モカ,シフォン,みるく
+2026-08-10|W=タキシードサム,ポチャッコ;B=ポムポムプリン;F=ぼんぼんりぼん,あひるのペックル;H=モカ,シフォン,みるく
+2026-08-11|W=タキシードサム,ポチャッコ;B=ポムポムプリン;F=ぼんぼんりぼん,あひるのペックル;H=モカ,シフォン,みるく
+2026-08-12|W=キキ,ララ;B=あひるのペックル;F=ディアダニエル,ぼんぼんりぼん,ウィッシュミーメル;H=ハローキティ,ディアダニエル,メアリー（ママ）,ジョージ（パパ）
+2026-08-13|W=キキ,ララ;B=あひるのペックル;F=ディアダニエル,ハンギョドン,マイスイートピアノ;H=ハローキティ,ディアダニエル,メアリー（ママ）,ジョージ（パパ）
+2026-08-14|W=キキ,ララ;B=あひるのペックル;F=ディアダニエル,ハンギョドン,マイスイートピアノ;H=ハローキティ,ディアダニエル,メアリー（ママ）,ジョージ（パパ）
+2026-08-15|W=ハローキティ,いちごの王さま;B=あひるのペックル;F=ディアダニエル,ハンギョドン,マイスイートピアノ;H=ハローキティ,ディアダニエル,メアリー（ママ）,ジョージ（パパ）
+2026-08-16|W=ハローキティ,いちごの王さま;B=ディアダニエル;F=あひるのペックル,ポチャッコ;H=ぼんぼんりぼん,ウサハナ,ウィッシュミーメル
+2026-08-17|W=マイスイートピアノ,クロミ;B=ディアダニエル;F=あひるのペックル,ポチャッコ;H=ぼんぼんりぼん,ウサハナ,ウィッシュミーメル
+2026-08-18|W=マイスイートピアノ,クロミ;B=ディアダニエル;F=あひるのペックル,ポチャッコ;H=ぼんぼんりぼん,ウサハナ,ウィッシュミーメル
+2026-08-19|W=マイスイートピアノ,クロミ;B=ディアダニエル;F=あひるのペックル,ポチャッコ;H=ぼんぼんりぼん,ウサハナ,ウィッシュミーメル
+2026-08-20|W=しろうさ,くろうさ;B=ディアダニエル;F=あひるのペックル,ルビー;H=マイメロディ,クロミ,マイスイートピアノ
+2026-08-21|W=しろうさ,くろうさ;B=あひるのペックル;F=ディアダニエル,ルビー;H=マイメロディ,クロミ,マイスイートピアノ
+2026-08-22|W=しろうさ,くろうさ;B=あひるのペックル;F=ディアダニエル,ルビー;H=マイメロディ,クロミ,マイスイートピアノ
+2026-08-23|W=モップ,ルビー;B=あひるのペックル;F=ディアダニエル,バッドばつ丸;H=マイメロディ,クロミ,マイスイートピアノ
+2026-08-24|W=モップ,ルビー;B=あひるのペックル;F=ディアダニエル,バッドばつ丸;H=カプチーノ,エスプレッソ,みるく
+2026-08-25|W=モップ,ルビー;B=あひるのペックル;F=ディアダニエル,バッドばつ丸;H=カプチーノ,エスプレッソ,みるく
+2026-08-26|W=ウサハナ,コロコロクリリン;B=あひるのペックル;F=ディアダニエル,バッドばつ丸;H=カプチーノ,エスプレッソ,みるく
+2026-08-27|W=ウサハナ,コロコロクリリン;B=シナモロール;F=あひるのペックル,ディアダニエル;H=カプチーノ,エスプレッソ,みるく
+2026-08-28|W=ウサハナ,コロコロクリリン;B=シナモロール;F=あひるのペックル,ディアダニエル;H=モカ,シフォン,みるく
+2026-08-29|W=ハローキティ,ハローミミィ;B=シナモロール;F=あひるのペックル,ディアダニエル;H=モカ,シフォン,みるく
+2026-08-30|W=ハローキティ,ハローミミィ;B=シナモロール;F=あひるのペックル,ディアダニエル;H=モカ,シフォン,みるく
+2026-08-31|W=ハローキティ,ハローミミィ;B=シナモロール;F=あひるのペックル,ディアダニエル;H=モカ,シフォン,みるく
+2026-09-01|W=ルビー,ぼんぼんりぼん;B=シナモロール;H=ぼんぼんりぼん,ウサハナ,ウィッシュミーメル
+2026-09-04|W=ルビー,ぼんぼんりぼん;B=シナモロール;H=ぼんぼんりぼん,ウサハナ,ウィッシュミーメル
+2026-09-05|W=ルビー,ぼんぼんりぼん;B=シナモロール;H=ぼんぼんりぼん,ウサハナ,ウィッシュミーメル
+2026-09-06|W=しろうさ,くろうさ;B=シナモロール;H=バッドばつ丸,ポチャッコ,けろけろけろっぴ
+2026-09-07|W=しろうさ,くろうさ;B=クロミ;H=バッドばつ丸,ポチャッコ,けろけろけろっぴ
+2026-09-08|W=しろうさ,くろうさ;B=クロミ;H=バッドばつ丸,ポチャッコ,けろけろけろっぴ
+2026-09-11|W=モップ,ウサハナ;B=クロミ;H=バッドばつ丸,ポチャッコ,けろけろけろっぴ
+2026-09-12|W=モップ,ウサハナ;B=クロミ;H=バッドばつ丸,タキシードサム,ハンギョドン
+2026-09-13|W=キキ,ララ;B=クロミ;H=バッドばつ丸,タキシードサム,ハンギョドン
+2026-09-14|W=キキ,ララ;B=クロミ;H=ポチャッコ,タキシードサム,ハンギョドン
+2026-09-15|W=キキ,ララ;B=クロミ;H=ポチャッコ,タキシードサム,ハンギョドン
+`.trim();
+
+const scheduleStart = "2026-07-22";
+const scheduleEnd = "2026-09-15";
+
+const eventMeta = {
+  W: {
+    name: "おでむかえグリーティング",
+    shortName: "おでむかえ",
+    color: "#ef668f",
+    light: "#fde8ef",
+    order: 1
+  },
+  B: {
+    name: "ビンゴ",
+    shortName: "ビンゴ",
+    color: "#f5a55c",
+    light: "#fdf0e3",
+    order: 2
+  },
+  F: {
+    name: "ファンスタジオ",
+    shortName: "ファンスタジオ",
+    color: "#79c898",
+    light: "#e8f6ed",
+    order: 3
+  },
+  H: {
+    name: "はちゃめちゃグリーティング",
+    shortName: "はちゃめちゃ",
+    color: "#77b9df",
+    light: "#e8f3fa",
+    order: 4
+  },
+  T: {
+    name: "ハイタッチグリーティング",
+    shortName: "ハイタッチ",
+    color: "#b795d4",
+    light: "#f1eafa",
+    order: 5
+  }
+};
+
+const dailyFanStudioCharacters = [
+  "マイメロ",
+  "クロミ",
+  "シナモロール",
+  "ポムポムプリン"
+];
+
+const $ = selector => document.querySelector(selector);
+
+const eventSelect = $("#event");
+const fromInput = $("#from");
+const toInput = $("#to");
+const list = $("#list");
+const characterChoices = $("#characterChoices");
+const characterSummary = $("#characterSummary");
+const characterSelector = $("#characterSelector");
+const exportButton = $("#exportCalendarImage");
+const exportStatus = $("#exportStatus");
+
+const escapeHtml = value => {
+  return String(value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[character]));
+};
+
+const normalizeCharacterName = name => {
+  const normalized = name.trim();
+
+  if (normalized === "マイメロディ") {
+    return "マイメロ";
+  }
+
+  return normalized;
+};
+
+const parseDate = value => {
+  const [year, month, day] = value
+    .split("-")
+    .map(Number);
+
+  return new Date(year, month - 1, day);
+};
+
+const formatDate = date => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const parseSchedule = source => {
+  return source
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean)
+    .flatMap(line => {
+      const [date, body] = line.split("|");
+
+      if (!date || !body) {
+        return [];
+      }
+
+      return body
+        .split(";")
+        .map(part => {
+          const equalPosition = part.indexOf("=");
+
+          if (equalPosition < 0) {
+            return null;
+          }
+
+          const type = part.slice(0, equalPosition);
+          const names = part
+            .slice(equalPosition + 1)
+            .split(",")
+            .map(normalizeCharacterName)
+            .filter(Boolean);
+
+          return {
+            date,
+            type,
+            names
+          };
+        })
+        .filter(Boolean);
+    });
+};
+
+const createDateRange = (start, end) => {
+  const dates = [];
+  const current = parseDate(start);
+  const last = parseDate(end);
+
+  while (current <= last) {
+    dates.push(formatDate(current));
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dates;
+};
+
+let scheduleRows = parseSchedule(rawSchedule);
+
+createDateRange(scheduleStart, scheduleEnd).forEach(date => {
+  let fanStudio = scheduleRows.find(item => {
+    return item.date === date && item.type === "F";
+  });
+
+  if (!fanStudio) {
+    fanStudio = {
+      date,
+      type: "F",
+      names: []
+    };
+
+    scheduleRows.push(fanStudio);
+  }
+
+  fanStudio.names = [
+    ...new Set([
+      ...fanStudio.names,
+      ...dailyFanStudioCharacters
+    ])
+  ];
+});
+
+scheduleRows.sort((first, second) => {
+  if (first.date !== second.date) {
+    return first.date.localeCompare(second.date);
+  }
+
+  return (
+    eventMeta[first.type].order -
+    eventMeta[second.type].order
+  );
+});
+
+const characters = [
+  ...new Set(
+    scheduleRows.flatMap(item => item.names)
+  )
+].sort((first, second) => {
+  return first.localeCompare(second, "ja");
+});
+
+characters.forEach((name, index) => {
+  const label = document.createElement("label");
+  label.className = "character-check";
+
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.name = "character";
+  input.value = name;
+  input.id = `character-${index}`;
+
+  const text = document.createElement("span");
+  text.textContent = name;
+
+  label.append(input, text);
+  characterChoices.appendChild(label);
+});
+
+const getCharacterInputs = () => {
+  return [
+    ...document.querySelectorAll(
+      'input[name="character"]'
+    )
+  ];
+};
+
+const getSelectedCharacters = () => {
+  return getCharacterInputs()
+    .filter(input => input.checked)
+    .map(input => input.value);
+};
+
+const getMatchMode = () => {
+  return document.querySelector(
+    'input[name="matchMode"]:checked'
+  )?.value || "any";
+};
+
+const matchesCharacters = (
+  schedule,
+  selectedCharacters,
+  matchMode
+) => {
+  if (!selectedCharacters.length) {
+    return true;
+  }
+
+  if (matchMode === "all") {
+    return selectedCharacters.every(name => {
+      return schedule.names.includes(name);
+    });
+  }
+
+  return selectedCharacters.some(name => {
+    return schedule.names.includes(name);
+  });
+};
+
+const getFilteredRows = () => {
+  const selectedCharacters = getSelectedCharacters();
+  const matchMode = getMatchMode();
+
+  return scheduleRows.filter(item => {
+    const characterMatch = matchesCharacters(
+      item,
+      selectedCharacters,
+      matchMode
+    );
+
+    const eventMatch =
+      !eventSelect.value ||
+      item.type === eventSelect.value;
+
+    const dateMatch =
+      item.date >= fromInput.value &&
+      item.date <= toInput.value;
+
+    return characterMatch && eventMatch && dateMatch;
+  });
+};
+
+const updateCharacterControls = () => {
+  const selected = getSelectedCharacters();
+
+  getCharacterInputs().forEach(input => {
+    input.closest(".character-check")
+      ?.classList.toggle(
+        "selected-option",
+        input.checked
+      );
+  });
+
+  if (!selected.length) {
+    characterSummary.textContent =
+      "すべてのキャラクター";
+  } else if (selected.length <= 3) {
+    characterSummary.textContent =
+      selected.join("、");
+  } else {
+    characterSummary.textContent =
+      `${selected.slice(0, 2).join("、")} ほか${selected.length - 2}キャラクター`;
+  }
+};
+
+const render = () => {
+  const filteredRows = getFilteredRows();
+  const selectedCharacters = getSelectedCharacters();
+  const grouped = {};
+
+  filteredRows.forEach(item => {
+    grouped[item.date] ??= [];
+    grouped[item.date].push(item);
+  });
+
+  const dates = Object.keys(grouped).sort();
+
+  $("#count").textContent =
+    `${filteredRows.length}件`;
+
+  $("#heading").textContent =
+    selectedCharacters.length === 1
+      ? `${selectedCharacters[0]}の予定`
+      : selectedCharacters.length > 1
+        ? `${selectedCharacters.length}キャラクターの予定`
+        : "スケジュール一覧";
+
+  $("#description").textContent =
+    `${fromInput.value.replaceAll("-", "/")}〜${toInput.value.replaceAll("-", "/")}`;
+
+  updateCharacterControls();
+
+  if (!dates.length) {
+    list.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🎀</div>
+        <b>該当する予定がありません</b>
+      </div>
+    `;
+
+    return;
+  }
+
+  const today = formatDate(new Date());
+
+  list.innerHTML = dates.map(date => {
+    const currentDate = parseDate(date);
+    const month = currentDate.getMonth() + 1;
+    const day = currentDate.getDate();
+    const weekday =
+      "日月火水木金土"[currentDate.getDay()];
+
+    const eventsHtml = grouped[date].map(item => {
+      const metadata = eventMeta[item.type];
+
+      const namesHtml = item.names.map(name => {
+        const selected =
+          selectedCharacters.includes(name);
+
+        const daily =
+          item.type === "F" &&
+          dailyFanStudioCharacters.includes(name);
+
+        return `
+          <button
+            type="button"
+            class="name${selected ? " selected" : ""}${daily ? " daily-character" : ""}"
+            style="--event-light:${metadata.light}"
+            data-name="${escapeHtml(name)}"
+          >
+            ${escapeHtml(name)}
+          </button>
+        `;
+      }).join("");
+
+      return `
+        <section
+          class="event"
+          style="
+            --event-color:${metadata.color};
+            --event-light:${metadata.light}
+          "
+        >
+          <div class="event-title">
+            <span class="dot"></span>
+            ${escapeHtml(metadata.name)}
+          </div>
+
+          <div class="names">
+            ${namesHtml}
+          </div>
+        </section>
+      `;
+    }).join("");
+
+    return `
+      <article class="day">
+        <div class="dayhead">
+          <div class="date">
+            <div class="badge">
+              <b>${day}</b>
+              <small>${month}月</small>
+            </div>
+
+            <div>
+              <div class="date-title">
+                ${month}月${day}日
+              </div>
+
+              <div class="weekday">
+                ${weekday}曜日
+              </div>
+            </div>
+          </div>
+
+          ${
+            date === today
+              ? '<span class="today-label">TODAY</span>'
+              : ""
+          }
+        </div>
+
+        <div class="events">
+          ${eventsHtml}
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  document
+    .querySelectorAll("[data-name]")
+    .forEach(button => {
+      button.addEventListener("click", () => {
+        const target = getCharacterInputs()
+          .find(input => {
+            return input.value === button.dataset.name;
+          });
+
+        if (target) {
+          target.checked = !target.checked;
+        }
+
+        render();
+      });
+    });
+};
+
+/* 画像出力 */
+
+let statusTimer = null;
+
+const showStatus = (message, error = false) => {
+  clearTimeout(statusTimer);
+
+  exportStatus.textContent = message;
+  exportStatus.classList.add("show");
+  exportStatus.classList.toggle("error", error);
+
+  statusTimer = setTimeout(() => {
+    exportStatus.classList.remove("show", "error");
+  }, 4500);
+};
+
+const getTargetMonths = (startValue, endValue) => {
+  const start = parseDate(
+    `${startValue.slice(0, 7)}-01`
+  );
+
+  const end = parseDate(
+    `${endValue.slice(0, 7)}-01`
+  );
+
+  const months = [];
+
+  while (start <= end) {
+    months.push({
+      year: start.getFullYear(),
+      month: start.getMonth() + 1
+    });
+
+    start.setMonth(start.getMonth() + 1);
+  }
+
+  return months;
+};
+
+const getCalendarCharacters = schedule => {
+  const selected = getSelectedCharacters();
+
+  if (!selected.length) {
+    return schedule.names;
+  }
+
+  return schedule.names.filter(name => {
+    return selected.includes(name);
+  });
+};
+
+const createFilterText = () => {
+  const selected = getSelectedCharacters();
+
+  const characterText = selected.length
+    ? selected.join("、")
+    : "すべてのキャラクター";
+
+  const eventText = eventSelect.value
+    ? eventMeta[eventSelect.value].name
+    : "すべてのイベント";
+
+  return `キャラクター：${characterText}　／　イベント：${eventText}`;
+};
+
+const createCalendarSheet = (
+  year,
+  month,
+  filteredRows
+) => {
+  const host = document.createElement("div");
+  host.className = "calendar-export-host";
+
+  const sheet = document.createElement("div");
+  sheet.className = "calendar-export-sheet";
+
+  const monthKey =
+    `${year}-${String(month).padStart(2, "0")}`;
+
+  const grouped = {};
+
+  filteredRows
+    .filter(item => {
+      return item.date.startsWith(monthKey);
+    })
+    .forEach(item => {
+      grouped[item.date] ??= [];
+      grouped[item.date].push(item);
+    });
+
+  const firstDay =
+    new Date(year, month - 1, 1);
+
+  const numberOfDays =
+    new Date(year, month, 0).getDate();
+
+  const cells = [];
+
+  for (
+    let index = 0;
+    index < firstDay.getDay();
+    index += 1
+  ) {
+    cells.push(
+      '<div class="calendar-cell is-empty"></div>'
+    );
+  }
+
+  const today = formatDate(new Date());
+
+  for (
+    let day = 1;
+    day <= numberOfDays;
+    day += 1
+  ) {
+    const current = new Date(
+      year,
+      month - 1,
+      day
+    );
+
+    const date = formatDate(current);
+    const weekday = current.getDay();
+
+    const insideRange =
+      date >= fromInput.value &&
+      date <= toInput.value;
+
+    const dayRows = insideRange
+      ? grouped[date] || []
+      : [];
+
+    const visibleRows =
+      dayRows.slice(0, 4);
+
+    const hiddenCount =
+      Math.max(0, dayRows.length - 4);
+
+    const itemHtml = visibleRows.map(item => {
+      const metadata = eventMeta[item.type];
+
+      const names =
+        getCalendarCharacters(item);
+
+      const nameText = names.length
+        ? names.join("・")
+        : "対象キャラクター";
+
+      return `
+        <div
+          class="calendar-item"
+          style="
+            --calendar-color:${metadata.color};
+            --calendar-light:${metadata.light}
+          "
+        >
+          <span class="calendar-item-event">
+            ${escapeHtml(metadata.shortName)}
+          </span>
+
+          <span class="calendar-item-characters">
+            ${escapeHtml(nameText)}
+          </span>
+        </div>
+      `;
+    }).join("");
+
+    const cellClasses = [
+      "calendar-cell"
+    ];
+
+    if (weekday === 0) {
+      cellClasses.push("sunday");
+    }
+
+    if (weekday === 6) {
+      cellClasses.push("saturday");
+    }
+
+    if (!insideRange) {
+      cellClasses.push("is-outside-range");
+    }
+
+    cells.push(`
+      <div class="${cellClasses.join(" ")}">
+        <div class="calendar-day-number">
+          <strong>${day}</strong>
+
+          ${
+            date === today
+              ? '<span class="calendar-today-badge">TODAY</span>'
+              : ""
+          }
+        </div>
+
+        <div class="calendar-items">
+          ${itemHtml}
+
+          ${
+            hiddenCount
+              ? `<div class="calendar-more">ほか${hiddenCount}件</div>`
+              : ""
+          }
+        </div>
+      </div>
+    `);
+  }
+
+  while (cells.length % 7 !== 0) {
+    cells.push(
+      '<div class="calendar-cell is-empty"></div>'
+    );
+  }
+
+  const legendHtml = Object.entries(eventMeta)
+    .filter(([type]) => {
+      return !eventSelect.value ||
+        eventSelect.value === type;
+    })
+    .map(([, metadata]) => {
+      return `
+        <div class="calendar-legend-item">
+          <span
+            class="calendar-legend-dot"
+            style="--legend-color:${metadata.color}"
+          ></span>
+
+          ${escapeHtml(metadata.name)}
+        </div>
+      `;
+    })
+    .join("");
+
+  sheet.innerHTML = `
+    <div class="calendar-export-header">
+      <h1 class="calendar-export-brand">
+        Harmony
+        <span style="color:#ef668f">P</span><span style="color:#f5a55c">a</span><span style="color:#f3c96e">l</span><span style="color:#79c898">e</span><span style="color:#72c9bd">t</span><span style="color:#77b9df">t</span><span style="color:#b795d4">e</span>
+      </h1>
+
+      <div class="calendar-export-subtitle">
+        グリーティングスケジュール
+      </div>
+    </div>
+
+    <div class="calendar-export-info">
+      <div class="calendar-export-month">
+        ${year}年${month}月
+      </div>
+
+      <div class="calendar-export-filter">
+        ${escapeHtml(createFilterText())}
+        <br>
+        対象期間：
+        ${fromInput.value.replaceAll("-", "/")}
+        〜
+        ${toInput.value.replaceAll("-", "/")}
+      </div>
+    </div>
+
+    <div class="calendar-weekdays">
+      <div class="calendar-weekday sunday">日</div>
+      <div class="calendar-weekday">月</div>
+      <div class="calendar-weekday">火</div>
+      <div class="calendar-weekday">水</div>
+      <div class="calendar-weekday">木</div>
+      <div class="calendar-weekday">金</div>
+      <div class="calendar-weekday saturday">土</div>
+    </div>
+
+    <div class="calendar-grid">
+      ${cells.join("")}
+    </div>
+
+    <div class="calendar-legend">
+      ${legendHtml}
+    </div>
+
+    <div class="calendar-export-footer">
+      Harmony Palette unofficial schedule viewer
+    </div>
+  `;
+
+  host.appendChild(sheet);
+
+  return {
+    host,
+    sheet
+  };
+};
+
+const waitForLayout = async () => {
+  if (document.fonts?.ready) {
+    await document.fonts.ready;
+  }
+
+  await new Promise(resolve => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(resolve);
+    });
+  });
+};
+
+const canvasToBlob = canvas => {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (blob) {
+        resolve(blob);
+      } else {
+        reject(
+          new Error("PNG画像を作成できませんでした。")
+        );
+      }
+    }, "image/png");
+  });
+};
+
+const downloadBlob = (
+  blob,
+  fileName
+) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = fileName;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 2000);
+};
+
+const exportCalendarImages = async () => {
+  if (typeof html2canvas === "undefined") {
+    showStatus(
+      "画像作成ライブラリを読み込めませんでした。インターネット接続を確認してください。",
+      true
+    );
+    return;
+  }
+
+  if (fromInput.value > toInput.value) {
+    showStatus(
+      "開始日は終了日以前にしてください。",
+      true
+    );
+    return;
+  }
+
+  const targetMonths = getTargetMonths(
+    fromInput.value,
+    toInput.value
+  );
+
+  const filteredRows = getFilteredRows();
+
+  exportButton.disabled = true;
+  exportButton.textContent =
+    "カレンダー画像を作成中…";
+
+  characterSelector.open = false;
+
+  const generatedImages = [];
+  let activeHost = null;
+
+  try {
+    for (
+      let index = 0;
+      index < targetMonths.length;
+      index += 1
+    ) {
+      const target = targetMonths[index];
+
+      showStatus(
+        `${target.year}年${target.month}月を作成中（${index + 1}/${targetMonths.length}）`
+      );
+
+      const { host, sheet } =
+        createCalendarSheet(
+          target.year,
+          target.month,
+          filteredRows
+        );
+
+      activeHost = host;
+      document.body.appendChild(host);
+
+      await waitForLayout();
+
+      const canvas = await html2canvas(
+        sheet,
+        {
+          backgroundColor: "#fff8fb",
+          scale: 1.5,
+          logging: false,
+          useCORS: false,
+          allowTaint: false,
+          width: 1200,
+          height: sheet.scrollHeight,
+          windowWidth: 1200,
+          windowHeight: sheet.scrollHeight,
+          scrollX: 0,
+          scrollY: 0
+        }
+      );
+
+      const blob = await canvasToBlob(canvas);
+
+      const monthText =
+        String(target.month).padStart(2, "0");
+
+      generatedImages.push({
+        blob,
+        name:
+          `harmony-palette_${target.year}-${monthText}.png`
+      });
+
+      host.remove();
+      activeHost = null;
+    }
+
+    if (generatedImages.length === 1) {
+      downloadBlob(
+        generatedImages[0].blob,
+        generatedImages[0].name
+      );
+
+      showStatus(
+        "カレンダー画像を保存しました。"
+      );
+    } else {
+      if (typeof JSZip === "undefined") {
+        throw new Error(
+          "ZIPライブラリを読み込めませんでした。"
+        );
+      }
+
+      showStatus(
+        "月別画像をZIPにまとめています。"
+      );
+
+      const zip = new JSZip();
+
+      generatedImages.forEach(image => {
+        zip.file(
+          image.name,
+          image.blob
+        );
+      });
+
+      const zipBlob =
+        await zip.generateAsync({
+          type: "blob"
+        });
+
+      downloadBlob(
+        zipBlob,
+        `harmony-palette_calendars_${fromInput.value}_${toInput.value}.zip`
+      );
+
+      showStatus(
+        `${generatedImages.length}か月分の画像をZIPで保存しました。`
+      );
+    }
+  } catch (error) {
+    console.error(
+      "カレンダー画像作成エラー:",
+      error
+    );
+
+    showStatus(
+      `画像の作成に失敗しました。${error.message || ""}`,
+      true
+    );
+  } finally {
+    activeHost?.remove();
+
+    exportButton.disabled = false;
+    exportButton.textContent =
+      "▦ カレンダー画像を保存";
+  }
+};
+
+/* イベント */
+
+getCharacterInputs().forEach(input => {
+  input.addEventListener(
+    "change",
+    render
+  );
+});
+
+document
+  .querySelectorAll(
+    'input[name="matchMode"]'
+  )
+  .forEach(input => {
+    input.addEventListener(
+      "change",
+      render
+    );
+  });
+
+$("#selectAllCharacters")
+  .addEventListener("click", event => {
+    event.stopPropagation();
+
+    getCharacterInputs().forEach(input => {
+      input.checked = true;
+    });
+
+    render();
+  });
+
+$("#clearCharacters")
+  .addEventListener("click", event => {
+    event.stopPropagation();
+
+    getCharacterInputs().forEach(input => {
+      input.checked = false;
+    });
+
+    render();
+  });
+
+[
+  eventSelect,
+  fromInput,
+  toInput
+].forEach(element => {
+  element.addEventListener(
+    "change",
+    render
+  );
+});
+
+document
+  .querySelectorAll(".chip")
+  .forEach(button => {
+    button.addEventListener("click", () => {
+      document
+        .querySelectorAll(".chip")
+        .forEach(item => {
+          item.classList.remove("on");
+        });
+
+      button.classList.add("on");
+      fromInput.value = scheduleStart;
+
+      if (button.dataset.days === "all") {
+        toInput.value = scheduleEnd;
+      } else {
+        const endDate =
+          parseDate(scheduleStart);
+
+        endDate.setDate(
+          endDate.getDate() +
+          Number(button.dataset.days) -
+          1
+        );
+
+        const calculated =
+          formatDate(endDate);
+
+        toInput.value =
+          calculated > scheduleEnd
+            ? scheduleEnd
+            : calculated;
+      }
+
+      render();
+    });
+  });
+
+$("#reset").addEventListener(
+  "click",
+  () => {
+    getCharacterInputs().forEach(input => {
+      input.checked = false;
+    });
+
+    document.querySelector(
+      'input[name="matchMode"][value="any"]'
+    ).checked = true;
+
+    eventSelect.value = "";
+    fromInput.value = scheduleStart;
+    toInput.value = scheduleEnd;
+    characterSelector.open = false;
+
+    document
+      .querySelectorAll(".chip")
+      .forEach(item => {
+        item.classList.toggle(
+          "on",
+          item.dataset.days === "all"
+        );
+      });
+
+    render();
+  }
+);
+
+exportButton.addEventListener(
+  "click",
+  exportCalendarImages
+);
+
+document.addEventListener(
+  "click",
+  event => {
+    if (
+      characterSelector.open &&
+      !characterSelector.contains(event.target)
+    ) {
+      characterSelector.open = false;
+    }
+  }
+);
+
+render();
+</script>
+</body>
+</html>

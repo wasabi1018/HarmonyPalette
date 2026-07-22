@@ -1,0 +1,45 @@
+"use client";
+
+import { CalendarDays, Clock3, Users } from "lucide-react";
+import { useCharacters } from "@/lib/character-store";
+import { getEntryCharacterNames, useScheduleEntries } from "@/lib/schedule-store";
+
+export function HomeHeroStats() {
+  const entries = useScheduleEntries();
+  const characters = useCharacters();
+  const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
+  const now = new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date()).replace("：", ":");
+  const todayEntries = entries.filter((entry) => entry.date === today);
+  const characterNames = new Set(todayEntries.flatMap((entry) => getEntryCharacterNames(entry)));
+  const characterIds = new Set(todayEntries.flatMap((entry) => entry.characterIds));
+  const characterCount = new Set([
+    ...characterNames,
+    ...characters.filter((character) => characterIds.has(character.id)).map((character) => character.name),
+  ]).size;
+  const nextSchedule = todayEntries.find((entry) => (entry.endTime || entry.startTime) >= now);
+
+  return (
+    <div className="mt-2.5 grid grid-cols-3 gap-2">
+      <div className="rounded-2xl bg-[#fff0f5] px-2 py-2 text-center sm:py-2.5">
+        <Users size={16} className="mx-auto text-pink" aria-hidden="true" />
+        <p className="mt-1 text-[10px] font-bold text-ink/45">今日会える</p>
+        <p className="text-[15px] font-black text-ink">{characterCount}人</p>
+      </div>
+      <div className="rounded-2xl bg-[#eef9f4] px-2 py-2 text-center sm:py-2.5">
+        <CalendarDays size={16} className="mx-auto text-[#53a687]" aria-hidden="true" />
+        <p className="mt-1 text-[10px] font-bold text-ink/45">今日の予定</p>
+        <p className="text-[15px] font-black text-ink">{todayEntries.length}件</p>
+      </div>
+      <div className="rounded-2xl bg-[#f3effa] px-2 py-2 text-center sm:py-2.5">
+        <Clock3 size={16} className="mx-auto text-lavender" aria-hidden="true" />
+        <p className="mt-1 text-[10px] font-bold text-ink/45">次の予定</p>
+        <p className="text-[15px] font-black text-ink">{nextSchedule?.startTime || "—"}</p>
+      </div>
+    </div>
+  );
+}
