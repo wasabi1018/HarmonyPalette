@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownAZ, KeyRound, Pencil, Plus, Save, Search, Trash2, UserRound, X } from "lucide-react";
 import type { Character } from "@/data/types";
 import { compareCharacters, refreshCharacters, useCharacters } from "@/lib/character-store";
@@ -35,6 +35,7 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
   const characters = useCharacters();
   const [adminSecret, setAdminSecret] = useState("");
   const [orders, setOrders] = useState<Record<string, number>>({});
+  const dirtyOrderIds = useRef(new Set<string>());
   const [query, setQuery] = useState("");
   const [form, setForm] = useState<CharacterForm>(emptyForm);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -44,7 +45,12 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
 
   useEffect(() => {
     setOrders((current) => Object.fromEntries(
-      characters.map((character) => [character.id, current[character.id] ?? character.displayOrder ?? 999]),
+      characters.map((character) => [
+        character.id,
+        dirtyOrderIds.current.has(character.id)
+          ? current[character.id] ?? character.displayOrder ?? 999
+          : character.displayOrder ?? 999,
+      ]),
     ));
   }, [characters]);
 
@@ -104,6 +110,10 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
       });
       const result = await response.json() as { error?: string };
       if (!response.ok) throw new Error(result.error || `${editing ? "編集" : "登録"}に失敗しました。`);
+      if (form.id) {
+        dirtyOrderIds.current.delete(form.id);
+        setOrders((current) => ({ ...current, [form.id!]: form.displayOrder }));
+      }
       refreshCharacters();
       setFeedback(`「${form.name}」を${editing ? "更新" : "登録"}しました。`);
       closeEditor();
@@ -164,6 +174,7 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
       });
       const result = await response.json() as { error?: string; updated?: number };
       if (!response.ok) throw new Error(result.error || "表示順の保存に失敗しました。");
+      dirtyOrderIds.current.clear();
       refreshCharacters();
       setFeedback(`${result.updated ?? characters.length}件の表示順を保存しました。`);
     } catch (error) {
@@ -267,7 +278,10 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
                 max={999999}
                 step={1}
                 value={orders[character.id] ?? 999}
-                onChange={(event) => setOrders((current) => ({ ...current, [character.id]: Number(event.target.value) }))}
+                onChange={(event) => {
+                  dirtyOrderIds.current.add(character.id);
+                  setOrders((current) => ({ ...current, [character.id]: Number(event.target.value) }));
+                }}
                 className={`${inputClass} w-20 text-right`}
                 aria-label={`${character.name}の表示順`}
               />
