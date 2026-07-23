@@ -185,7 +185,7 @@ export function ScheduleBrowser({
         {groups.length > 0 ? groups.map(([date, dayEntries]) => (
           <div key={date} className="rounded-[22px] border border-pink/10 bg-[#fffdfd] p-3 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="grid h-11 w-11 place-items-center rounded-[14px] bg-pink text-[12px] font-black text-white shadow-[0_6px_14px_rgba(239,102,143,0.22)]"><CalendarDays size={18} aria-hidden="true" /></span><div><h3 className="text-[15px] font-black text-ink">{formatGroupDate(date)}</h3><p className="text-[10px] font-bold text-ink/40">{date.replaceAll("-", "/")}</p></div></div><span className="text-[11px] font-black text-ink/40">{dayEntries.length}件</span></div>
-            <ScheduleDayGrid entries={dayEntries} characters={characters} />
+            <ScheduleDayGrid entries={dayEntries} characters={characters} selectedCharacters={selectedCharacters} />
           </div>
         )) : (
           <div className="rounded-[24px] border border-dashed border-pink/25 bg-white p-10 text-center"><ListEmptyIcon /><p className="mt-3 font-black text-ink">条件に一致する予定がありません</p><button type="button" onClick={reset} className="mt-4 min-h-11 rounded-full bg-pink px-5 text-[12px] font-black text-white">条件をリセット</button></div>
@@ -201,7 +201,15 @@ function ListEmptyIcon() {
   return <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-pink/10 text-pink"><CalendarDays size={22} aria-hidden="true" /></div>;
 }
 
-function ScheduleDayGrid({ entries, characters }: { entries: ScheduleEntry[]; characters: Character[] }) {
+function ScheduleDayGrid({
+  entries,
+  characters,
+  selectedCharacters,
+}: {
+  entries: ScheduleEntry[];
+  characters: Character[];
+  selectedCharacters: string[];
+}) {
   const fanStudioByCharacter = new Map<string, ScheduleEntry[]>();
 
   entries.filter(isFanStudioGreeting).forEach((entry) => {
@@ -229,13 +237,13 @@ function ScheduleDayGrid({ entries, characters }: { entries: ScheduleEntry[]; ch
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {cards.map((card) => card.type === "entry"
-        ? <ScheduleEntryCard key={card.key} entry={card.entry} />
-        : <FanStudioCharacterCard key={card.key} name={card.name} entries={card.entries} />)}
+        ? <ScheduleEntryCard key={card.key} entry={card.entry} selectedCharacters={selectedCharacters} />
+        : <FanStudioCharacterCard key={card.key} name={card.name} entries={card.entries} selected={selectedCharacters.includes(card.name)} />)}
     </div>
   );
 }
 
-function FanStudioCharacterCard({ name, entries }: { name: string; entries: ScheduleEntry[] }) {
+function FanStudioCharacterCard({ name, entries, selected }: { name: string; entries: ScheduleEntry[]; selected: boolean }) {
   return (
     <article className="rounded-2xl border border-lavender/20 bg-white p-4 shadow-[0_8px_24px_rgba(118,73,86,0.06)] sm:p-5">
       <div className="flex items-center justify-between gap-3">
@@ -244,26 +252,37 @@ function FanStudioCharacterCard({ name, entries }: { name: string; entries: Sche
         </span>
         <span className="text-[10px] font-black text-ink/35">{entries.length}回</span>
       </div>
-      <h3 className="mt-3 text-[17px] font-black leading-6 text-ink">{name}</h3>
-      <div className="mt-3 grid gap-2">
-        {entries.map((entry) => {
-          const appearance = specialAppearance(entry);
-          return (
-            <div key={entry.id} className={`rounded-xl border px-3 py-2.5 ${appearance ? "border-[#efd69f] bg-[#fffaf0]" : "border-lavender/15 bg-[#faf8fc]"}`}>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 text-[12px] font-black tabular-nums text-ink">
-                  <Clock3 size={13} className="text-pink" aria-hidden="true" />
-                  {entry.startTime}{entry.endTime ? `–${entry.endTime}` : "〜"}
-                </span>
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black ${appearance ? "bg-[#f6b83f]/15 text-[#8c5a0c]" : "bg-lavender/10 text-lavender"}`}>
-                  {appearance && <Sun size={10} aria-hidden="true" />}{appearance ?? "通常の姿"}
-                </span>
+      <h3 className="mt-3 text-[17px] font-black leading-6 text-ink">
+        <span className={selected ? "rounded-md bg-pink/10 px-1.5 py-0.5 text-pink" : undefined}>
+          {name}
+          {selected && <span className="sr-only">（検索対象として選択中）</span>}
+        </span>
+      </h3>
+      <details className="group mt-4 border-t border-lavender/15 text-[11px] font-bold">
+        <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-2 rounded-lg pt-2 text-ink/50 outline-none transition-colors hover:text-lavender focus-visible:ring-2 focus-visible:ring-lavender/30 [&::-webkit-details-marker]:hidden">
+          <span>スケジュール詳細</span>
+          <ChevronDown size={14} className="shrink-0 text-lavender transition-transform group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <div className="grid gap-2 pt-1">
+          {entries.map((entry) => {
+            const appearance = specialAppearance(entry);
+            return (
+              <div key={entry.id} className={`rounded-xl border px-3 py-2.5 ${appearance ? "border-[#efd69f] bg-[#fffaf0]" : "border-lavender/15 bg-[#faf8fc]"}`}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-[12px] font-black tabular-nums text-ink">
+                    <Clock3 size={13} className="text-pink" aria-hidden="true" />
+                    {entry.startTime}{entry.endTime ? `–${entry.endTime}` : "〜"}
+                  </span>
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black ${appearance ? "bg-[#f6b83f]/15 text-[#8c5a0c]" : "bg-lavender/10 text-lavender"}`}>
+                    {appearance && <Sun size={10} aria-hidden="true" />}{appearance ?? "通常の姿"}
+                  </span>
+                </div>
+                <p className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-ink/45"><MapPin size={11} className="shrink-0" aria-hidden="true" />{shortFanStudioLocation(entry.location)}</p>
               </div>
-              <p className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-ink/45"><MapPin size={11} className="shrink-0" aria-hidden="true" />{shortFanStudioLocation(entry.location)}</p>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </details>
     </article>
   );
 }
