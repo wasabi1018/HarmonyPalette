@@ -38,6 +38,30 @@ export type OperationDraftEdit = {
   notes: string;
 };
 
+type PublishedScheduleRow = {
+  id: string;
+  source_id: string;
+  source_reference: string;
+  kind: "greeting" | "event";
+  title: string;
+  event_date: string;
+  end_date: string | null;
+  start_time: string;
+  end_time: string | null;
+  schedule_type: string;
+  location: string;
+  description: string;
+  official_url: string;
+  updated_at: string;
+  verification_status: string;
+  schedule_characters: Array<{
+    character_id: string | null;
+    character_name: string;
+  }>;
+};
+
+const PUBLISHED_SCHEDULE_PAGE_SIZE = 1000;
+
 function storageExtension(document: SourceDocument) {
   if (document.contentType.includes("pdf")) return "pdf";
   if (document.contentType.includes("jpeg")) return "jpg";
@@ -393,16 +417,34 @@ export async function updatePublishedSchedule(id: string, edit: PublishedSchedul
 export async function getPublishedSchedules(from: string, to: string) {
   const client = getSupabaseReadClient();
   if (!client) return null;
-  const { data, error } = await client
-    .from("schedule_items")
-    .select("*, schedule_characters(character_id, character_name)")
-    .eq("publication_status", "published")
-    .lte("event_date", to)
-    .or(`end_date.is.null,end_date.gte.${from}`)
-    .order("event_date", { ascending: true })
-    .order("start_time", { ascending: true });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+
+  const rows: PublishedScheduleRow[] = [];
+  let offset = 0;
+  let totalCount: number | null = null;
+
+  do {
+    const { data, error, count } = await client
+      .from("schedule_items")
+      .select("*, schedule_characters(character_id, character_name)", { count: "exact" })
+      .eq("publication_status", "published")
+      .lte("event_date", to)
+      .or(`end_date.is.null,end_date.gte.${from}`)
+      .order("event_date", { ascending: true })
+      .order("start_time", { ascending: true })
+      .order("id", { ascending: true })
+      .range(offset, offset + PUBLISHED_SCHEDULE_PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+
+    const page = (data ?? []) as PublishedScheduleRow[];
+    rows.push(...page);
+    offset += page.length;
+    totalCount = count;
+
+    if (page.length === 0) break;
+    if (totalCount === null && page.length < PUBLISHED_SCHEDULE_PAGE_SIZE) break;
+  } while (totalCount === null || offset < totalCount);
+
+  return rows;
 }
 
 export async function getPublishedOperations(date: string) {
