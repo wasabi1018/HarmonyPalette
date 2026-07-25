@@ -32,7 +32,7 @@ const emptyForm: CharacterForm = {
 };
 
 export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: boolean }) {
-  const characters = useCharacters();
+  const { characters } = useCharacters({ fallbackToSamples: true });
   const [adminSecret, setAdminSecret] = useState("");
   const [orders, setOrders] = useState<Record<string, number>>({});
   const dirtyOrderIds = useRef(new Set<string>());

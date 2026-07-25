@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { characters, events, schedules } from "@/data/site-data";
 import officialScheduleData from "@/public/data/harmonyland-official-schedule-2026-07-03-08-15.json";
 import { parseScheduleImportDocument, type ImportedScheduleEntry, type ImportVerificationStatus } from "@/lib/schedule-import";
@@ -36,6 +36,41 @@ type StoredScheduleState = {
   customEntries: ScheduleEntry[];
   deletedIds: string[];
 };
+
+export type DataLoadStatus = "loading" | "success" | "error" | "unavailable";
+
+type UseScheduleEntriesOptions = {
+  fallbackToSamples?: boolean;
+};
+
+type PublishedScheduleResult = {
+  configured: boolean;
+  entries: ScheduleEntry[];
+};
+
+let publishedScheduleCache: PublishedScheduleResult | null = null;
+let publishedScheduleRequest: Promise<PublishedScheduleResult> | null = null;
+
+function loadPublishedSchedules(force = false) {
+  if (publishedScheduleRequest) return publishedScheduleRequest;
+  if (!force && publishedScheduleCache) return Promise.resolve(publishedScheduleCache);
+  if (force) publishedScheduleCache = null;
+
+  publishedScheduleRequest = fetch("/api/schedules", { cache: "no-store" })
+    .then(async (response) => {
+      if (!response.ok) throw new Error("公開スケジュールを取得できませんでした。");
+      return response.json() as Promise<PublishedScheduleResult>;
+    })
+    .then((result) => {
+      publishedScheduleCache = result;
+      return result;
+    })
+    .finally(() => {
+      publishedScheduleRequest = null;
+    });
+
+  return publishedScheduleRequest;
+}
 
 export const greetingTypeOptions = [
   "お出迎えグリーティング",
@@ -145,9 +180,13 @@ function writeState(state: StoredScheduleState) {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-export function useScheduleEntries() {
+export function useScheduleEntries({ fallbackToSamples = false }: UseScheduleEntriesOptions = {}) {
   const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [remoteEntries, setRemoteEntries] = useState<ScheduleEntry[] | null>(null);
+  const remoteEntriesRef = useRef<ScheduleEntry[] | null>(null);
+  const [status, setStatus] = useState<DataLoadStatus>("loading");
+  const [error, setError] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [revision, setRevision] = useState(0);
 
   useEffect(() => {
@@ -158,29 +197,51 @@ export function useScheduleEntries() {
 
   useEffect(() => {
     let active = true;
-    fetch("/api/schedules")
-      .then(async (response) => {
-        if (!response.ok) throw new Error("公開スケジュールを取得できませんでした。");
-        return response.json() as Promise<{ configured: boolean; entries: ScheduleEntry[] }>;
-      })
+    const hasPreviousData = remoteEntriesRef.current !== null;
+    if (hasPreviousData) {
+      setIsRefreshing(true);
+    } else {
+      setStatus("loading");
+    }
+    setError("");
+
+    loadPublishedSchedules(revision > 0)
       .then((result) => {
-        if (active && result.configured && result.entries.length > 0) setRemoteEntries(result.entries);
+        if (!active) return;
+        if (!result.configured) {
+          setStatus("unavailable");
+          return;
+        }
+        remoteEntriesRef.current = result.entries;
+        setRemoteEntries(result.entries);
+        setStatus("success");
       })
-      .catch(() => undefined);
+      .catch((caughtError: unknown) => {
+        if (!active) return;
+        setError(caughtError instanceof Error ? caughtError.message : "公開スケジュールを取得できませんでした。");
+        setStatus("error");
+      })
+      .finally(() => {
+        if (active) setIsRefreshing(false);
+      });
     return () => { active = false; };
   }, [revision]);
 
-  return useMemo(() => {
+  const entries = useMemo(() => {
     const state = parseState(raw);
     const deleted = new Set(state.deletedIds);
-    const sourceEntries = remoteEntries ?? baseScheduleEntries;
+    const sourceEntries = remoteEntries ?? (fallbackToSamples ? baseScheduleEntries : []);
     const customIds = new Set(state.customEntries.map((entry) => entry.id));
     return [
       ...sourceEntries.filter((entry) => !deleted.has(entry.id) && !customIds.has(entry.id)),
       ...state.customEntries.filter((entry) => !deleted.has(entry.id)),
     ]
       .sort(compareScheduleEntries);
-  }, [raw, remoteEntries]);
+  }, [fallbackToSamples, raw, remoteEntries]);
+
+  const retry = useCallback(() => setRevision((current) => current + 1), []);
+
+  return { entries, status, error, isRefreshing, retry };
 }
 
 export function refreshScheduleEntries() {

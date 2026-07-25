@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Check, ChevronDown, Clock3, Filter, MapPin, RotateCcw, Search, Settings2, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Clock3, Filter, LoaderCircle, MapPin, RotateCcw, Search, Settings2, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
 import type { Character } from "@/data/types";
+import { DataStatePanel } from "@/components/data-state-panel";
 import { ScheduleEntryCard } from "@/components/schedule-entry-card";
 import { sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
@@ -40,8 +41,10 @@ export function ScheduleBrowser({
   initialFromDate?: string;
   initialToDate?: string;
 }) {
-  const entries = useScheduleEntries();
-  const characters = useCharacters();
+  const scheduleState = useScheduleEntries();
+  const characterState = useCharacters();
+  const { entries } = scheduleState;
+  const { characters } = characterState;
   const today = useMemo(todayInJapan, []);
   const hasInitialDateRange = Boolean(initialFromDate || initialToDate);
   const [fromDate, setFromDate] = useState(initialFromDate ?? today);
@@ -157,6 +160,14 @@ export function ScheduleBrowser({
   const characterSummary = selectedCharacters.length === 0
     ? "すべてのキャラクター"
     : selectedCharacters.join("、");
+  const isInitialLoading = scheduleState.status === "loading" || characterState.status === "loading";
+  const loadProblem = entries.length === 0 && (
+    scheduleState.status === "error" || characterState.status === "error"
+      ? "error"
+      : scheduleState.status === "unavailable" || characterState.status === "unavailable"
+        ? "unavailable"
+        : null
+  );
 
   return (
     <div className="mt-5">
@@ -211,13 +222,34 @@ export function ScheduleBrowser({
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div><p className="text-[11px] font-black tracking-[0.16em] text-pink">SCHEDULE LIST</p><h2 className="mt-1 text-[22px] font-black text-ink">スケジュール一覧</h2><p className="mt-1 text-[12px] font-bold text-ink/45">{fromDate.replaceAll("-", "/")}〜{toDate.replaceAll("-", "/")}</p></div>
-        <div className="flex items-center gap-2"><span className="rounded-full bg-pink/10 px-3 py-2 text-[13px] font-black text-pink">{filteredEntries.length}件</span><button type="button" onClick={() => setSortAscending((value) => !value)} className="min-h-10 rounded-full border border-ink/10 px-3 text-[11px] font-black text-ink/60">時間の{sortAscending ? "早い順" : "遅い順"}</button></div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-pink/10 px-3 py-2 text-[13px] font-black text-pink">
+            {(isInitialLoading || scheduleState.isRefreshing || characterState.isRefreshing) && (
+              <LoaderCircle size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+            )}
+            {isInitialLoading ? "読込中" : scheduleState.isRefreshing || characterState.isRefreshing ? "更新中" : `${filteredEntries.length}件`}
+          </span>
+          <button type="button" onClick={() => setSortAscending((value) => !value)} className="min-h-10 rounded-full border border-ink/10 px-3 text-[11px] font-black text-ink/60">時間の{sortAscending ? "早い順" : "遅い順"}</button>
+        </div>
       </div>
 
       <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fff6f9] px-3 py-2.5 text-[11px] font-bold leading-5 text-ink/55"><Filter size={14} className="shrink-0 text-pink" aria-hidden="true" />ファンスタジオは、同じ日の同じキャラクターを1枚にまとめています。通常の姿と特別な姿は、時間ごとに確認できます。</div>
 
-      <section id="schedule-results" className="mt-4 grid scroll-mt-24 gap-4" aria-live="polite">
-        {groups.length > 0 ? groups.map(([date, dayEntries]) => (
+      <section id="schedule-results" className="mt-4 grid scroll-mt-24 gap-4" aria-live="polite" aria-busy={isInitialLoading}>
+        {isInitialLoading ? (
+          <DataStatePanel state="loading" message="スケジュールを読み込んでいます…" />
+        ) : loadProblem ? (
+          <DataStatePanel
+            state={loadProblem}
+            message={loadProblem === "unavailable"
+              ? "現在、スケジュール情報を表示できません。"
+              : "スケジュールを読み込めませんでした。"}
+            onRetry={() => {
+              scheduleState.retry();
+              characterState.retry();
+            }}
+          />
+        ) : groups.length > 0 ? groups.map(([date, dayEntries]) => (
           <div key={date} className="rounded-[22px] border border-pink/10 bg-[#fffdfd] p-3 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="grid h-11 w-11 place-items-center rounded-[14px] bg-pink text-[12px] font-black text-white shadow-[0_6px_14px_rgba(239,102,143,0.22)]"><CalendarDays size={18} aria-hidden="true" /></span><div><h3 className="text-[15px] font-black text-ink">{formatGroupDate(date)}</h3><p className="text-[10px] font-bold text-ink/40">{date.replaceAll("-", "/")}</p></div></div><span className="text-[11px] font-black text-ink/40">{dayEntries.length}件</span></div>
             <ScheduleDayGrid entries={dayEntries} characters={characters} selectedCharacters={selectedCharacters} />
@@ -227,7 +259,9 @@ export function ScheduleBrowser({
         )}
       </section>
 
-      <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-mint/20 bg-mint/10 p-4 text-[12px] font-bold leading-6 text-ink/60 sm:flex-row sm:items-center sm:justify-between"><span>表示中の情報には、公式サイトから取り込んだ確認済みデータまたは動作確認用サンプルが含まれます。最新情報は公式サイトをご確認ください。</span><Link href="/admin/schedule" className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-4 text-[11px] font-black text-white"><Settings2 size={14} aria-hidden="true" />予定を管理</Link></div>
+      {!isInitialLoading && !loadProblem && (
+        <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-mint/20 bg-mint/10 p-4 text-[12px] font-bold leading-6 text-ink/60 sm:flex-row sm:items-center sm:justify-between"><span>表示中の情報は、確認・公開されたデータです。最新情報は公式サイトもあわせてご確認ください。</span><Link href="/admin/schedule" className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-4 text-[11px] font-black text-white"><Settings2 size={14} aria-hidden="true" />予定を管理</Link></div>
+      )}
     </div>
   );
 }

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock3, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock3, LoaderCircle, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
 import type { Character } from "@/data/types";
 import { mergeCharactersWithNames, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
 import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 import { CharacterAvatar } from "@/components/character-avatar";
+import { DataStatePanel } from "@/components/data-state-panel";
 import { SectionHeading } from "@/components/section-heading";
 
 function japanDate(date = new Date()) {
@@ -85,8 +86,10 @@ function displayUpdatedAt(value?: string) {
 }
 
 export function HomeTodaySections() {
-  const entries = useScheduleEntries();
-  const catalogCharacters = useCharacters();
+  const scheduleState = useScheduleEntries();
+  const characterState = useCharacters();
+  const { entries } = scheduleState;
+  const { characters: catalogCharacters } = characterState;
   const [now, setNow] = useState(() => new Date());
   const [isClockReady, setIsClockReady] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => japanDate());
@@ -194,6 +197,22 @@ export function HomeTodaySections() {
       const byTime = left.appearances[0].startTime.localeCompare(right.appearances[0].startTime);
       return byTime || left.character.name.localeCompare(right.character.name, "ja");
     });
+  const characterSectionHasData = entries.length > 0 && catalogCharacters.length > 0;
+  const characterSectionProblem = !characterSectionHasData && (
+    scheduleState.status === "error" || characterState.status === "error"
+      ? "error"
+      : scheduleState.status === "unavailable" || characterState.status === "unavailable"
+        ? "unavailable"
+        : null
+  );
+  const characterSectionLoading = !characterSectionProblem && (
+    scheduleState.status === "loading" || characterState.status === "loading"
+  );
+  const scheduleSectionProblem = entries.length === 0 && (
+    scheduleState.status === "error" || scheduleState.status === "unavailable"
+      ? scheduleState.status
+      : null
+  );
 
   return (
     <>
@@ -203,7 +222,20 @@ export function HomeTodaySections() {
           href="/characters"
           linkLabel="キャラクターから探す"
         />
-        {todayCharacterCards.length > 0 ? (
+        {characterSectionLoading ? (
+          <DataStatePanel state="loading" message="今日会えるキャラクターを読み込んでいます…" />
+        ) : characterSectionProblem ? (
+          <DataStatePanel
+            state={characterSectionProblem}
+            message={characterSectionProblem === "unavailable"
+              ? "現在、キャラクター情報を表示できません。"
+              : "今日会えるキャラクターを読み込めませんでした。"}
+            onRetry={() => {
+              scheduleState.retry();
+              characterState.retry();
+            }}
+          />
+        ) : todayCharacterCards.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
             {todayCharacterCards.map(({ character }) => (
               <a
@@ -226,10 +258,18 @@ export function HomeTodaySections() {
             今日の公開済みキャラクター予定はまだありません。
           </p>
         )}
-        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-bold leading-4 text-ink/50">
-          <span className="inline-flex items-center gap-1 text-lavender"><Sparkles size={12} aria-hidden="true" />公開済み予定</span>
-          <span>取込後に確認・公開した予定を反映します。</span>
-        </div>
+        {!characterSectionLoading && !characterSectionProblem && (
+          <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-bold leading-4 text-ink/50">
+            <span className="inline-flex items-center gap-1 text-lavender"><Sparkles size={12} aria-hidden="true" />公開済み予定</span>
+            <span>取込後に確認・公開した予定を反映します。</span>
+            {(scheduleState.isRefreshing || characterState.isRefreshing) && (
+              <span className="inline-flex items-center gap-1 text-pink" role="status">
+                <LoaderCircle size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                更新中…
+              </span>
+            )}
+          </div>
+        )}
       </section>
 
       <section id="today-schedule" className="mx-auto max-w-[1200px] scroll-mt-20 px-4 pt-12 sm:px-6 lg:px-8">
@@ -256,7 +296,17 @@ export function HomeTodaySections() {
               <button type="button" onClick={() => setSelectedDate(today)} disabled={selectedDate === today} className="min-h-10 rounded-xl bg-pink/10 px-3 text-[11px] font-black text-pink disabled:cursor-default disabled:opacity-40">今日</button>
             </div>
           </div>
-          {timelineSegments.length > 0 ? (
+          {scheduleState.status === "loading" ? (
+            <DataStatePanel state="loading" message="スケジュールを読み込んでいます…" />
+          ) : scheduleSectionProblem ? (
+            <DataStatePanel
+              state={scheduleSectionProblem}
+              message={scheduleSectionProblem === "unavailable"
+                ? "現在、スケジュール情報を表示できません。"
+                : "スケジュールを読み込めませんでした。"}
+              onRetry={scheduleState.retry}
+            />
+          ) : timelineSegments.length > 0 ? (
             <div className="overflow-hidden rounded-[18px] border border-pink/10 bg-white shadow-[0_8px_24px_rgba(118,73,86,0.05)]">
               <div className="grid grid-cols-[38px_minmax(0,1.1fr)_minmax(0,.9fr)] gap-1.5 border-b border-pink/10 bg-[#fffafd] px-2 py-2.5 sm:grid-cols-[64px_minmax(0,1.25fr)_minmax(0,.75fr)] sm:gap-3 sm:px-4 sm:py-3">
                 <div className="flex items-center gap-1 text-[9px] font-black text-ink/35 sm:text-[11px]">
@@ -415,12 +465,16 @@ export function HomeTodaySections() {
               {displayScheduleDate(selectedDate)}の公開済みスケジュールはまだありません。
             </p>
           )}
-          <p className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-bold text-ink/45">
-            <Clock3 size={13} aria-hidden="true" />
-            最終更新：{displayUpdatedAt(latestUpdatedAt)}
-            <span className="text-ink/20">|</span>
-            {selectedSchedules.some((entry) => entry.isImported) ? "公式参照データ" : "サンプル・手入力データ"}
-          </p>
+          {scheduleState.status !== "loading" && !scheduleSectionProblem && (
+            <p className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-bold text-ink/45">
+              {scheduleState.isRefreshing
+                ? <LoaderCircle size={13} className="animate-spin text-pink motion-reduce:animate-none" aria-hidden="true" />
+                : <Clock3 size={13} aria-hidden="true" />}
+              {scheduleState.isRefreshing ? "更新中…" : `最終更新：${displayUpdatedAt(latestUpdatedAt)}`}
+              <span className="text-ink/20">|</span>
+              {selectedSchedules.some((entry) => entry.isImported) ? "公式参照データ" : "公開データ"}
+            </p>
+          )}
         </div>
       </section>
     </>

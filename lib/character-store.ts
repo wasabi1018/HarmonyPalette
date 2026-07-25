@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/data/types";
 import { characters as sampleCharacters } from "@/data/site-data";
+import type { DataLoadStatus } from "@/lib/schedule-store";
 
 const REFRESH_EVENT = "harmony-palette:characters-refresh";
 
@@ -60,8 +61,53 @@ export function refreshCharacters() {
   if (typeof window !== "undefined") window.dispatchEvent(new Event(REFRESH_EVENT));
 }
 
-export function useCharacters(initialCharacters?: Character[]) {
+type UseCharactersOptions = {
+  initialCharacters?: Character[];
+  initialStatus?: DataLoadStatus;
+  fallbackToSamples?: boolean;
+};
+
+type RegisteredCharacterResult = {
+  configured: boolean;
+  characters: Character[];
+};
+
+let registeredCharacterCache: RegisteredCharacterResult | null = null;
+let registeredCharacterRequest: Promise<RegisteredCharacterResult> | null = null;
+
+function loadRegisteredCharacters(force = false) {
+  if (registeredCharacterRequest) return registeredCharacterRequest;
+  if (!force && registeredCharacterCache) return Promise.resolve(registeredCharacterCache);
+  if (force) registeredCharacterCache = null;
+
+  registeredCharacterRequest = fetch("/api/characters", { cache: "no-store" })
+    .then(async (response) => {
+      if (!response.ok) throw new Error("キャラクター一覧を取得できませんでした。");
+      return response.json() as Promise<RegisteredCharacterResult>;
+    })
+    .then((result) => {
+      registeredCharacterCache = result;
+      return result;
+    })
+    .finally(() => {
+      registeredCharacterRequest = null;
+    });
+
+  return registeredCharacterRequest;
+}
+
+export function useCharacters({
+  initialCharacters,
+  initialStatus,
+  fallbackToSamples = false,
+}: UseCharactersOptions = {}) {
   const [remoteCharacters, setRemoteCharacters] = useState<Character[] | null>(initialCharacters ?? null);
+  const remoteCharactersRef = useRef<Character[] | null>(initialCharacters ?? null);
+  const [status, setStatus] = useState<DataLoadStatus>(
+    initialStatus ?? (initialCharacters ? "success" : "loading"),
+  );
+  const [error, setError] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [revision, setRevision] = useState(0);
 
   useEffect(() => {
@@ -72,22 +118,42 @@ export function useCharacters(initialCharacters?: Character[]) {
 
   useEffect(() => {
     let active = true;
-    fetch("/api/characters", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("キャラクター一覧を取得できませんでした。");
-        return response.json() as Promise<{ configured: boolean; characters: Character[] }>;
-      })
+    const hasPreviousData = remoteCharactersRef.current !== null;
+    if (hasPreviousData) {
+      setIsRefreshing(true);
+    } else {
+      setStatus("loading");
+    }
+    setError("");
+
+    loadRegisteredCharacters(revision > 0)
       .then((result) => {
-        if (active && result.configured) {
-          setRemoteCharacters(result.characters);
+        if (!active) return;
+        if (!result.configured) {
+          setStatus("unavailable");
+          return;
         }
+        remoteCharactersRef.current = result.characters;
+        setRemoteCharacters(result.characters);
+        setStatus("success");
       })
-      .catch(() => undefined);
+      .catch((caughtError: unknown) => {
+        if (!active) return;
+        setError(caughtError instanceof Error ? caughtError.message : "キャラクター一覧を取得できませんでした。");
+        setStatus("error");
+      })
+      .finally(() => {
+        if (active) setIsRefreshing(false);
+      });
     return () => { active = false; };
   }, [revision]);
 
-  return useMemo(
-    () => [...(remoteCharacters ?? sampleCharacters)].sort(compareCharacters),
-    [remoteCharacters],
+  const characters = useMemo(
+    () => [...(remoteCharacters ?? (fallbackToSamples ? sampleCharacters : []))].sort(compareCharacters),
+    [fallbackToSamples, remoteCharacters],
   );
+
+  const retry = useCallback(() => setRevision((current) => current + 1), []);
+
+  return { characters, status, error, isRefreshing, retry };
 }

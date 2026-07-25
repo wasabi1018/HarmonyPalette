@@ -23,8 +23,8 @@ const inputClass = "min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd]
 const labelClass = "mb-1.5 block text-[11px] font-black text-ink/55";
 
 export function ScheduleManager({ hasAdminSecret }: { hasAdminSecret: boolean }) {
-  const entries = useScheduleEntries();
-  const catalogCharacters = useCharacters();
+  const { entries } = useScheduleEntries({ fallbackToSamples: true });
+  const { characters: catalogCharacters } = useCharacters({ fallbackToSamples: true });
   const characters = useMemo(() => mergeCharactersWithNames(
     catalogCharacters,
     entries.flatMap((entry) => getEntryCharacterNames(entry)),
