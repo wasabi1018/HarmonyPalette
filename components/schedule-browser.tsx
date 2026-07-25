@@ -27,6 +27,10 @@ function formatGroupDate(date: string) {
     .format(new Date(`${date}T00:00:00`));
 }
 
+function getDisplayDate(entry: ScheduleEntry, fromDate: string) {
+  return entry.kind === "event" && entry.date < fromDate ? fromDate : entry.date;
+}
+
 export function ScheduleBrowser({
   initialCharacters = [],
   initialFromDate,
@@ -72,28 +76,55 @@ export function ScheduleBrowser({
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
   }, [fromDate, selectedCharacters, toDate]);
 
-  const filteredEntries = useMemo(() => entries.filter((entry) => {
-    const entryEnd = entry.endDate ?? entry.date;
-    const matchesDate = entry.date <= toDate && entryEnd >= fromDate;
-    const entryCharacterNames = getEntryCharacterNames(entry);
-    const matchesCharacters = selectedCharacters.length === 0 || (matchMode === "any"
-      ? selectedCharacters.some((name) => entryCharacterNames.includes(name))
-      : selectedCharacters.every((name) => entryCharacterNames.includes(name)));
-    const matchesKind = kind === "all" || entry.kind === kind;
-    const matchesType = scheduleType === "all" || entry.scheduleType === scheduleType;
-    const matchesLocation = location === "all" || entry.location === location;
+  const filteredEntries = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("ja");
-    const matchesQuery = keyword === "" || `${entry.title}${entry.location}${entry.scheduleType}${entryCharacterNames.join("")}`.toLocaleLowerCase("ja").includes(keyword);
-    return matchesDate && matchesCharacters && matchesKind && matchesType && matchesLocation && matchesQuery;
-  }).sort((a, b) => {
-    const result = `${a.date}-${a.startTime}`.localeCompare(`${b.date}-${b.startTime}`);
-    return sortAscending ? result : -result;
-  }), [entries, fromDate, kind, location, matchMode, query, scheduleType, selectedCharacters, sortAscending, toDate]);
+    const candidates = entries.filter((entry) => {
+      const entryEnd = entry.endDate ?? entry.date;
+      const matchesDate = entry.date <= toDate && entryEnd >= fromDate;
+      const entryCharacterNames = getEntryCharacterNames(entry);
+      const matchesKind = kind === "all" || entry.kind === kind;
+      const matchesType = scheduleType === "all" || entry.scheduleType === scheduleType;
+      const matchesLocation = location === "all" || entry.location === location;
+      const matchesQuery = keyword === "" || `${entry.title}${entry.location}${entry.scheduleType}${entryCharacterNames.join("")}`.toLocaleLowerCase("ja").includes(keyword);
+      return matchesDate && matchesKind && matchesType && matchesLocation && matchesQuery;
+    });
+
+    let characterMatchedEntries = candidates;
+    if (selectedCharacters.length > 0 && matchMode === "any") {
+      characterMatchedEntries = candidates.filter((entry) => {
+        const entryCharacterNames = getEntryCharacterNames(entry);
+        return selectedCharacters.some((name) => entryCharacterNames.includes(name));
+      });
+    } else if (selectedCharacters.length > 0) {
+      const charactersByDate = new Map<string, Set<string>>();
+      candidates.forEach((entry) => {
+        const displayDate = getDisplayDate(entry, fromDate);
+        const names = charactersByDate.get(displayDate) ?? new Set<string>();
+        getEntryCharacterNames(entry).forEach((name) => names.add(name));
+        charactersByDate.set(displayDate, names);
+      });
+      const matchingDates = new Set(Array.from(charactersByDate.entries())
+        .filter(([, names]) => selectedCharacters.every((name) => names.has(name)))
+        .map(([date]) => date));
+
+      characterMatchedEntries = candidates.filter((entry) => {
+        const displayDate = getDisplayDate(entry, fromDate);
+        const entryCharacterNames = getEntryCharacterNames(entry);
+        return matchingDates.has(displayDate)
+          && selectedCharacters.some((name) => entryCharacterNames.includes(name));
+      });
+    }
+
+    return characterMatchedEntries.sort((a, b) => {
+      const result = `${a.date}-${a.startTime}`.localeCompare(`${b.date}-${b.startTime}`);
+      return sortAscending ? result : -result;
+    });
+  }, [entries, fromDate, kind, location, matchMode, query, scheduleType, selectedCharacters, sortAscending, toDate]);
 
   const groups = useMemo(() => {
     const grouped = new Map<string, typeof filteredEntries>();
     filteredEntries.forEach((entry) => {
-      const displayDate = entry.kind === "event" && entry.date < fromDate ? fromDate : entry.date;
+      const displayDate = getDisplayDate(entry, fromDate);
       grouped.set(displayDate, [...(grouped.get(displayDate) ?? []), entry]);
     });
     return Array.from(grouped.entries()).sort(([a], [b]) => sortAscending ? a.localeCompare(b) : b.localeCompare(a));
@@ -166,7 +197,7 @@ export function ScheduleBrowser({
           <div>
             <p className="text-[11px] font-black text-ink/50">複数選択時の検索方法</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {([['any', 'いずれかに会える予定'], ['all', '全員に会える予定']] as const).map(([value, label]) => <label key={value} className={`inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-full border px-3 text-[11px] font-bold ${matchMode === value ? "border-pink bg-pink/5 text-pink" : "border-ink/10 text-ink/60"}`}><input type="radio" name="match-mode" value={value} checked={matchMode === value} onChange={() => setMatchMode(value)} className="accent-pink" />{label}</label>)}
+              {([['any', 'いずれかに会える日'], ['all', '全員に会える日']] as const).map(([value, label]) => <label key={value} className={`inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-full border px-3 text-[11px] font-bold ${matchMode === value ? "border-pink bg-pink/5 text-pink" : "border-ink/10 text-ink/60"}`}><input type="radio" name="match-mode" value={value} checked={matchMode === value} onChange={() => setMatchMode(value)} className="accent-pink" />{label}</label>)}
             </div>
           </div>
           <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/50">開催場所</span><div className="relative"><select value={location} onChange={(event) => setLocation(event.target.value)} className="min-h-11 w-full appearance-none rounded-xl border border-ink/10 bg-[#fffafd] px-3 pr-9 text-[13px] font-bold text-ink outline-none focus:border-pink"><option value="all">すべて</option>{locations.map((item) => <option key={item} value={item}>{item}</option>)}</select><ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-pink" aria-hidden="true" /></div></label>
