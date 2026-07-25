@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Check, ChevronDown, Clock3, Filter, MapPin, RotateCcw, Search, Settings2, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
 import type { Character } from "@/data/types";
-import { sampleDate } from "@/data/site-data";
 import { ScheduleEntryCard } from "@/components/schedule-entry-card";
 import { sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
@@ -12,6 +11,10 @@ import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "
 
 type MatchMode = "any" | "all";
 type Period = "all" | "7" | "14" | "30";
+
+function todayInJapan() {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
+}
 
 function addDays(date: string, days: number) {
   const value = new Date(`${date}T00:00:00Z`);
@@ -35,9 +38,10 @@ export function ScheduleBrowser({
 }) {
   const entries = useScheduleEntries();
   const characters = useCharacters();
+  const today = useMemo(todayInJapan, []);
   const hasInitialDateRange = Boolean(initialFromDate || initialToDate);
-  const [fromDate, setFromDate] = useState(initialFromDate ?? sampleDate);
-  const [toDate, setToDate] = useState(initialToDate ?? (initialFromDate ? initialFromDate : addDays(sampleDate, 13)));
+  const [fromDate, setFromDate] = useState(initialFromDate ?? today);
+  const [toDate, setToDate] = useState(initialToDate ?? (initialFromDate ? initialFromDate : addDays(today, 13)));
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>(initialCharacters);
   const [matchMode, setMatchMode] = useState<MatchMode>("any");
   const [kind, setKind] = useState("all");
@@ -50,8 +54,8 @@ export function ScheduleBrowser({
 
   const bounds = useMemo(() => {
     const dates = entries.flatMap((entry) => [entry.date, entry.endDate ?? entry.date]).sort();
-    return { min: dates[0] ?? sampleDate, max: dates.at(-1) ?? sampleDate };
-  }, [entries]);
+    return { min: dates[0] ?? today, max: dates.at(-1) ?? today };
+  }, [entries, today]);
   const locations = useMemo(() => Array.from(new Set(entries.map((entry) => entry.location))).sort((a, b) => a.localeCompare(b, "ja")), [entries]);
   const scheduleTypes = useMemo(() => Array.from(new Set(entries.filter((entry) => kind === "all" || entry.kind === kind).map((entry) => entry.scheduleType))).sort((a, b) => a.localeCompare(b, "ja")), [entries, kind]);
   const characterOptions = useMemo(() => sortCharacterNames([
@@ -97,8 +101,8 @@ export function ScheduleBrowser({
 
   const toggleCharacter = (name: string) => setSelectedCharacters((current) => current.includes(name) ? current.filter((item) => item !== name) : [...current, name]);
   const reset = () => {
-    setFromDate(sampleDate);
-    setToDate(addDays(sampleDate, 13));
+    setFromDate(today);
+    setToDate(addDays(today, 13));
     setSelectedCharacters([]);
     setMatchMode("any");
     setKind("all");
@@ -115,8 +119,8 @@ export function ScheduleBrowser({
       setToDate(bounds.max);
       return;
     }
-    setFromDate(sampleDate);
-    setToDate(addDays(sampleDate, Number(period) - 1));
+    setFromDate(today);
+    setToDate(addDays(today, Number(period) - 1));
   };
 
   const characterSummary = selectedCharacters.length === 0
