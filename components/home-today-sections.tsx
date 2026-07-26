@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, LoaderCircle, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
 import type { Character } from "@/data/types";
-import { mergeCharactersWithNames, sortCharacterNames, useCharacters } from "@/lib/character-store";
+import { compareCharacters, mergeCharactersWithNames, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
 import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 import { CharacterAvatar } from "@/components/character-avatar";
@@ -193,21 +193,14 @@ export function HomeTodaySections() {
     return sortCharacterNames(names, characters);
   };
 
-  const availableAppearances = todayAppearances.filter((entry) => (
-    entry.status !== "completed" && timelineEndTime(entry) > currentTime
-  ));
-
-  const appearancesForCharacter = (character: Character) => availableAppearances.filter((entry) => (
+  const appearancesForCharacter = (character: Character) => todayAppearances.filter((entry) => (
     entry.characterIds.includes(character.id) || namesForEntry(entry).includes(character.name)
   ));
 
   const todayCharacterCards = characters
     .map((character) => ({ character, appearances: appearancesForCharacter(character) }))
     .filter(({ appearances }) => appearances.length > 0)
-    .sort((left, right) => {
-      const byTime = left.appearances[0].startTime.localeCompare(right.appearances[0].startTime);
-      return byTime || left.character.name.localeCompare(right.character.name, "ja");
-    });
+    .sort((left, right) => compareCharacters(left.character, right.character));
   const characterSectionHasData = entries.length > 0 && catalogCharacters.length > 0;
   const characterSectionProblem = !characterSectionHasData && (
     scheduleState.status === "error" || characterState.status === "error"
