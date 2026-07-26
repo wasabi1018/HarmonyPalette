@@ -10,7 +10,7 @@ import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "
 import { CharacterAvatar } from "@/components/character-avatar";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { SectionHeading } from "@/components/section-heading";
-import { PlanAddButton } from "@/components/plan-add-button";
+import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
 
 function japanDate(date = new Date()) {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(date);
@@ -67,6 +67,13 @@ function groupTimelineEntries(entries: ScheduleEntry[]) {
     .sort((left, right) => `${left.startTime}-${left.endTime}`.localeCompare(`${right.startTime}-${right.endTime}`));
 }
 
+function commonGroupStatus(entries: ScheduleEntry[], today: string, currentTime: string) {
+  const statuses = entries.map((entry) => entryStatus(entry, today, currentTime));
+  const first = statuses[0];
+  if (!first) return null;
+  return statuses.every((status) => status?.label === first.label) ? first : null;
+}
+
 function displayScheduleDate(date: string) {
   return new Intl.DateTimeFormat("ja-JP", {
     timeZone: "Asia/Tokyo",
@@ -110,22 +117,24 @@ export function HomeTodaySections() {
     ...group,
     entries: [...group.entries].sort((left, right) => left.location.localeCompare(right.location, "ja")),
   }));
-  const timelineBoundaries = Array.from(new Set(selectedSchedules.flatMap((entry) => [
-    entry.startTime,
-    timelineEndTime(entry),
-  ]))).sort();
-  const timelineSegments = timelineBoundaries.slice(0, -1).map((startTime, index) => ({
+  const timelineStartTimes = Array.from(new Set(selectedSchedules.map((entry) => entry.startTime))).sort();
+  const latestTimelineEnd = selectedSchedules
+    .map(timelineEndTime)
+    .sort()
+    .at(-1);
+  const timelineSegments = timelineStartTimes.map((startTime, index) => ({
     startTime,
-    endTime: timelineBoundaries[index + 1],
+    endTime: timelineStartTimes[index + 1]
+      ?? (latestTimelineEnd && latestTimelineEnd > startTime
+        ? latestTimelineEnd
+        : minutesToTime(timeToMinutes(startTime) + 30)),
   }));
   const timelineRows = [
     ...timelineSegments.map((segment) => {
       const duration = timeToMinutes(segment.endTime) - timeToMinutes(segment.startTime);
-      return `minmax(${Math.max(48, duration * 1.8)}px, auto)`;
+      return `minmax(${Math.max(64, duration * 1.8)}px, auto)`;
     }),
-    "0px",
   ].join(" ");
-  const timelineBoundaryIndex = new Map(timelineBoundaries.map((time, index) => [time, index]));
   const currentTimeMinutes = timeToMinutes(currentTime);
   const currentTimelinePosition = isClockReady && selectedDate === today && timelineSegments.length > 0
     ? (() => {
@@ -314,7 +323,7 @@ export function HomeTodaySections() {
                 : "スケジュールを読み込めませんでした。"}
               onRetry={scheduleState.retry}
             />
-          ) : timelineSegments.length > 0 ? (
+          ) : timelineStartTimes.length > 0 ? (
             <div className="overflow-hidden rounded-[18px] border border-pink/10 bg-white shadow-[0_8px_24px_rgba(118,73,86,0.05)]">
               <div className="grid grid-cols-[38px_minmax(0,1.1fr)_minmax(0,.9fr)] gap-1.5 border-b border-pink/10 bg-[#fffafd] px-2 py-2.5 sm:grid-cols-[64px_minmax(0,1.25fr)_minmax(0,.75fr)] sm:gap-3 sm:px-4 sm:py-3">
                 <div className="flex items-center gap-1 text-[9px] font-black text-ink/35 sm:text-[11px]">
@@ -330,42 +339,30 @@ export function HomeTodaySections() {
                   <div className="min-w-0"><p className="truncate text-[10px] font-black leading-4 text-ink sm:text-[12px]">ファンスタジオ</p><p className="text-[8px] font-black leading-3 text-lavender sm:tracking-[0.08em]">グリーティング</p></div>
                 </div>
               </div>
+              <p className="border-b border-pink/10 bg-white px-3 py-2 text-center text-[9px] font-bold text-ink/45 sm:text-[10px]">
+                予定をタップして追加
+              </p>
 
               <div
-                className="relative grid grid-cols-[38px_minmax(0,1.1fr)_minmax(0,.9fr)] px-2 pb-5 pt-1 sm:grid-cols-[64px_minmax(0,1.25fr)_minmax(0,.75fr)] sm:px-4 sm:pb-6 sm:pt-2"
+                className="relative grid grid-cols-[38px_minmax(0,1.1fr)_minmax(0,.9fr)] px-2 pb-5 pt-4 sm:grid-cols-[64px_minmax(0,1.25fr)_minmax(0,.75fr)] sm:px-4 sm:pb-6"
                 style={{ gridTemplateRows: timelineRows }}
               >
-                {timelineSegments.map((segment, index) => (
-                  <div key={segment.startTime} className="contents">
+                {timelineStartTimes.map((startTime, index) => (
+                  <div key={startTime} className="contents">
                     <div
-                      className={`pointer-events-none z-0 border-t ${segment.startTime.endsWith(":00") ? "border-pink/20" : "border-dashed border-ink/10"}`}
-                      style={{ gridColumn: "1 / -1", gridRow: String(index + 1) }}
+                      className={`pointer-events-none z-0 border-t ${startTime.endsWith(":00") ? "border-pink/20" : "border-dashed border-ink/10"}`}
+                      style={{ gridColumn: "2 / -1", gridRow: String(index + 1) }}
                       aria-hidden="true"
                     />
                     <div
-                      className="relative z-[1] border-r border-pink/20 pr-2 pt-2 text-right sm:pr-3"
+                      className="relative z-[1] border-r border-pink/20 text-right"
                       style={{ gridColumn: "1", gridRow: String(index + 1) }}
                     >
-                      <time className="text-[10px] font-black leading-none tabular-nums text-ink/65 sm:text-[13px]">{segment.startTime}</time>
-                      <span className="absolute -right-[4px] top-[10px] h-[7px] w-[7px] rounded-full border-2 border-white bg-pink" aria-hidden="true" />
+                      <time className="absolute right-2 top-0 -translate-y-1/2 text-[10px] font-black leading-none tabular-nums text-ink/65 sm:right-3 sm:text-[13px]">{startTime}</time>
+                      <span className="absolute -right-[4px] top-0 h-[7px] w-[7px] -translate-y-1/2 rounded-full border-2 border-white bg-pink" aria-hidden="true" />
                     </div>
                   </div>
                 ))}
-
-                <div
-                  className={`pointer-events-none z-0 h-0 border-t ${timelineBoundaries.at(-1)?.endsWith(":00") ? "border-pink/20" : "border-dashed border-ink/10"}`}
-                  style={{ gridColumn: "1 / -1", gridRow: String(timelineSegments.length + 1) }}
-                  aria-hidden="true"
-                />
-                <div
-                  className="relative z-[1] h-0 border-r border-pink/20 text-right"
-                  style={{ gridColumn: "1", gridRow: String(timelineSegments.length + 1) }}
-                >
-                  <time className="absolute right-2 top-0 -translate-y-1/2 text-[10px] font-black leading-none tabular-nums text-ink/65 sm:right-3 sm:text-[13px]">
-                    {timelineBoundaries.at(-1)}
-                  </time>
-                  <span className="absolute -right-[4px] top-0 h-[7px] w-[7px] -translate-y-1/2 rounded-full border-2 border-white bg-pink" aria-hidden="true" />
-                </div>
 
                 {currentTimelinePosition && (
                   <div
@@ -390,84 +387,130 @@ export function HomeTodaySections() {
                   </div>
                 )}
 
-                {eventGroups.map((group) => {
-                  const startLine = (timelineBoundaryIndex.get(group.startTime) ?? 0) + 1;
-                  const endLine = (timelineBoundaryIndex.get(group.endTime) ?? startLine) + 1;
+                {timelineStartTimes.map((startTime, index) => {
+                  const row = index + 1;
+                  const startEventGroups = eventGroups.filter((group) => group.startTime === startTime);
+                  const startFanStudioGroups = fanStudioGroups.filter((group) => group.startTime === startTime);
                   return (
-                    <div
-                      key={group.key}
-                      className="z-10 p-1.5 sm:p-2"
-                      style={{ gridColumn: "2", gridRow: `${startLine} / ${endLine}` }}
-                    >
-                      <div className="grid h-full auto-rows-fr gap-1.5">
-                        {group.entries.map((entry) => {
-                          const status = entryStatus(entry, today, currentTime);
-                          const names = namesForEntry(entry);
-                          return (
-                            <article key={entry.id} className={`h-full min-w-0 rounded-xl border border-[#eed8aa] bg-[#fffaf0] p-2 sm:p-3 ${status?.label === "終了" ? "saturate-50" : ""}`}>
-                              <div className="flex items-start justify-between gap-1">
-                                <h3 className="min-w-0 text-[10px] font-black leading-[1.45] text-ink sm:text-[13px]">{entry.title}</h3>
-                                <div className="flex shrink-0 items-center gap-1">
-                                  {status && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-black sm:px-2 sm:text-[9px] ${status.className}`}>{status.label}</span>}
-                                  <PlanAddButton entry={entry} targetDate={selectedDate} variant="compact" />
+                    <div key={startTime} className="contents">
+                      <div className="z-10 px-1.5 py-3 sm:px-2 sm:py-4" style={{ gridColumn: "2", gridRow: String(row) }}>
+                        <div className="grid gap-1.5">
+                          {startEventGroups.map((group) => {
+                            const status = commonGroupStatus(group.entries, today, currentTime);
+                            return (
+                              <article key={group.key} className={`min-w-0 overflow-hidden rounded-xl border border-[#eed8aa] bg-[#fffdfa] ${status?.label === "終了" ? "saturate-50" : ""}`}>
+                                <header className="flex min-h-8 items-center justify-between gap-1 border-b border-[#eed8aa] bg-[#fff4df] px-2 py-1.5 sm:px-3">
+                                  <time className="min-w-0 truncate text-[9px] font-black tabular-nums text-[#a76624] sm:text-[12px]">
+                                    {group.startTime}–{group.endTime}
+                                  </time>
+                                  <span className="flex shrink-0 items-center gap-1">
+                                    {status && <span className={`rounded-full px-1.5 py-0.5 text-[8px] font-black sm:text-[9px] ${status.className}`}>{status.label}</span>}
+                                    {group.entries.length > 1 && <span className="text-[8px] font-black text-[#a76624] sm:text-[9px]">{group.entries.length}件</span>}
+                                  </span>
+                                </header>
+                                <div className="divide-y divide-[#eed8aa]/60">
+                                  {group.entries.map((entry) => {
+                                    const names = namesForEntry(entry);
+                                    const compactTitle = entry.title.length > 18;
+                                    return (
+                                      <PlanToggleSurface
+                                        key={entry.id}
+                                        entry={entry}
+                                        targetDate={selectedDate}
+                                        className="group/plan block w-full px-2 py-2 text-left transition-[background-color,box-shadow,transform] hover:bg-[#fff7e9] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#d9912d]/35 sm:px-3 sm:py-2.5"
+                                        addedClassName="bg-mint/10"
+                                        pressedClassName="scale-[0.99] bg-[#fff0d6] shadow-inner"
+                                      >
+                                        {({ added, pressed }) => (
+                                          <>
+                                            <span className="grid grid-cols-[minmax(0,1fr)_16px] items-start gap-1.5">
+                                              <span className={`min-w-0 font-black leading-[1.35] text-ink [overflow-wrap:anywhere] ${compactTitle ? "text-[9px] tracking-[-0.02em] sm:text-[12px]" : "text-[10px] sm:text-[13px]"}`}>
+                                                {entry.title}
+                                              </span>
+                                              <PlanToggleIndicator
+                                                added={added}
+                                                pressed={pressed}
+                                                size={15}
+                                                className={`mt-0.5 ${added ? "text-[#35745f]" : "text-[#b86d1f]"}`}
+                                              />
+                                            </span>
+                                            {names.length > 0 && <span className="mt-1 block text-[9px] font-bold leading-4 text-pink sm:text-[11px]">{names.join("・")}</span>}
+                                            <span className="mt-1 flex min-w-0 items-center gap-1 text-[8px] font-bold leading-4 text-ink/45 sm:text-[10px]">
+                                              <MapPin size={10} className="shrink-0" aria-hidden="true" />
+                                              <span className="truncate">{entry.location}</span>
+                                            </span>
+                                          </>
+                                        )}
+                                      </PlanToggleSurface>
+                                    );
+                                  })}
                                 </div>
-                              </div>
-                              {names.length > 0 && <p className="mt-1 text-[9px] font-bold leading-4 text-pink sm:text-[11px]">{names.join("・")}</p>}
-                              <p className="mt-1 flex min-w-0 items-center gap-1 text-[8px] font-bold leading-4 text-ink/45 sm:text-[10px]">
-                                <MapPin size={10} className="shrink-0" aria-hidden="true" />
-                                <span className="truncate">{entry.location}</span>
-                                {entry.endTime && <span className="ml-auto shrink-0 tabular-nums">〜{entry.endTime}</span>}
-                              </p>
-                            </article>
-                          );
-                        })}
+                              </article>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
 
-                {fanStudioGroups.map((group) => {
-                  const startLine = (timelineBoundaryIndex.get(group.startTime) ?? 0) + 1;
-                  const endLine = (timelineBoundaryIndex.get(group.endTime) ?? startLine) + 1;
-                  const greetingColumnsClass = group.entries.length >= 3
-                    ? "lg:grid-cols-3"
-                    : group.entries.length === 2
-                      ? "lg:grid-cols-2"
-                      : "lg:grid-cols-1";
-                  return (
-                    <div
-                      key={group.key}
-                      className="z-10 p-1.5 sm:p-2"
-                      style={{ gridColumn: "3", gridRow: `${startLine} / ${endLine}` }}
-                    >
-                      <div className={`grid h-full auto-rows-fr gap-1.5 ${greetingColumnsClass}`}>
-                        {group.entries.map((entry) => {
-                          const status = entryStatus(entry, today, currentTime);
-                          const names = namesForEntry(entry);
-                          const appearance = specialAppearance(entry);
-                          const displayName = names.length > 0
-                            ? names.join("・")
-                            : fanStudioFallbackName(entry);
-                          return (
-                            <article key={entry.id} className={`flex min-w-0 flex-col rounded-xl border p-2 sm:p-2.5 ${appearance ? "border-[#f1cb7b] bg-[#fff8e8]" : "border-lavender/15 bg-[#f8f5fc]"} ${status?.label === "終了" ? "saturate-50" : ""}`}>
-                              <div className="flex items-start justify-between gap-1">
-                                <h3 className="min-w-0 break-words text-[10px] font-black leading-[1.4] text-ink sm:text-[12px]">{displayName}</h3>
-                                <div className="flex shrink-0 items-center gap-1">
-                                  {status && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-black sm:px-2 sm:text-[9px] ${status.className}`}>{status.label}</span>}
-                                  <PlanAddButton entry={entry} targetDate={selectedDate} variant="compact" />
+                      <div className="z-10 px-1.5 py-3 sm:px-2 sm:py-4" style={{ gridColumn: "3", gridRow: String(row) }}>
+                        <div className="grid gap-1.5">
+                          {startFanStudioGroups.map((group) => {
+                            const status = commonGroupStatus(group.entries, today, currentTime);
+                            return (
+                              <article key={group.key} className={`min-w-0 overflow-hidden rounded-xl border border-lavender/25 bg-[#fbfaff] ${status?.label === "終了" ? "saturate-50" : ""}`}>
+                                <header className="flex min-h-8 items-center justify-between gap-1 border-b border-lavender/20 bg-lavender/10 px-2 py-1.5 sm:px-2.5">
+                                  <time className="min-w-0 truncate text-[9px] font-black tabular-nums text-lavender sm:text-[11px]">
+                                    {group.startTime}–{group.endTime}
+                                  </time>
+                                  <span className="flex shrink-0 items-center gap-1">
+                                    {status && <span className={`rounded-full px-1.5 py-0.5 text-[8px] font-black ${status.className}`}>{status.label}</span>}
+                                    {group.entries.length > 1 && <span className="text-[8px] font-black text-lavender sm:text-[9px]">{group.entries.length}件</span>}
+                                  </span>
+                                </header>
+                                <div className="divide-y divide-lavender/15">
+                                  {group.entries.map((entry) => {
+                                    const names = namesForEntry(entry);
+                                    const appearance = specialAppearance(entry);
+                                    const displayName = names.length > 0
+                                      ? names.join("・")
+                                      : fanStudioFallbackName(entry);
+                                    return (
+                                      <PlanToggleSurface
+                                        key={entry.id}
+                                        entry={entry}
+                                        targetDate={selectedDate}
+                                        className="group/plan block w-full px-2 py-2 text-left transition-[background-color,box-shadow,transform] hover:bg-lavender/5 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lavender/35 sm:px-2.5"
+                                        addedClassName="bg-mint/10"
+                                        pressedClassName="scale-[0.99] bg-lavender/10 shadow-inner"
+                                      >
+                                        {({ added, pressed }) => (
+                                          <>
+                                            <span className="grid grid-cols-[minmax(0,1fr)_16px] items-start gap-1">
+                                              <span className="min-w-0 text-[10px] font-black leading-[1.35] text-ink [overflow-wrap:anywhere] sm:text-[12px]">{displayName}</span>
+                                              <PlanToggleIndicator
+                                                added={added}
+                                                pressed={pressed}
+                                                size={14}
+                                                className={added ? "text-[#35745f]" : "text-lavender"}
+                                              />
+                                            </span>
+                                            <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[8px] font-bold leading-4 text-ink/45 sm:text-[9px]">
+                                              <span className="truncate">{shortFanStudioLocation(entry.location)}</span>
+                                              {appearance && (
+                                                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#f6b83f]/15 px-1.5 py-0.5 text-[8px] font-black leading-3 text-[#9a6512]">
+                                                  <Sun size={9} aria-hidden="true" />{appearance}
+                                                </span>
+                                              )}
+                                            </span>
+                                          </>
+                                        )}
+                                      </PlanToggleSurface>
+                                    );
+                                  })}
                                 </div>
-                              </div>
-                              {appearance && (
-                                <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-[#f6b83f]/15 px-1.5 py-0.5 text-[8px] font-black leading-3 text-[#9a6512] sm:text-[9px]">
-                                  <Sun size={10} aria-hidden="true" />{appearance}
-                                </span>
-                              )}
-                              <p className="mt-auto truncate pt-1 text-[8px] font-bold leading-4 text-ink/45 sm:text-[10px]">
-                                {shortFanStudioLocation(entry.location)}{entry.endTime ? `・〜${entry.endTime}` : ""}
-                              </p>
-                            </article>
-                          );
-                        })}
+                              </article>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   );
