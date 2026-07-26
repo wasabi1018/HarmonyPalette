@@ -360,6 +360,20 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
     });
   };
 
+  const toggleOfficialSchedule = (scheduleId: string) => {
+    const entry = officialCandidates.find((candidate) => candidate.id === scheduleId);
+    if (!entry) return;
+
+    if (isScheduleInPlan(plans, entry.id, selectedDate)) {
+      removeScheduleFromPlan(selectedDate, entry.id);
+      setNotice(`${formatDate(selectedDate, false)}のプランから取り消しました。`);
+      return;
+    }
+
+    addScheduleToPlan(entry, selectedDate);
+    setNotice(`${formatDate(selectedDate, false)}のプランに追加しました。`);
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveDragId(String(event.active.id));
     setDragDelta(0);
@@ -536,8 +550,8 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
       )}
 
       {addOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/35 p-0 sm:items-center sm:p-5" role="presentation">
-          <div role="dialog" aria-modal="true" aria-labelledby="add-plan-title" className="max-h-[88dvh] w-full max-w-2xl overflow-hidden rounded-t-[28px] bg-white shadow-[0_24px_70px_rgba(62,53,64,0.25)] sm:rounded-[28px]">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center overflow-x-hidden bg-ink/35 p-0 sm:items-center sm:p-5" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="add-plan-title" className="max-h-[88dvh] w-full max-w-full overflow-hidden rounded-t-[28px] bg-white shadow-[0_24px_70px_rgba(62,53,64,0.25)] sm:max-w-2xl sm:rounded-[28px]">
             <div className="flex items-center justify-between border-b border-pink/10 px-4 py-4 sm:px-5">
               <div>
                 <p className="text-[10px] font-black tracking-[0.14em] text-pink">{formatDate(selectedDate, false)}</p>
@@ -553,43 +567,46 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
               </div>
             )}
 
-            <div className="max-h-[calc(88dvh-142px)] overflow-y-auto px-4 pb-7 pt-4 sm:px-5">
+            <div className="max-h-[calc(88dvh-142px)] min-w-0 overflow-x-hidden overflow-y-auto px-4 pb-7 pt-4 sm:px-5">
               {addTab === "official" && !editingItem ? (
                 scheduleState.status === "loading" ? (
                   <div className="flex min-h-40 items-center justify-center gap-2 text-[12px] font-bold text-ink/45"><LoaderCircle size={18} className="animate-spin text-pink" aria-hidden="true" />読み込み中…</div>
                 ) : officialCandidates.length > 0 ? (
-                  <div className="grid gap-2">
+                  <div className="grid min-w-0 gap-2">
                     {officialCandidates.map((entry) => {
                       const added = isScheduleInPlan(plans, entry.id, selectedDate);
                       const names = getEntryCharacterNames(entry);
                       return (
-                        <article key={entry.id} className="flex items-center gap-3 rounded-2xl border border-pink/10 bg-[#fffafd] p-3">
+                        <button
+                          key={entry.id}
+                          type="button"
+                          aria-pressed={added}
+                          aria-label={`${entry.title}を${added ? "マイプランから取り消す" : "マイプランに追加する"}`}
+                          onClick={() => toggleOfficialSchedule(entry.id)}
+                          className={`grid w-full min-w-0 grid-cols-[54px_minmax(0,1fr)_32px] items-center gap-3 overflow-hidden rounded-2xl border p-3 text-left transition-colors ${
+                            added
+                              ? "border-mint/50 bg-[#f4fbf8]"
+                              : "border-pink/10 bg-[#fffafd] hover:border-pink/25 hover:bg-[#fff6fa]"
+                          }`}
+                        >
                           <div className="w-[54px] shrink-0 text-center">
                             <p className="text-[14px] font-black tabular-nums text-ink">{entry.startTime}</p>
                             <p className="text-[9px] font-bold text-ink/35">{entry.endTime ? `〜${entry.endTime}` : ""}</p>
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-[12px] font-black leading-5 text-ink">{entry.title}</h3>
+                            <span className="block break-words text-[12px] font-black leading-5 text-ink [overflow-wrap:anywhere]">{entry.title}</span>
                             {names.length > 0 && <p className="mt-0.5 truncate text-[10px] font-bold text-pink">{names.join("・")}</p>}
-                            {entry.location && <p className="mt-0.5 flex items-center gap-1 truncate text-[10px] font-bold text-ink/40"><MapPin size={11} aria-hidden="true" />{entry.location}</p>}
+                            {entry.location && <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] font-bold text-ink/40"><MapPin size={11} className="shrink-0" aria-hidden="true" /><span className="truncate">{entry.location}</span></p>}
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (added) {
-                                removeScheduleFromPlan(selectedDate, entry.id);
-                                setNotice(`${formatDate(selectedDate, false)}のプランから取り消しました。`);
-                              } else {
-                                addScheduleToPlan(entry, selectedDate);
-                                setNotice(`${formatDate(selectedDate, false)}のプランに追加しました。`);
-                              }
-                            }}
-                            className={`inline-flex min-h-10 shrink-0 items-center gap-1 rounded-xl px-3 text-[10px] font-black ${added ? "bg-mint/15 text-[#35745f] hover:bg-pink/10 hover:text-pink" : "bg-pink text-white"}`}
+                          <span
+                            className={`grid h-8 w-8 place-items-center rounded-full ${
+                              added ? "bg-mint text-white" : "border border-pink/20 bg-white text-pink"
+                            }`}
+                            aria-hidden="true"
                           >
-                            {added ? <Check size={13} aria-hidden="true" /> : <Plus size={13} aria-hidden="true" />}
-                            {added ? "取り消す" : "追加"}
-                          </button>
-                        </article>
+                            {added ? <Check size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={2.5} />}
+                          </span>
+                        </button>
                       );
                     })}
                   </div>
