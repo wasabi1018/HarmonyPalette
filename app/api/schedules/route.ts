@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
   const from = url.searchParams.get("from") || addDays(today, -31);
-  const to = url.searchParams.get("to") || addDays(today, 90);
+  const to = url.searchParams.get("to") || "9999-12-31";
   const config = getSupabaseConfigStatus();
   if (!config.canRead) return NextResponse.json({ configured: false, entries: [] });
 
@@ -46,4 +46,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ configured: true, entries: [], error: error instanceof Error ? error.message : "読込に失敗しました。" }, { status: 500 });
   }
 }
-

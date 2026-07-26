@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Check, LoaderCircle, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, LoaderCircle, MapPin, Search, Sparkles, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Character } from "@/data/types";
 import { DataStatePanel } from "@/components/data-state-panel";
@@ -22,6 +22,17 @@ function currentTimeInJapan() {
   }).format(new Date()).replace("：", ":");
 }
 
+function addDays(date: string, days: number) {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+function compactDate(value: string) {
+  const [, month, day] = value.split("-");
+  return `${Number(month)}/${Number(day)}`;
+}
+
 function matchesCharacter(entry: ScheduleEntry, character: Character) {
   return entry.characterIds.includes(character.id) || getEntryCharacterNames(entry).includes(character.name);
 }
@@ -38,6 +49,7 @@ export function CharacterBrowser({
   const { characters } = characterState;
   const { entries } = scheduleState;
   const today = useMemo(todayInJapan, []);
+  const scheduleTo = useMemo(() => addDays(today, 13), [today]);
   const currentTime = useMemo(currentTimeInJapan, []);
   const [query, setQuery] = useState("");
   const [onlyScheduled, setOnlyScheduled] = useState(false);
@@ -55,6 +67,7 @@ export function CharacterBrowser({
     .filter((entry) => (
       matchesCharacter(entry, character)
       && entry.status !== "completed"
+      && (entry.endDate ?? entry.date) >= today
       && (
         entry.date > today
         || (entry.date === today && (entry.endTime ?? entry.startTime) >= currentTime)
@@ -90,11 +103,44 @@ export function CharacterBrowser({
           <span><span className="text-pink">{filtered.length}</span> キャラクター</span>
           {characterState.isRefreshing && <span className="inline-flex items-center gap-1 text-[11px] text-pink" role="status"><LoaderCircle size={12} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />更新中…</span>}
         </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{filtered.map((character) => {
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{filtered.map((character) => {
           const next = nextScheduleFor(character);
           const scheduleLoading = scheduleState.status === "loading";
           const scheduleUnavailable = scheduleState.status === "error" || scheduleState.status === "unavailable";
-          return <Link key={character.id} href={`/characters/${character.slug}`} className="group rounded-[26px] border border-pink/10 bg-white p-5 shadow-soft transition-all hover:-translate-y-1 hover:shadow-card"><div className="flex items-start gap-3"><CharacterAvatar character={character} size="lg" /><h3 className="self-center font-black text-ink group-hover:text-pink">{character.name}</h3></div><div className="mt-4 grid gap-2 rounded-2xl bg-[#fff9fb] p-3 text-xs font-bold text-ink/60"><div className="flex items-center gap-2"><CalendarDays size={14} className="text-pink" aria-hidden="true" />{scheduleLoading ? <><LoaderCircle size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />予定を読み込み中…</> : scheduleUnavailable ? "予定情報を取得できません" : next ? `次回 ${next.date === today ? "今日" : next.date} ${next.startTime}` : "登場予定を確認"}</div><div className="flex items-center gap-2"><span className={`h-2 w-2 rounded-full ${next && !scheduleLoading && !scheduleUnavailable ? "bg-mint" : "bg-ink/20"}`} aria-hidden="true" />{scheduleLoading ? "確認中" : scheduleUnavailable ? "表示できません" : next ? next.location : "予定情報なし"}</div></div><span className="mt-5 inline-flex items-center gap-2 text-xs font-black text-pink group-hover:gap-3">詳細を見る <ArrowRight size={15} aria-hidden="true" /></span></Link>;
+          const scheduleHref = `/schedule?character=${encodeURIComponent(character.name)}&from=${today}&to=${scheduleTo}#schedule-results`;
+          const nextDate = next && next.date <= today && (next.endDate ?? next.date) >= today
+            ? "今日"
+            : next
+              ? compactDate(next.date)
+              : "";
+          return (
+            <article key={character.id} className="group rounded-[22px] border border-pink/10 bg-white p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-card">
+              <div className="flex items-center gap-3">
+                <CharacterAvatar character={character} size="md" />
+                <h3 className="min-w-0 truncate font-black text-ink group-hover:text-pink">{character.name}</h3>
+              </div>
+              <div className="mt-3 rounded-[14px] bg-[#fff9fb] px-3 py-2.5">
+                {scheduleLoading ? (
+                  <p className="flex items-center gap-2 text-[11px] font-bold text-ink/50"><LoaderCircle size={13} className="animate-spin text-pink motion-reduce:animate-none" aria-hidden="true" />予定を読み込み中…</p>
+                ) : scheduleUnavailable ? (
+                  <p className="text-[11px] font-bold text-ink/50">予定情報を取得できません</p>
+                ) : next ? (
+                  <div>
+                    <p className="flex min-w-0 items-center gap-2 text-[12px] font-black text-ink"><Sparkles size={13} className="shrink-0 text-pink" aria-hidden="true" /><span className="line-clamp-1">{next.title}</span></p>
+                    <div className="mt-1.5 flex min-w-0 items-center gap-3 text-[10px] font-bold text-ink/45">
+                      <p className="flex shrink-0 items-center gap-1.5"><CalendarDays size={12} className="text-pink" aria-hidden="true" />次回 {nextDate} {next.startTime}</p>
+                      <p className="flex min-w-0 items-center gap-1.5"><MapPin size={11} className="shrink-0 text-mint" aria-hidden="true" /><span className="truncate">{next.location}</span></p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] font-bold text-ink/45">今後の登場予定はありません</p>
+                )}
+              </div>
+              <Link href={scheduleHref} className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-full px-1 text-xs font-black text-pink group-hover:gap-3">
+                予定を見る <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+            </article>
+          );
         })}</div>
         {filtered.length === 0 && <div className="mt-5 rounded-[26px] border border-dashed border-pink/20 bg-white p-10 text-center font-black text-ink">見つかりませんでした</div>}
       </>

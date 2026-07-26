@@ -428,7 +428,7 @@ export async function getPublishedSchedules(from: string, to: string) {
       .select("*, schedule_characters(character_id, character_name)", { count: "exact" })
       .eq("publication_status", "published")
       .lte("event_date", to)
-      .or(`end_date.is.null,end_date.gte.${from}`)
+      .or(`and(end_date.is.null,event_date.gte.${from}),end_date.gte.${from}`)
       .order("event_date", { ascending: true })
       .order("start_time", { ascending: true })
       .order("id", { ascending: true })
