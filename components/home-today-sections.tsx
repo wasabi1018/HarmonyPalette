@@ -340,7 +340,7 @@ export function HomeTodaySections() {
                 </div>
               </div>
               <p className="border-b border-pink/10 bg-white px-3 py-2 text-center text-[9px] font-bold text-ink/45 sm:text-[10px]">
-                予定をタップして追加
+                予定を選択してマイプランに追加
               </p>
 
               <div
