@@ -1,5 +1,9 @@
 import { extractPdfTextItems, groupPdfTextLines, type PdfTextLine } from "@/lib/official-import/pdf";
-import type { AttractionOperationCandidate, ImportedCharacter, ImportedScheduleCandidate } from "@/lib/official-import/types";
+import {
+  canonicalCharacters,
+  normalizeCharacterNamesInText,
+} from "@/lib/official-import/character-name-normalizer";
+import type { AttractionOperationCandidate, ImportedScheduleCandidate } from "@/lib/official-import/types";
 import { buildExternalKey, normalizeSpace, normalizeTime, sha256 } from "@/lib/official-import/utils";
 
 const TIME_RANGE = /(\d{1,2}\s*[:：]\s*\d{2})\s*[〜～~－-]\s*(\d{1,2}\s*[:：]\s*\d{2})/;
@@ -13,44 +17,9 @@ const KNOWN_LOCATIONS = [
   "エントランス",
 ];
 
-const CHARACTER_IDS: Record<string, string> = {
-  "マイメロディ": "my-melody",
-  "クロミ": "kuromi",
-  "シナモロール": "cinnamoroll",
-  "ポムポムプリン": "pompompurin",
-  "ハローキティ": "hello-kitty",
-  "ディアダニエル": "daniel",
-};
-
-const CHARACTER_NAMES = [
-  "ウィッシュミーメル",
-  "ポムポムプリン",
-  "ディアダニエル",
-  "シナモロール",
-  "ハローキティ",
-  "ハローミミィ",
-  "マイメロディ",
-  "けろけろけろっぴ",
-  "リトルツインスターズ",
-  "タキシードサム",
-  "バッドばつ丸",
-  "ハンギョドン",
-  "ポチャッコ",
-  "ぼんぼんりぼん",
-  "クロミ",
-  "ウサハナ",
-  "メアリー",
-  "ジョージ",
-  "ルビー",
-  "キキ",
-  "ララ",
-];
-
-function findCharacters(lines: PdfTextLine[]): ImportedCharacter[] {
+function findCharacters(lines: PdfTextLine[]) {
   const text = lines.map((line) => line.text).join(" ");
-  return CHARACTER_NAMES
-    .filter((name) => text.includes(name))
-    .map((name) => ({ id: CHARACTER_IDS[name], name }));
+  return canonicalCharacters(text, { preserveUnknown: false });
 }
 
 function findLocation(lines: PdfTextLine[]) {
@@ -72,7 +41,9 @@ function cleanTitlePart(value: string, location: string) {
 }
 
 function normalizeGreetingTitle(title: string) {
-  return title.replace("おでむかえグリーティング", "お出迎えグリーティング");
+  return normalizeCharacterNamesInText(
+    title.replace("おでむかえグリーティング", "お出迎えグリーティング"),
+  );
 }
 
 function buildTitle(anchor: PdfTextLine, block: PdfTextLine[], location: string) {

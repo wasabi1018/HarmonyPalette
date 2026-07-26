@@ -1,4 +1,5 @@
 import type { ImportPreview, ImportedScheduleCandidate, SourceDocument } from "@/lib/official-import/types";
+import { canonicalCharacters } from "@/lib/official-import/character-name-normalizer";
 import { buildExternalKey, normalizeSpace, normalizeTime, sha256 } from "@/lib/official-import/utils";
 
 const FUN_STUDIO_URL = "https://www.harmonyland.jp/sp/funstudio/c_schedule.html";
@@ -10,23 +11,6 @@ const ROOMS: Record<string, string> = {
   p: "ファンスタジオ102号室",
   s: "ファンスタジオ103号室",
 };
-
-const CHARACTER_ALIASES: Array<[RegExp, string, string | undefined]> = [
-  [/マイ\s*メロディ|マイメロディ/, "マイメロディ", "my-melody"],
-  [/クロミ/, "クロミ", "kuromi"],
-  [/シナモ(?:ロール)?/, "シナモロール", "cinnamoroll"],
-  [/ポムポム\s*プリン|ポムポムプリン/, "ポムポムプリン", "pompompurin"],
-  [/ハロー\s*キティ|ハローキティ/, "ハローキティ", "hello-kitty"],
-  [/ディア\s*ダニエル|ディアダニエル/, "ディアダニエル", "daniel"],
-  [/ウサハナ/, "ウサハナ", undefined],
-  [/あひる\s*の?\s*ペックル|あひるのペックル/, "あひるのペックル", undefined],
-  [/ウィッシュ\s*ミー\s*メル|ウィッシュミーメル/, "ウィッシュミーメル", undefined],
-  [/コロコロ\s*[グク]リリン|コロコロクリリン/, "コロコロクリリン", undefined],
-  [/ハンギョドン/, "ハンギョドン", undefined],
-  [/ポチャッコ/, "ポチャッコ", undefined],
-  [/バッド\s*ばつ丸|バッドばつ丸/, "バッドばつ丸", undefined],
-  [/モップ/, "モップ", undefined],
-];
 
 type FanStudioImage = { prefix: string; monthDay: string; url: string };
 
@@ -166,17 +150,6 @@ function discoverImages(html: string): FanStudioImage[] {
     images.push({ prefix: match[1].slice(0, 1), monthDay: match[2], url: new URL(match[3], FUN_STUDIO_URL).toString() });
   }
   return images;
-}
-
-function canonicalCharacter(raw: string) {
-  for (const [pattern, name, id] of CHARACTER_ALIASES) {
-    if (pattern.test(raw)) return { name, id };
-  }
-  const name = normalizeSpace(raw)
-    .replace(/[※★☆●○◎]/g, "")
-    .replace(/[^ぁ-んァ-ヶ一-龠ーA-Za-z・]/g, " ")
-    .trim();
-  return name ? { name } : null;
 }
 
 function parseOcrRows(text: string) {
@@ -379,19 +352,20 @@ export async function importFanStudioSchedules(
         warnings.push(`${date} ${room}: 表は${imageRows.length}行ですが、読み取れた予定は${recognizedRows.length}件です。原本画像との差分確認が必要です。`);
       }
       for (const row of recognizedRows) {
-        const character = canonicalCharacter(row.rawName);
-        if (!character) {
+        const characters = canonicalCharacters(row.rawName);
+        if (characters.length === 0) {
           warnings.push(`${date} ${room} ${row.startTime}: キャラクター名を認識できませんでした。`);
           continue;
         }
+        const characterNames = characters.map((character) => character.name).join("・");
         const appearance = row.hasIcon ? "（日焼け姿）" : "";
         schedules.push({
-          externalKey: buildExternalKey([date, room, row.startTime, character.name]),
+          externalKey: buildExternalKey([date, room, row.startTime, characterNames]),
           sourceId: "harmonyland-funstudio",
           sourceReference: target.url,
           sourceHash,
           kind: "greeting",
-          title: `${character.name}${appearance} ファンスタジオグリーティング`,
+          title: `${characterNames}${appearance} ファンスタジオグリーティング`,
           date,
           startTime: row.startTime,
           endTime: row.endTime,
@@ -401,7 +375,7 @@ export async function importFanStudioSchedules(
             ? "予定表のアイコンから、日焼けをした姿で登場する案内を検出しました。OCRによる確認待ちデータのため、公式情報をご確認ください。"
             : "予定表画像をOCRで読み取った確認待ちデータです。登場内容は公式情報をご確認ください。",
           officialUrl: FUN_STUDIO_URL,
-          characters: [character],
+          characters,
           verificationStatus: "needs-review",
           confidence: Math.max(0.35, Math.min(0.95, row.confidence)),
           rawPayload: { timeOcr: row.timeOcr, nameOcr: row.nameOcr, rawName: row.rawName, hasIcon: row.hasIcon, imageUrl: target.url },
