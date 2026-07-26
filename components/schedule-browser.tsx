@@ -6,7 +6,7 @@ import { CalendarDays, Check, ChevronDown, Clock3, Filter, LoaderCircle, MapPin,
 import type { Character } from "@/data/types";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { ScheduleEntryCard } from "@/components/schedule-entry-card";
-import { PlanAddButton } from "@/components/plan-add-button";
+import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
 import { sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
 import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
@@ -234,7 +234,7 @@ export function ScheduleBrowser({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fff6f9] px-3 py-2.5 text-[11px] font-bold leading-5 text-ink/55"><Filter size={14} className="shrink-0 text-pink" aria-hidden="true" />ファンスタジオは、同じ日の同じキャラクターを1枚にまとめています。通常の姿と特別な姿は、時間ごとに確認できます。</div>
+      <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fff6f9] px-3 py-2.5 text-[11px] font-bold leading-5 text-ink/55"><Filter size={14} className="shrink-0 text-pink" aria-hidden="true" />ファンスタジオは、同じ日の同じキャラクターを1枚にまとめています。各時間の行をタップしてマイプランに追加できます。</div>
 
       <section id="schedule-results" className="mt-4 grid scroll-mt-24 gap-4" aria-live="polite" aria-busy={isInitialLoading}>
         {isInitialLoading ? (
@@ -339,21 +339,37 @@ function FanStudioCharacterCard({ date, name, entries, selected }: { date: strin
           {entries.map((entry) => {
             const appearance = specialAppearance(entry);
             return (
-                <div key={entry.id} className={`rounded-xl border px-3 py-2.5 ${appearance ? "border-[#efd69f] bg-[#fffaf0]" : "border-lavender/15 bg-[#faf8fc]"}`}>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex min-w-0 items-center gap-1.5 text-[12px] font-black tabular-nums text-ink">
-                      <Clock3 size={13} className="shrink-0 text-pink" aria-hidden="true" />
-                      {entry.startTime}{entry.endTime ? `–${entry.endTime}` : "〜"}
-                    </span>
-                    <div className="ml-auto flex shrink-0 items-center gap-1.5">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black ${appearance ? "bg-[#f6b83f]/15 text-[#8c5a0c]" : "bg-lavender/10 text-lavender"}`}>
-                        {appearance && <Sun size={10} aria-hidden="true" />}{appearance ?? "通常の姿"}
+              <PlanToggleSurface
+                key={entry.id}
+                entry={entry}
+                targetDate={date}
+                className={`block w-full rounded-xl border px-3 py-2.5 text-left transition-[background-color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavender/30 ${appearance ? "border-[#efd69f] bg-[#fffaf0] hover:bg-[#fff5df]" : "border-lavender/15 bg-[#faf8fc] hover:bg-lavender/5"}`}
+                addedClassName="border-mint/40 bg-[#f4fbf8]"
+                pressedClassName="scale-[0.99] shadow-inner"
+              >
+                {({ added, pressed }) => (
+                  <>
+                    <span className="flex items-center gap-2">
+                      <span className="inline-flex min-w-0 items-center gap-1.5 text-[12px] font-black tabular-nums text-ink">
+                        <Clock3 size={13} className="shrink-0 text-pink" aria-hidden="true" />
+                        {entry.startTime}{entry.endTime ? `–${entry.endTime}` : "〜"}
                       </span>
-                      <PlanAddButton entry={entry} targetDate={date} variant="compact" />
-                    </div>
-                  </div>
-                  <p className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-ink/45"><MapPin size={11} className="shrink-0" aria-hidden="true" />{shortFanStudioLocation(entry.location)}</p>
-                </div>
+                      <span className="ml-auto flex shrink-0 items-center gap-1.5">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black ${appearance ? "bg-[#f6b83f]/15 text-[#8c5a0c]" : "bg-lavender/10 text-lavender"}`}>
+                          {appearance && <Sun size={10} aria-hidden="true" />}{appearance ?? "通常の姿"}
+                        </span>
+                        <PlanToggleIndicator
+                          added={added}
+                          pressed={pressed}
+                          size={15}
+                          className={added ? "text-[#35745f]" : "text-lavender"}
+                        />
+                      </span>
+                    </span>
+                    <span className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-ink/45"><MapPin size={11} className="shrink-0" aria-hidden="true" />{shortFanStudioLocation(entry.location)}</span>
+                  </>
+                )}
+              </PlanToggleSurface>
             );
           })}
         </div>

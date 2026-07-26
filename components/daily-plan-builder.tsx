@@ -39,22 +39,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PlanItemCard } from "@/components/plan-item-card";
+import { ScheduleTimeline } from "@/components/schedule-timeline";
 import {
   addCustomPlanItem,
-  addScheduleToPlan,
   clearPlan,
   type CustomPlanItemInput,
   type DailyPlanItem,
-  isScheduleInPlan,
   minutesToTime,
   removePlanItem,
-  removeScheduleFromPlan,
   shiftCustomPlanItem,
   timeToMinutes,
   updateCustomPlanItem,
   useDailyPlans,
 } from "@/lib/daily-plan-store";
-import { getEntryCharacterNames, useScheduleEntries } from "@/lib/schedule-store";
+import { useScheduleEntries } from "@/lib/schedule-store";
 
 const DRAG_MINUTES_PER_PIXEL = 0.5;
 const DEFAULT_CUSTOM_FORM: CustomPlanItemInput = {
@@ -360,20 +358,6 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
     });
   };
 
-  const toggleOfficialSchedule = (scheduleId: string) => {
-    const entry = officialCandidates.find((candidate) => candidate.id === scheduleId);
-    if (!entry) return;
-
-    if (isScheduleInPlan(plans, entry.id, selectedDate)) {
-      removeScheduleFromPlan(selectedDate, entry.id);
-      setNotice(`${formatDate(selectedDate, false)}のプランから取り消しました。`);
-      return;
-    }
-
-    addScheduleToPlan(entry, selectedDate);
-    setNotice(`${formatDate(selectedDate, false)}のプランに追加しました。`);
-  };
-
   const handleDragStart = (event: DragStartEvent) => {
     setActiveDragId(String(event.active.id));
     setDragDelta(0);
@@ -572,44 +556,7 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
                 scheduleState.status === "loading" ? (
                   <div className="flex min-h-40 items-center justify-center gap-2 text-[12px] font-bold text-ink/45"><LoaderCircle size={18} className="animate-spin text-pink" aria-hidden="true" />読み込み中…</div>
                 ) : officialCandidates.length > 0 ? (
-                  <div className="grid min-w-0 gap-2">
-                    {officialCandidates.map((entry) => {
-                      const added = isScheduleInPlan(plans, entry.id, selectedDate);
-                      const names = getEntryCharacterNames(entry);
-                      return (
-                        <button
-                          key={entry.id}
-                          type="button"
-                          aria-pressed={added}
-                          aria-label={`${entry.title}を${added ? "マイプランから取り消す" : "マイプランに追加する"}`}
-                          onClick={() => toggleOfficialSchedule(entry.id)}
-                          className={`grid w-full min-w-0 grid-cols-[54px_minmax(0,1fr)_32px] items-center gap-3 overflow-hidden rounded-2xl border p-3 text-left transition-colors ${
-                            added
-                              ? "border-mint/50 bg-[#f4fbf8]"
-                              : "border-pink/10 bg-[#fffafd] hover:border-pink/25 hover:bg-[#fff6fa]"
-                          }`}
-                        >
-                          <div className="w-[54px] shrink-0 text-center">
-                            <p className="text-[14px] font-black tabular-nums text-ink">{entry.startTime}</p>
-                            <p className="text-[9px] font-bold text-ink/35">{entry.endTime ? `〜${entry.endTime}` : ""}</p>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="block break-words text-[12px] font-black leading-5 text-ink [overflow-wrap:anywhere]">{entry.title}</span>
-                            {names.length > 0 && <p className="mt-0.5 truncate text-[10px] font-bold text-pink">{names.join("・")}</p>}
-                            {entry.location && <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] font-bold text-ink/40"><MapPin size={11} className="shrink-0" aria-hidden="true" /><span className="truncate">{entry.location}</span></p>}
-                          </div>
-                          <span
-                            className={`grid h-8 w-8 place-items-center rounded-full ${
-                              added ? "bg-mint text-white" : "border border-pink/20 bg-white text-pink"
-                            }`}
-                            aria-hidden="true"
-                          >
-                            {added ? <Check size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={2.5} />}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <ScheduleTimeline entries={officialCandidates} date={selectedDate} />
                 ) : (
                   <p className="rounded-2xl border border-dashed border-pink/20 px-4 py-10 text-center text-[12px] font-bold text-ink/45">この日の公開スケジュールはまだありません。</p>
                 )
