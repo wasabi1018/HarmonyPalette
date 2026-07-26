@@ -1,13 +1,16 @@
 import { CalendarRange, ChevronDown, Clock3, ExternalLink, MapPin, PartyPopper, Users } from "lucide-react";
 import type { ScheduleEntry } from "@/lib/schedule-store";
 import { getEntryCharacterNames } from "@/lib/schedule-store";
+import { PlanAddButton } from "@/components/plan-add-button";
 
 export function ScheduleEntryCard({
   entry,
   selectedCharacters = [],
+  planDate = entry.date,
 }: {
   entry: ScheduleEntry;
   selectedCharacters?: string[];
+  planDate?: string;
 }) {
   const names = getEntryCharacterNames(entry);
   const selectedCharacterNames = new Set(selectedCharacters);
@@ -15,14 +18,17 @@ export function ScheduleEntryCard({
 
   return (
     <article className="rounded-2xl border border-pink/10 bg-white p-4 shadow-[0_8px_24px_rgba(118,73,86,0.06)] transition-transform hover:-translate-y-0.5 sm:p-5">
-      <div className="flex flex-wrap items-center gap-2 text-[11px] font-black">
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 ${isEvent ? "bg-[#fff4df] text-[#a76624]" : "bg-pink/10 text-pink"}`}>
-          {isEvent ? <PartyPopper size={13} aria-hidden="true" /> : <Users size={13} aria-hidden="true" />}
-          {isEvent ? "イベント" : "グリーティング"}
-        </span>
-        <span className="rounded-full bg-[#f5f2f4] px-2.5 py-1.5 text-ink/60">{entry.scheduleType}</span>
-        {entry.isSample && <span className="rounded-full border border-ink/10 px-2.5 py-1.5 text-ink/45">サンプル</span>}
-        {entry.verificationStatus === "year-inferred" && <span className="rounded-full border border-[#f1d59c] bg-[#fff9ec] px-2.5 py-1.5 text-[#8a652c]">年は推定</span>}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-[11px] font-black">
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 ${isEvent ? "bg-[#fff4df] text-[#a76624]" : "bg-pink/10 text-pink"}`}>
+            {isEvent ? <PartyPopper size={13} aria-hidden="true" /> : <Users size={13} aria-hidden="true" />}
+            {isEvent ? "イベント" : "グリーティング"}
+          </span>
+          <span className="rounded-full bg-[#f5f2f4] px-2.5 py-1.5 text-ink/60">{entry.scheduleType}</span>
+          {entry.isSample && <span className="rounded-full border border-ink/10 px-2.5 py-1.5 text-ink/45">サンプル</span>}
+          {entry.verificationStatus === "year-inferred" && <span className="rounded-full border border-[#f1d59c] bg-[#fff9ec] px-2.5 py-1.5 text-[#8a652c]">年は推定</span>}
+        </div>
+        <PlanAddButton entry={entry} targetDate={planDate} variant="compact" />
       </div>
 
       <h3 className="mt-3 text-[16px] font-black leading-6 text-ink sm:text-[17px]">{entry.title}</h3>

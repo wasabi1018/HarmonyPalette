@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, ChevronRight, Home, MapPinned, Menu, Users, X } from "lucide-react";
+import { CalendarDays, ChevronRight, ClipboardList, Home, MapPinned, Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { mainNavigation } from "@/lib/navigation";
@@ -9,7 +9,7 @@ import { mainNavigation } from "@/lib/navigation";
 const items = [
   { label: "ホーム", href: "/", icon: Home },
   { label: "今日の予定", href: "/schedule", icon: CalendarDays },
-  { label: "キャラクター", href: "/characters", icon: Users },
+  { label: "マイプラン", href: "/plan", icon: ClipboardList },
   { label: "周辺情報", href: "/around", icon: MapPinned },
   { label: "メニュー", href: "#menu", icon: Menu },
 ];

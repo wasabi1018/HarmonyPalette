@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock3, LoaderCircle, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, LoaderCircle, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
 import type { Character } from "@/data/types";
 import { mergeCharactersWithNames, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
@@ -9,6 +10,7 @@ import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "
 import { CharacterAvatar } from "@/components/character-avatar";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { SectionHeading } from "@/components/section-heading";
+import { PlanAddButton } from "@/components/plan-add-button";
 
 function japanDate(date = new Date()) {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(date);
@@ -282,9 +284,15 @@ export function HomeTodaySections() {
             linkLabel="全スケジュール"
           />
           <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-pink/10 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-            <div className="flex items-center gap-2 text-[12px] font-black text-ink/60">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-pink/10 text-pink"><CalendarDays size={16} aria-hidden="true" /></span>
-              確認したい日を選択
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 text-[12px] font-black text-ink/60">
+                <span className="grid h-8 w-8 place-items-center rounded-xl bg-pink/10 text-pink"><CalendarDays size={16} aria-hidden="true" /></span>
+                確認したい日を選択
+              </div>
+              <Link href={`/plan?date=${selectedDate}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-[10px] font-black text-white">
+                <ClipboardList size={13} aria-hidden="true" />
+                マイプランを見る
+              </Link>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" onClick={() => setSelectedDate((date) => addDays(date, -1))} aria-label="前日のスケジュール" className="grid h-10 w-10 place-items-center rounded-xl border border-ink/10 bg-white text-ink/60 transition-colors hover:border-pink/30 hover:text-pink"><ChevronLeft size={17} aria-hidden="true" /></button>
@@ -399,7 +407,10 @@ export function HomeTodaySections() {
                             <article key={entry.id} className={`h-full min-w-0 rounded-xl border border-[#eed8aa] bg-[#fffaf0] p-2 sm:p-3 ${status?.label === "終了" ? "saturate-50" : ""}`}>
                               <div className="flex items-start justify-between gap-1">
                                 <h3 className="min-w-0 text-[10px] font-black leading-[1.45] text-ink sm:text-[13px]">{entry.title}</h3>
-                                {status && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-black sm:px-2 sm:text-[9px] ${status.className}`}>{status.label}</span>}
+                                <div className="flex shrink-0 items-center gap-1">
+                                  {status && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-black sm:px-2 sm:text-[9px] ${status.className}`}>{status.label}</span>}
+                                  <PlanAddButton entry={entry} targetDate={selectedDate} variant="compact" />
+                                </div>
                               </div>
                               {names.length > 0 && <p className="mt-1 text-[9px] font-bold leading-4 text-pink sm:text-[11px]">{names.join("・")}</p>}
                               <p className="mt-1 flex min-w-0 items-center gap-1 text-[8px] font-bold leading-4 text-ink/45 sm:text-[10px]">
@@ -441,7 +452,10 @@ export function HomeTodaySections() {
                             <article key={entry.id} className={`flex min-w-0 flex-col rounded-xl border p-2 sm:p-2.5 ${appearance ? "border-[#f1cb7b] bg-[#fff8e8]" : "border-lavender/15 bg-[#f8f5fc]"} ${status?.label === "終了" ? "saturate-50" : ""}`}>
                               <div className="flex items-start justify-between gap-1">
                                 <h3 className="min-w-0 break-words text-[10px] font-black leading-[1.4] text-ink sm:text-[12px]">{displayName}</h3>
-                                {status && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-black sm:px-2 sm:text-[9px] ${status.className}`}>{status.label}</span>}
+                                <div className="flex shrink-0 items-center gap-1">
+                                  {status && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-black sm:px-2 sm:text-[9px] ${status.className}`}>{status.label}</span>}
+                                  <PlanAddButton entry={entry} targetDate={selectedDate} variant="compact" />
+                                </div>
                               </div>
                               {appearance && (
                                 <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-[#f6b83f]/15 px-1.5 py-0.5 text-[8px] font-black leading-3 text-[#9a6512] sm:text-[9px]">

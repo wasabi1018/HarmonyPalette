@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Settings2, Sparkles } from "lucide-react";
+import { ChevronRight, ClipboardList, Sparkles } from "lucide-react";
 import { OfficialNotice } from "@/components/official-notice";
 import { ScheduleBrowser } from "@/components/schedule-browser";
 
@@ -40,7 +40,7 @@ export default async function SchedulePage({
         <div className="absolute -right-12 -top-14 h-40 w-40 rounded-full bg-white/70" aria-hidden="true" />
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl"><p className="flex items-center gap-2 text-[11px] font-black tracking-[0.18em] text-pink"><Sparkles size={14} aria-hidden="true" />GREETING &amp; EVENT SCHEDULE</p><h1 className="mt-2 font-display text-[28px] font-semibold leading-tight text-ink sm:text-[38px]">会いたい予定を、すぐ見つけよう。</h1><p className="mt-3 text-[13px] font-bold leading-6 text-ink/60 sm:text-[14px]">日付・イベント・複数のキャラクターから、グリーティングとイベントをまとめて検索できます。</p></div>
-          <Link href="/admin/schedule" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-[12px] font-black text-white shadow-soft"><Settings2 size={15} aria-hidden="true" />予定を追加・削除</Link>
+          <Link href={initialFromDate ? `/plan?date=${initialFromDate}` : "/plan"} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-[12px] font-black text-white shadow-soft"><ClipboardList size={15} aria-hidden="true" />マイプランを開く</Link>
         </div>
       </section>
       <ScheduleBrowser

@@ -6,6 +6,7 @@ import { CalendarDays, Check, ChevronDown, Clock3, Filter, LoaderCircle, MapPin,
 import type { Character } from "@/data/types";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { ScheduleEntryCard } from "@/components/schedule-entry-card";
+import { PlanAddButton } from "@/components/plan-add-button";
 import { sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
 import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
@@ -252,7 +253,7 @@ export function ScheduleBrowser({
         ) : groups.length > 0 ? groups.map(([date, dayEntries]) => (
           <div key={date} className="rounded-[22px] border border-pink/10 bg-[#fffdfd] p-3 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="grid h-11 w-11 place-items-center rounded-[14px] bg-pink text-[12px] font-black text-white shadow-[0_6px_14px_rgba(239,102,143,0.22)]"><CalendarDays size={18} aria-hidden="true" /></span><div><h3 className="text-[15px] font-black text-ink">{formatGroupDate(date)}</h3><p className="text-[10px] font-bold text-ink/40">{date.replaceAll("-", "/")}</p></div></div><span className="text-[11px] font-black text-ink/40">{dayEntries.length}件</span></div>
-            <ScheduleDayGrid entries={dayEntries} characters={characters} selectedCharacters={selectedCharacters} />
+            <ScheduleDayGrid date={date} entries={dayEntries} characters={characters} selectedCharacters={selectedCharacters} />
           </div>
         )) : (
           <div className="rounded-[24px] border border-dashed border-pink/25 bg-white p-10 text-center"><ListEmptyIcon /><p className="mt-3 font-black text-ink">条件に一致する予定がありません</p><button type="button" onClick={reset} className="mt-4 min-h-11 rounded-full bg-pink px-5 text-[12px] font-black text-white">条件をリセット</button></div>
@@ -271,10 +272,12 @@ function ListEmptyIcon() {
 }
 
 function ScheduleDayGrid({
+  date,
   entries,
   characters,
   selectedCharacters,
 }: {
+  date: string;
   entries: ScheduleEntry[];
   characters: Character[];
   selectedCharacters: string[];
@@ -306,13 +309,13 @@ function ScheduleDayGrid({
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {cards.map((card) => card.type === "entry"
-        ? <ScheduleEntryCard key={card.key} entry={card.entry} selectedCharacters={selectedCharacters} />
-        : <FanStudioCharacterCard key={card.key} name={card.name} entries={card.entries} selected={selectedCharacters.includes(card.name)} />)}
+        ? <ScheduleEntryCard key={card.key} entry={card.entry} selectedCharacters={selectedCharacters} planDate={date} />
+        : <FanStudioCharacterCard key={card.key} date={date} name={card.name} entries={card.entries} selected={selectedCharacters.includes(card.name)} />)}
     </div>
   );
 }
 
-function FanStudioCharacterCard({ name, entries, selected }: { name: string; entries: ScheduleEntry[]; selected: boolean }) {
+function FanStudioCharacterCard({ date, name, entries, selected }: { date: string; name: string; entries: ScheduleEntry[]; selected: boolean }) {
   return (
     <article className="rounded-2xl border border-lavender/20 bg-white p-4 shadow-[0_8px_24px_rgba(118,73,86,0.06)] sm:p-5">
       <div className="flex items-center justify-between gap-3">
@@ -336,18 +339,21 @@ function FanStudioCharacterCard({ name, entries, selected }: { name: string; ent
           {entries.map((entry) => {
             const appearance = specialAppearance(entry);
             return (
-              <div key={entry.id} className={`rounded-xl border px-3 py-2.5 ${appearance ? "border-[#efd69f] bg-[#fffaf0]" : "border-lavender/15 bg-[#faf8fc]"}`}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 text-[12px] font-black tabular-nums text-ink">
-                    <Clock3 size={13} className="text-pink" aria-hidden="true" />
-                    {entry.startTime}{entry.endTime ? `–${entry.endTime}` : "〜"}
-                  </span>
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black ${appearance ? "bg-[#f6b83f]/15 text-[#8c5a0c]" : "bg-lavender/10 text-lavender"}`}>
-                    {appearance && <Sun size={10} aria-hidden="true" />}{appearance ?? "通常の姿"}
-                  </span>
+                <div key={entry.id} className={`rounded-xl border px-3 py-2.5 ${appearance ? "border-[#efd69f] bg-[#fffaf0]" : "border-lavender/15 bg-[#faf8fc]"}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex min-w-0 items-center gap-1.5 text-[12px] font-black tabular-nums text-ink">
+                      <Clock3 size={13} className="shrink-0 text-pink" aria-hidden="true" />
+                      {entry.startTime}{entry.endTime ? `–${entry.endTime}` : "〜"}
+                    </span>
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black ${appearance ? "bg-[#f6b83f]/15 text-[#8c5a0c]" : "bg-lavender/10 text-lavender"}`}>
+                        {appearance && <Sun size={10} aria-hidden="true" />}{appearance ?? "通常の姿"}
+                      </span>
+                      <PlanAddButton entry={entry} targetDate={date} variant="compact" />
+                    </div>
+                  </div>
+                  <p className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-ink/45"><MapPin size={11} className="shrink-0" aria-hidden="true" />{shortFanStudioLocation(entry.location)}</p>
                 </div>
-                <p className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-ink/45"><MapPin size={11} className="shrink-0" aria-hidden="true" />{shortFanStudioLocation(entry.location)}</p>
-              </div>
             );
           })}
         </div>
