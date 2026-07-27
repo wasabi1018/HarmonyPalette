@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
-  const authorization = assertImportAuthorization(request);
+  const authorization = await assertImportAuthorization(request);
   if (!authorization.ok) return NextResponse.json({ error: authorization.message }, { status: authorization.status });
 
   try {
@@ -29,4 +29,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "取込処理に失敗しました。" }, { status: 500 });
   }
 }
-

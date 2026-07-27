@@ -8,7 +8,7 @@ type OrderUpdate = {
 };
 
 export async function PATCH(request: Request) {
-  const authorization = assertImportAuthorization(request);
+  const authorization = await assertImportAuthorization(request);
   if (!authorization.ok) {
     return NextResponse.json({ error: authorization.message }, { status: authorization.status });
   }

@@ -47,7 +47,6 @@ type Props = {
     hasPublicKey: boolean;
     hasSecretKey: boolean;
   };
-  hasAdminSecret: boolean;
 };
 
 function todayInJapan() {
@@ -61,11 +60,10 @@ function parseCharacterNames(value: string) {
   return [...new Set(value.split(/[・,、]/).map((name) => name.trim()).filter(Boolean))];
 }
 
-export function OfficialBatchImporter({ config, hasAdminSecret }: Props) {
+export function OfficialBatchImporter({ config }: Props) {
   const today = useMemo(todayInJapan, []);
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
-  const [batchKey, setBatchKey] = useState("");
   const [includeFanStudio, setIncludeFanStudio] = useState(true);
   const [loading, setLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -85,7 +83,7 @@ export function OfficialBatchImporter({ config, hasAdminSecret }: Props) {
     try {
       const response = await fetch("/api/admin/import/official", {
         method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${batchKey}` },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ from, to, includeFanStudio }),
       });
       const body = await response.json();
@@ -113,7 +111,7 @@ export function OfficialBatchImporter({ config, hasAdminSecret }: Props) {
     try {
       const response = await fetch("/api/admin/import/official/publish", {
         method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${batchKey}` },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           runId: result.runId,
           scheduleKeys: selectedSchedules,
@@ -185,21 +183,20 @@ export function OfficialBatchImporter({ config, hasAdminSecret }: Props) {
         <span className={`inline-flex min-h-8 items-center gap-1.5 self-start rounded-full px-3 text-[10px] font-black ${config.canWrite ? "bg-mint/15 text-[#35745f]" : "bg-[#fff4df] text-[#9a6620]"}`}><Database size={13} aria-hidden="true" />{config.canWrite ? "Supabase接続準備済み" : "Supabase秘密鍵が未設定"}</span>
       </div>
 
-      {(!config.hasSecretKey || !hasAdminSecret) && (
+      {!config.hasSecretKey && (
         <div className="mt-4 rounded-xl border border-[#f1d59c] bg-[#fff9ec] px-3 py-3 text-[11px] font-bold leading-5 text-[#76582f]">
-          <p className="flex items-start gap-2"><AlertTriangle size={15} className="mt-0.5 shrink-0" aria-hidden="true" /><span><code>.env.local</code>に{!config.hasSecretKey ? "SUPABASE_SECRET_KEY" : ""}{!config.hasSecretKey && !hasAdminSecret ? " と " : ""}{!hasAdminSecret ? "ADMIN_IMPORT_SECRET" : ""}を設定すると保存・公開できます。</span></p>
+          <p className="flex items-start gap-2"><AlertTriangle size={15} className="mt-0.5 shrink-0" aria-hidden="true" /><span><code>.env.local</code>にSUPABASE_SECRET_KEYを設定すると保存・公開できます。</span></p>
         </div>
       )}
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
         <label><span className="mb-1.5 block text-[11px] font-black text-ink/55">開始日</span><input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className={inputClass} /></label>
         <label><span className="mb-1.5 block text-[11px] font-black text-ink/55">終了日</span><input type="date" min={from} value={to} onChange={(event) => setTo(event.target.value)} className={inputClass} /></label>
-        <label className="md:col-span-2"><span className="mb-1.5 block text-[11px] font-black text-ink/55">管理用バッチキー</span><input type="password" autoComplete="current-password" value={batchKey} onChange={(event) => setBatchKey(event.target.value)} placeholder="ADMIN_IMPORT_SECRET" className={inputClass} /></label>
       </div>
 
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-white px-3 text-[12px] font-bold text-ink/65"><input type="checkbox" checked={includeFanStudio} onChange={(event) => setIncludeFanStudio(event.target.checked)} className="h-4 w-4 accent-pink" />ファンスタジオ画像もOCRする</label>
-        <button type="button" onClick={runImport} disabled={loading || !batchKey || !from || !to} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky px-5 text-[12px] font-black text-white disabled:cursor-not-allowed disabled:opacity-40">{loading ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <CloudDownload size={16} aria-hidden="true" />}{loading ? "公式データを解析中…" : "確認待ちデータを取得"}</button>
+        <button type="button" onClick={runImport} disabled={loading || !from || !to} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky px-5 text-[12px] font-black text-white disabled:cursor-not-allowed disabled:opacity-40">{loading ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <CloudDownload size={16} aria-hidden="true" />}{loading ? "公式データを解析中…" : "確認待ちデータを取得"}</button>
       </div>
       {includeFanStudio && <p className="mt-2 text-[10px] font-bold leading-5 text-ink/40">OCRは時間がかかるため、最初は1日単位での取得をおすすめします。</p>}
 

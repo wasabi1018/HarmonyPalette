@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { assertImportAuthorization, getSupabaseAdminClient } from "@/lib/supabase/server";
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
-  const authorization = assertImportAuthorization(request);
+  const authorization = await assertImportAuthorization(request);
   if (!authorization.ok) return NextResponse.json({ error: authorization.message }, { status: authorization.status });
   const client = getSupabaseAdminClient();
   if (!client) return NextResponse.json({ error: "Supabaseのサーバー用秘密鍵が設定されていません。" }, { status: 503 });

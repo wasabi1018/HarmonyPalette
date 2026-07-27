@@ -78,7 +78,7 @@ function parseOperationEdit(value: unknown): OperationDraftEdit {
 }
 
 export async function POST(request: Request) {
-  const authorization = assertImportAuthorization(request);
+  const authorization = await assertImportAuthorization(request);
   if (!authorization.ok) return NextResponse.json({ error: authorization.message }, { status: authorization.status });
   try {
     const body = await request.json() as {

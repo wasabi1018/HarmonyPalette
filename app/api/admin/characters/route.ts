@@ -85,7 +85,7 @@ async function ensureUnique(
 }
 
 export async function POST(request: Request) {
-  const authorization = assertImportAuthorization(request);
+  const authorization = await assertImportAuthorization(request);
   if (!authorization.ok) return NextResponse.json({ error: authorization.message }, { status: authorization.status });
   const client = getSupabaseAdminClient();
   if (!client) return NextResponse.json({ error: "Supabaseのサーバー用秘密鍵が設定されていません。" }, { status: 503 });
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const authorization = assertImportAuthorization(request);
+  const authorization = await assertImportAuthorization(request);
   if (!authorization.ok) return NextResponse.json({ error: authorization.message }, { status: authorization.status });
   const client = getSupabaseAdminClient();
   if (!client) return NextResponse.json({ error: "Supabaseのサーバー用秘密鍵が設定されていません。" }, { status: 503 });

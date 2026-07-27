@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SiteShell } from "@/components/site-shell";
 
 const siteUrl = "https://harmony-palette.example";
 
@@ -25,5 +24,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="ja" data-scroll-behavior="smooth"><body><SiteShell>{children}</SiteShell></body></html>;
+  return <html lang="ja" data-scroll-behavior="smooth"><body>{children}</body></html>;
 }

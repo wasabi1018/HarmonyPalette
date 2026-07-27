@@ -1,0 +1,80 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import {
+  CalendarDays,
+  ChevronRight,
+  FileText,
+  Settings2,
+  ShieldCheck,
+} from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "管理トップ",
+  description: "Harmony Paletteの管理トップページです。",
+};
+
+export default function AdminPage() {
+  return (
+    <div className="mx-auto max-w-[1120px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="flex flex-col gap-4 border-b border-pink/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="flex items-center gap-2 text-[10px] font-black tracking-[0.18em] text-pink">
+            <Settings2 size={15} aria-hidden="true" />
+            ADMIN HOME
+          </p>
+          <h1 className="mt-2 font-display text-[30px] font-semibold text-ink sm:text-[36px]">
+            管理トップ
+          </h1>
+          <p className="mt-2 text-[13px] font-bold leading-6 text-ink/50">
+            Harmony Paletteの公開情報を、安全に確認・管理できます。
+          </p>
+        </div>
+        <span className="inline-flex w-fit items-center gap-2 rounded-full bg-mint/10 px-3 py-2 text-[10px] font-black text-[#35745f]">
+          <ShieldCheck size={14} aria-hidden="true" />
+          管理者としてログイン中
+        </span>
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <Link
+          href="/admin/schedule"
+          className="group flex items-center gap-4 rounded-[22px] border border-pink/10 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-pink/25"
+        >
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-pink/10 text-pink">
+            <CalendarDays size={22} aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <strong className="block text-[15px] font-black text-ink">
+              スケジュール管理
+            </strong>
+            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
+              イベント、グリーティング、キャラクター台帳を管理
+            </span>
+          </span>
+          <ChevronRight
+            size={18}
+            className="shrink-0 text-pink transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </Link>
+
+        <div className="flex items-center gap-4 rounded-[22px] border border-dashed border-lavender/25 bg-lavender/[0.03] p-5">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-lavender/10 text-lavender">
+            <FileText size={22} aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="inline-flex rounded-full bg-lavender/10 px-2 py-0.5 text-[8px] font-black text-lavender">
+              NEXT PHASE
+            </span>
+            <strong className="mt-1 block text-[15px] font-black text-ink/55">
+              記事管理
+            </strong>
+            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/35">
+              リッチエディターとタグ管理を次フェーズで追加します
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}

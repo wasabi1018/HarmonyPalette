@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownAZ, KeyRound, Pencil, Plus, Save, Search, Trash2, UserRound, X } from "lucide-react";
+import { ArrowDownAZ, Pencil, Plus, Save, Search, Trash2, UserRound, X } from "lucide-react";
 import type { Character } from "@/data/types";
 import { compareCharacters, refreshCharacters, useCharacters } from "@/lib/character-store";
 
@@ -31,9 +31,8 @@ const emptyForm: CharacterForm = {
   displayOrder: 999,
 };
 
-export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: boolean }) {
+export function CharacterOrderManager() {
   const { characters } = useCharacters({ fallbackToSamples: true });
-  const [adminSecret, setAdminSecret] = useState("");
   const [orders, setOrders] = useState<Record<string, number>>({});
   const dirtyOrderIds = useRef(new Set<string>());
   const [query, setQuery] = useState("");
@@ -61,10 +60,7 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
       { ...right, displayOrder: orders[right.id] ?? right.displayOrder ?? 999 },
     )), [characters, orders, query]);
 
-  const authorizationHeaders = () => ({
-    "content-type": "application/json",
-    authorization: `Bearer ${adminSecret}`,
-  });
+  const authorizationHeaders = () => ({ "content-type": "application/json" });
 
   const openCreate = () => {
     setForm(emptyForm);
@@ -96,10 +92,6 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
   const saveCharacter = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFeedback("");
-    if (!adminSecret) {
-      setFeedback("管理用バッチキーを入力してください。");
-      return;
-    }
     setSaving(true);
     try {
       const editing = Boolean(form.id);
@@ -125,10 +117,6 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
   };
 
   const deleteCharacter = async (character: Character) => {
-    if (!adminSecret) {
-      setFeedback("管理用バッチキーを入力してください。");
-      return;
-    }
     const confirmed = window.confirm(
       `「${character.name}」をキャラクター台帳から削除しますか？\n\n過去のスケジュールに保存された出演名は残ります。また、公式データを再取込すると再登録される場合があります。`,
     );
@@ -155,10 +143,6 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
 
   const saveOrders = async () => {
     setFeedback("");
-    if (!adminSecret) {
-      setFeedback("管理用バッチキーを入力してください。");
-      return;
-    }
     setSaving(true);
     try {
       const response = await fetch("/api/admin/characters/order", {
@@ -197,23 +181,9 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-          <label className="sm:w-64">
-            <span className="mb-1.5 flex items-center gap-1.5 text-[11px] font-black text-ink/55">
-              <KeyRound size={13} aria-hidden="true" /> 管理用バッチキー
-            </span>
-            <input
-              type="password"
-              value={adminSecret}
-              onChange={(event) => setAdminSecret(event.target.value)}
-              autoComplete="off"
-              className={inputClass}
-              placeholder={hasAdminSecret ? "ADMIN_IMPORT_SECRET" : "サーバー側の設定が必要です"}
-            />
-          </label>
           <button
             type="button"
             onClick={openCreate}
-            disabled={!hasAdminSecret}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-pink px-4 text-[12px] font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-45"
           >
             <Plus size={15} aria-hidden="true" /> 新規登録
@@ -294,9 +264,8 @@ export function CharacterOrderManager({ hasAdminSecret }: { hasAdminSecret: bool
       </div>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <button type="button" onClick={saveOrders} disabled={saving || !hasAdminSecret || characters.length === 0} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-lavender px-5 text-[12px] font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-45"><ArrowDownAZ size={15} aria-hidden="true" />{saving ? "保存中…" : "表示順をまとめて保存"}</button>
+        <button type="button" onClick={saveOrders} disabled={saving || characters.length === 0} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-lavender px-5 text-[12px] font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-45"><ArrowDownAZ size={15} aria-hidden="true" />{saving ? "保存中…" : "表示順をまとめて保存"}</button>
         {feedback && <p role="status" className="text-[12px] font-bold text-ink/60">{feedback}</p>}
-        {!hasAdminSecret && <p className="text-[11px] font-bold text-red-500">ADMIN_IMPORT_SECRETを設定すると操作できます。</p>}
       </div>
       <p className="mt-3 text-[10px] font-bold leading-5 text-ink/35">キャラクター名を編集しても、すでに保存された予定内の出演名は自動変更しません。必要に応じて予定候補も編集してください。</p>
     </section>

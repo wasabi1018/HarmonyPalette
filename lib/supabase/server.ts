@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { getAdminAccess } from "@/lib/supabase/auth-server";
 
 const DEFAULT_SUPABASE_URL = "https://bnbdwstvrjgmfftmmofx.supabase.co";
 
@@ -44,10 +45,21 @@ export function getSupabaseAdminClient() {
   return key ? createServerClient(key) : null;
 }
 
-export function assertImportAuthorization(request: Request) {
+export async function assertImportAuthorization(request: Request) {
+  const adminAccess = await getAdminAccess();
+  if (adminAccess.ok) {
+    return { ok: true as const };
+  }
+
   const configuredSecret = process.env.ADMIN_IMPORT_SECRET;
   if (!configuredSecret) {
-    return { ok: false as const, status: 503, message: "ADMIN_IMPORT_SECRET が設定されていません。" };
+    return {
+      ok: false as const,
+      status: adminAccess.reason === "unconfigured" ? 503 : 401,
+      message: adminAccess.reason === "unconfigured"
+        ? "管理者認証が設定されていません。"
+        : "管理者としてログインしてください。",
+    };
   }
   const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || "";
   if (supplied !== configuredSecret) {

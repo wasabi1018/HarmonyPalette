@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { type FormEvent, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CalendarDays, Check, CircleAlert, KeyRound, LoaderCircle, Pencil, Plus, RotateCcw, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, CircleAlert, LoaderCircle, Pencil, Plus, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { sampleDate } from "@/data/site-data";
 import { mergeCharactersWithNames, useCharacters } from "@/lib/character-store";
 import {
@@ -22,7 +22,7 @@ import {
 const inputClass = "min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none transition-colors placeholder:text-ink/30 focus:border-pink focus:ring-4 focus:ring-pink/10";
 const labelClass = "mb-1.5 block text-[11px] font-black text-ink/55";
 
-export function ScheduleManager({ hasAdminSecret }: { hasAdminSecret: boolean }) {
+export function ScheduleManager() {
   const { entries } = useScheduleEntries({ fallbackToSamples: true });
   const { characters: catalogCharacters } = useCharacters({ fallbackToSamples: true });
   const characters = useMemo(() => mergeCharactersWithNames(
@@ -44,7 +44,6 @@ export function ScheduleManager({ hasAdminSecret }: { hasAdminSecret: boolean })
   const [feedback, setFeedback] = useState("");
   const [filter, setFilter] = useState<"all" | ScheduleEntryKind>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [adminSecret, setAdminSecret] = useState("");
   const [saving, setSaving] = useState(false);
   const formSectionRef = useRef<HTMLElement>(null);
 
@@ -126,11 +125,10 @@ export function ScheduleManager({ hasAdminSecret }: { hasAdminSecret: boolean })
     setFeedback("");
     try {
       if (editingId?.startsWith("supabase:")) {
-        if (!adminSecret) throw new Error("管理用バッチキーを入力してください。");
         const databaseId = editingId.slice("supabase:".length);
         const response = await fetch(`/api/admin/schedules/${encodeURIComponent(databaseId)}`, {
           method: "PATCH",
-          headers: { "content-type": "application/json", authorization: `Bearer ${adminSecret}` },
+          headers: { "content-type": "application/json" },
           body: JSON.stringify({
             ...entryValues,
             characters: selectedCharacters.map((character) => ({ id: character.id, name: character.name })),
@@ -218,10 +216,8 @@ export function ScheduleManager({ hasAdminSecret }: { hasAdminSecret: boolean })
             <label><span className={labelClass}>公式情報URL</span><input type="url" value={officialUrl} onChange={(event) => setOfficialUrl(event.target.value)} placeholder="https://..." className={inputClass} /></label>
           </div>
 
-          {editingId?.startsWith("supabase:") && <label><span className={`${labelClass} flex items-center gap-1.5`}><KeyRound size={13} aria-hidden="true" />管理用バッチキー <span className="text-pink">必須</span></span><input type="password" autoComplete="current-password" value={adminSecret} onChange={(event) => setAdminSecret(event.target.value)} placeholder={hasAdminSecret ? "ADMIN_IMPORT_SECRET" : "サーバー側の設定が必要です"} className={inputClass} /></label>}
-
           <div className="flex flex-col gap-2 sm:flex-row">
-            <button type="submit" disabled={saving || Boolean(editingId?.startsWith("supabase:") && (!hasAdminSecret || !adminSecret))} className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-pink px-5 text-[13px] font-black text-white shadow-[0_8px_18px_rgba(239,102,143,0.24)] hover:bg-[#df587f] disabled:cursor-not-allowed disabled:opacity-45">{saving ? <LoaderCircle size={17} className="animate-spin" aria-hidden="true" /> : editingId ? <Save size={17} aria-hidden="true" /> : <Plus size={17} aria-hidden="true" />}{saving ? "保存中…" : editingId ? "変更を保存する" : "予定を追加する"}</button>
+            <button type="submit" disabled={saving} className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-pink px-5 text-[13px] font-black text-white shadow-[0_8px_18px_rgba(239,102,143,0.24)] hover:bg-[#df587f] disabled:cursor-not-allowed disabled:opacity-45">{saving ? <LoaderCircle size={17} className="animate-spin" aria-hidden="true" /> : editingId ? <Save size={17} aria-hidden="true" /> : <Plus size={17} aria-hidden="true" />}{saving ? "保存中…" : editingId ? "変更を保存する" : "予定を追加する"}</button>
             {editingId && <button type="button" onClick={resetForm} disabled={saving} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-ink/10 px-5 text-[12px] font-black text-ink/55 hover:border-pink/30 hover:text-pink"><X size={15} aria-hidden="true" />編集をキャンセル</button>}
           </div>
           {feedback && <p role="status" className="rounded-xl bg-mint/10 px-3 py-2.5 text-[12px] font-bold text-[#35745f]"><Save size={14} className="mr-1.5 inline" aria-hidden="true" />{feedback}</p>}
