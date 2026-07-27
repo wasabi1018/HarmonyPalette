@@ -28,6 +28,130 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   outline-offset: 3px;
 }
 
+textarea:focus-visible {
+  outline: 3px solid rgba(235, 110, 152, 0.24);
+  outline-offset: 2px;
+}
+
 ::selection { background: rgba(235, 110, 152, 0.22); }
 
 .line-clamp-1 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; }
+
+.article-editor-content {
+  min-height: 420px;
+  padding: 22px 20px 34px;
+  color: #3e3540;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.9;
+  outline: none;
+}
+
+.article-editor-content p.is-editor-empty:first-child::before {
+  float: left;
+  height: 0;
+  color: rgba(62, 53, 64, 0.28);
+  content: attr(data-placeholder);
+  pointer-events: none;
+}
+
+.article-editor-content h2,
+.article-prose h2 {
+  margin: 2.2em 0 0.8em;
+  border-left: 4px solid #eb6e98;
+  padding-left: 0.8em;
+  color: #3e3540;
+  font-size: 1.35em;
+  font-weight: 900;
+  line-height: 1.55;
+}
+
+.article-editor-content h3,
+.article-prose h3 {
+  margin: 1.9em 0 0.7em;
+  color: #3e3540;
+  font-size: 1.18em;
+  font-weight: 900;
+  line-height: 1.6;
+}
+
+.article-editor-content h4,
+.article-prose h4 {
+  margin: 1.6em 0 0.6em;
+  color: #3e3540;
+  font-size: 1.05em;
+  font-weight: 900;
+}
+
+.article-editor-content p,
+.article-prose p {
+  margin: 0.85em 0;
+}
+
+.article-editor-content ul,
+.article-editor-content ol,
+.article-prose ul,
+.article-prose ol {
+  margin: 1em 0;
+  padding-left: 1.6em;
+}
+
+.article-editor-content ul,
+.article-prose ul { list-style: disc; }
+.article-editor-content ol,
+.article-prose ol { list-style: decimal; }
+
+.article-editor-content blockquote,
+.article-prose blockquote {
+  margin: 1.5em 0;
+  border-left: 3px solid rgba(235, 110, 152, 0.42);
+  border-radius: 0 12px 12px 0;
+  background: rgba(235, 110, 152, 0.05);
+  padding: 0.7em 1.1em;
+  color: rgba(62, 53, 64, 0.72);
+}
+
+.article-editor-content a,
+.article-prose a {
+  color: #e65f8b;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: rgba(230, 95, 139, 0.3);
+  text-underline-offset: 3px;
+}
+
+.article-editor-content img,
+.article-prose img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.7em 0;
+  border-radius: 18px;
+}
+
+.article-editor-content hr,
+.article-prose hr {
+  margin: 2em 0;
+  border: 0;
+  border-top: 1px solid rgba(235, 110, 152, 0.18);
+}
+
+.article-prose {
+  color: #3e3540;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 2;
+}
+
+@media (max-width: 640px) {
+  .article-editor-content {
+    min-height: 360px;
+    padding: 18px 15px 28px;
+    font-size: 13px;
+  }
+
+  .article-prose {
+    font-size: 14px;
+    line-height: 1.9;
+  }
+}

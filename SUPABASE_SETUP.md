@@ -7,8 +7,13 @@ Supabase is the canonical store for approved schedules and attraction operation 
 Open the Supabase SQL Editor for the project and run:
 
 - `supabase/migrations/202607220001_schedule_import.sql`
+- `supabase/migrations/202607220002_character_display_order.sql`
+- `supabase/migrations/202607270001_articles.sql`
 
-This creates the import history, source documents, schedule versions, character relations, attraction operation data, public read policies, and the private source-document bucket.
+This creates the import history, source documents, schedule versions, character
+relations, attraction operation data, article and tag tables, public read
+policies, the private source-document bucket, and the public `article-images`
+bucket used by the article editor.
 
 ## 2. Configure server-only secrets
 
@@ -52,7 +57,19 @@ The command-line importer is also available:
 npm.cmd run import:official -- --from 2026-07-22 --to 2026-07-22 --fanstudio --persist
 ```
 
-## 5. Scheduled import
+## 5. Article publishing
+
+After applying the articles migration, sign in and open `/admin/articles`.
+
+- Create or edit article text with headings, lists, quotes, links, underline,
+  bold, italic, and font colors.
+- Upload a cover image or insert images into the body. Images are stored in the
+  public `article-images` bucket and limited to 10MB each.
+- Assign tags, preview the unsaved article, then save it as a draft or publish
+  it.
+- Published articles appear under `/articles`; readers can filter them by tag.
+
+## 6. Scheduled import
 
 `vercel.json` calls `/api/cron/import-schedules` daily at 21:00 UTC (06:00 JST). The route archives and saves candidates as drafts. With the recommended `AUTO_PUBLISH_IMPORTS=false`, an administrator must review and publish them.
 
@@ -62,7 +79,7 @@ For non-Vercel hosting, call the same route from an external scheduler with:
 Authorization: Bearer <CRON_SECRET>
 ```
 
-## 6. Read APIs
+## 7. Read APIs
 
 - Published schedules: `/api/schedules`
 - Published attraction operations: `/api/operations?date=YYYY-MM-DD`

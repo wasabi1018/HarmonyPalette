@@ -22,12 +22,9 @@ type AdminShellProps = {
 
 const navigation = [
   { href: "/admin", label: "管理トップ", icon: Home, exact: true },
+  { href: "/admin/articles", label: "記事", icon: FileText, exact: false },
+  { href: "/admin/tags", label: "タグ", icon: Tag, exact: false },
   { href: "/admin/schedule", label: "スケジュール", icon: CalendarDays, exact: false },
-] as const;
-
-const futureNavigation = [
-  { label: "記事", icon: FileText },
-  { label: "タグ", icon: Tag },
 ] as const;
 
 function BrandLogo() {
@@ -84,22 +81,6 @@ function SidebarContent({
           );
         })}
 
-        <div className="px-3 pb-1 pt-5 text-[9px] font-black tracking-[0.16em] text-ink/30">
-          CONTENT
-        </div>
-        {futureNavigation.map(({ label, icon: Icon }) => (
-          <div
-            key={label}
-            aria-disabled="true"
-            className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-[13px] font-bold text-ink/30"
-          >
-            <Icon size={18} aria-hidden="true" />
-            <span className="flex-1">{label}</span>
-            <span className="rounded-full bg-lavender/10 px-2 py-0.5 text-[8px] font-black text-lavender">
-              次フェーズ
-            </span>
-          </div>
-        ))}
       </nav>
 
       <div className="border-t border-pink/10 p-3">

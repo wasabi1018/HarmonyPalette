@@ -58,22 +58,27 @@ export default function AdminPage() {
           />
         </Link>
 
-        <div className="flex items-center gap-4 rounded-[22px] border border-dashed border-lavender/25 bg-lavender/[0.03] p-5">
+        <Link
+          href="/admin/articles"
+          className="group flex items-center gap-4 rounded-[22px] border border-lavender/15 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-lavender/30"
+        >
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-lavender/10 text-lavender">
             <FileText size={22} aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="inline-flex rounded-full bg-lavender/10 px-2 py-0.5 text-[8px] font-black text-lavender">
-              NEXT PHASE
-            </span>
-            <strong className="mt-1 block text-[15px] font-black text-ink/55">
+            <strong className="block text-[15px] font-black text-ink">
               記事管理
             </strong>
-            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/35">
-              リッチエディターとタグ管理を次フェーズで追加します
+            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
+              記事の作成、画像・リンク編集、プレビュー、タグ管理
             </span>
           </span>
-        </div>
+          <ChevronRight
+            size={18}
+            className="shrink-0 text-lavender transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </Link>
       </div>
     </div>
   );

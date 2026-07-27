@@ -1,51 +1,59 @@
-# Phase 1 Admin Shell — Design QA
+# Phase 2 Article Management — Design QA
 
 ## Scope
 
-- Phase 1 only: public/admin shell separation, admin login, protected admin routes, responsive admin navigation.
-- Article editor, preview, publishing controls, and tag management are intentionally deferred to later phases.
-- Because the selected visual target shows the future article editor, this QA compares the shared admin shell (logo, sidebar, typography, colors, spacing, borders, and responsive behavior) rather than treating the deferred editor content as a mismatch.
+- Article list, create/edit screen, rich-text editing, preview, draft/publish controls, image insertion, and tag management.
+- Public article list/detail pages and tag filtering.
+- The selected visual target is the Sidecar Studio desktop editor concept.
 
 ## Visual truth and evidence
 
-- Source visual truth: `C:/Harmony Palette/audit/article-admin-concepts/01-sidecar-studio.png`
-- Final desktop implementation: `C:/Harmony Palette/audit/phase1-admin-shell-desktop-final.png`
-- Side-by-side comparison: `C:/Harmony Palette/audit/phase1-admin-shell-comparison-final.png`
-- Final mobile menu: `C:/Harmony Palette/audit/phase1-admin-shell-mobile-menu-final.png`
-- Login desktop: `C:/Harmony Palette/audit/phase1-admin-login-desktop.png`
-- Login mobile: `C:/Harmony Palette/audit/phase1-admin-login-mobile.png`
+- Source: `C:/Harmony Palette/audit/article-admin-concepts/01-sidecar-studio.png`
+- Initial implementation: `C:/Harmony Palette/audit/phase2-article-editor-desktop.png`
+- Final implementation: `C:/Harmony Palette/audit/phase2-article-editor-desktop-v2.png`
+- Side-by-side comparison: `C:/Harmony Palette/audit/phase2-article-editor-comparison.png`
+- Full-screen preview: `C:/Harmony Palette/audit/phase2-article-preview-desktop.png`
+- Generated QA cover: `C:/Harmony Palette/audit/phase2-demo-article-cover.png`
 
 ## Capture details
 
-| Item | CSS viewport | Pixel dimensions | Density |
-| --- | --- | --- | --- |
-| Source visual | normalized to 1440 × 1024 for comparison | 1487 × 1058 original | source raster |
-| Desktop implementation | 1440 × 1024 | 1440 × 1024 | 1× |
-| Mobile implementation | 390 × 844 | 390 × 844 | 1× |
+| Item | CSS viewport | Pixel dimensions | Density | State |
+| --- | --- | --- | --- | --- |
+| Source | 1487 × 1058 | 1487 × 1058 | source raster | editor, link panel open |
+| Final implementation | 1487 × 1058 | 1472 × 1048 browser content | 1× | editor, default controls |
+| Preview | 1487 × 1058 | 1472 × 1048 browser content | 1× | full-screen preview |
+
+The full desktop comparison remains readable at source resolution, so a separate cropped comparison was not necessary.
 
 ## Comparison history
 
-1. Initial comparison found the sidebar brand header too tall because it contained an extra `ADMIN CONSOLE` label. The label was removed.
-2. Follow-up comparison found the logo and divider still larger/lower than the source. The logo crop was reduced and centered, and the header padding was tightened.
-3. Final combined comparison confirms the Phase 1 shell now follows the selected direction: restrained white/pink palette, slim fixed navigation, fine dividers, compact labels, rounded cards, and low-contrast secondary states.
+1. The first implementation had a cover image that was too tall and did not repeat the cover thumbnail in the publishing inspector. Both were P2 fidelity findings.
+2. The cover was changed to the source-like 4:1 treatment and a compact inspector thumbnail was added.
+3. The post-fix comparison confirms the source hierarchy: slim sidebar, wide writing canvas, narrow inspector, restrained pink accents, low-contrast dividers, rounded controls, and visible content hierarchy.
 
-## Responsive and interaction checks
+## Functional checks
 
-- Desktop admin shell: 1440 × 1024, no horizontal overflow.
-- Mobile admin shell: 390 × 844, `scrollWidth` equals `innerWidth`.
-- Mobile menu opens from the menu button and closes from the backdrop.
-- Unauthenticated `/admin` redirects to `/admin/login?error=signin`.
-- Invalid login credentials produce an inline error without a broken layout.
-- Public `/` retains the public navigation and does not render the admin shell.
-- Unauthenticated admin API mutation returns HTTP 401.
-- Browser developer log: 0 errors or warnings during final shell QA.
+- Preview opens as a full-screen article view and closes cleanly.
+- Tag search and selection work, including adding a filtered tag.
+- Draft save updates the saved/dirty state.
+- Link insertion applies the entered URL to selected text.
+- Text color applies the selected palette color to editor content.
+- The generated demo cover renders sharply at the intended aspect ratio.
+- Browser console showed no errors or warnings during the completed editor checks.
+- Image upload API and editor integration compile successfully. The final browser file-chooser action could not be completed because local-browser file upload was blocked by the browser security policy.
+- Responsive layouts are implemented in CSS. An additional live mobile capture was not attempted after that browser policy block; this does not affect the desktop visual target.
 
 ## Severity review
 
 - P0: none.
 - P1: none.
-- P2: none remaining within Phase 1 scope.
-- P3: the dashboard content differs from the article-editor content in the source by design; the editor and preview experience belong to the next implementation phase.
+- P2: none remaining.
+- P3: implementation typography is slightly denser than the concept; the concept happens to show its link panel open while the final default-state capture keeps contextual panels closed.
+
+## Image quality and provenance
+
+- The QA cover is an original, generated pastel amusement-park illustration without trademarks, recognizable characters, or text.
+- The image is used at its native wide composition and is not visibly stretched or pixelated.
 
 ## Final result
 
