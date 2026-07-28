@@ -9,10 +9,12 @@ import {
   getPublishedArticle,
   listRelatedArticles,
 } from "@/lib/articles/repository";
+import { prepareArticleContent } from "@/lib/articles/publishing";
 
 export const dynamic = "force-dynamic";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://harmony-palette.example";
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://harmony-palette.example")
+  .replace(/\/+$/, "");
 
 export async function generateMetadata({
   params,
@@ -29,7 +31,13 @@ export async function generateMetadata({
     return {
       title,
       description,
-      alternates: { canonical: url },
+      alternates: {
+        canonical: url,
+        types: {
+          "application/rss+xml": "/articles/feed.xml",
+          "application/feed+json": "/articles/feed.json",
+        },
+      },
       openGraph: {
         type: "article",
         title,
@@ -76,6 +84,7 @@ export default async function ArticleDetailPage({
     relatedArticles = [];
   }
   const articleUrl = `${siteUrl}/articles/${article.slug}`;
+  const preparedContent = prepareArticleContent(article.contentHtml);
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -107,11 +116,14 @@ export default async function ArticleDetailPage({
         title={article.title}
         excerpt={article.excerpt}
         coverImageUrl={article.coverImageUrl}
-        contentHtml={article.contentHtml}
+        contentHtml={preparedContent.html}
         tags={article.tags}
         publishedAt={article.publishedAt || article.updatedAt}
+        headings={preparedContent.headings}
+        readingTimeMinutes={preparedContent.readingTimeMinutes}
+        articleUrl={articleUrl}
       />
-      <div className="mx-auto max-w-[920px] px-4 pb-12 sm:px-7">
+      <div className="article-print-hidden mx-auto max-w-[920px] px-4 pb-12 sm:px-7">
         {relatedArticles.length > 0 && (
           <section className="mb-10 border-t border-pink/10 pt-9">
             <p className="text-[9px] font-black tracking-[0.16em] text-pink">RELATED ARTICLES</p>

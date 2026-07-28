@@ -143,6 +143,12 @@ textarea:focus-visible {
   line-height: 2;
 }
 
+.article-prose h2,
+.article-prose h3,
+.article-prose h4 {
+  scroll-margin-top: 6rem;
+}
+
 @media (max-width: 640px) {
   .article-editor-content {
     min-height: 360px;
@@ -153,5 +159,36 @@ textarea:focus-visible {
   .article-prose {
     font-size: 14px;
     line-height: 1.9;
+  }
+}
+
+@media print {
+  @page { margin: 16mm; }
+
+  body { background: #fff; }
+
+  .article-print-hidden,
+  body > header,
+  body > nav,
+  body > footer {
+    display: none !important;
+  }
+
+  .article-prose {
+    max-width: none;
+    color: #000;
+    font-size: 11pt;
+    line-height: 1.75;
+  }
+
+  .article-prose a {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  .article-prose img {
+    break-inside: avoid;
+    max-height: 220mm;
+    object-fit: contain;
   }
 }

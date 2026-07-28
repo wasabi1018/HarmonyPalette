@@ -94,6 +94,9 @@ After applying the articles migration, sign in and open `/admin/articles`.
   review popular articles, and export the aggregate data as CSV.
 - Readers can combine text search and tag filters on `/articles`, move through
   paginated results, and discover related articles on each detail page.
+- Readers can use an automatically generated table of contents, reading-time
+  estimate, share/copy/print controls, RSS, and JSON Feed. These delivery
+  features do not require an additional database migration.
 - Published articles appear under `/articles`; readers can filter them by tag.
 
 ## 6. Scheduled import

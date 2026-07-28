@@ -1,6 +1,8 @@
 "use client";
 
-import { CalendarDays, X } from "lucide-react";
+import { CalendarDays, Clock3, List, X } from "lucide-react";
+import { ArticleShareActions } from "@/components/article-share-actions";
+import type { ArticleHeading } from "@/lib/articles/publishing";
 import type { ArticleTag } from "@/lib/articles/types";
 
 type ArticlePreviewProps = {
@@ -10,6 +12,9 @@ type ArticlePreviewProps = {
   contentHtml: string;
   tags: ArticleTag[];
   publishedAt: string;
+  headings?: ArticleHeading[];
+  readingTimeMinutes?: number;
+  articleUrl?: string;
   onClose?: () => void;
 };
 
@@ -30,6 +35,9 @@ export function ArticlePreview({
   contentHtml,
   tags,
   publishedAt,
+  headings = [],
+  readingTimeMinutes,
+  articleUrl,
   onClose,
 }: ArticlePreviewProps) {
   return (
@@ -72,10 +80,18 @@ export function ArticlePreview({
               {excerpt}
             </p>
           )}
-          <p className="mt-5 inline-flex items-center gap-2 text-[10px] font-bold text-ink/35">
-            <CalendarDays size={13} aria-hidden="true" />
-            {formatDate(publishedAt)}
-          </p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] font-bold text-ink/35">
+            <span className="inline-flex items-center gap-2">
+              <CalendarDays size={13} aria-hidden="true" />
+              {formatDate(publishedAt)}
+            </span>
+            {readingTimeMinutes && (
+              <span className="inline-flex items-center gap-2">
+                <Clock3 size={13} aria-hidden="true" />
+                約{readingTimeMinutes}分で読めます
+              </span>
+            )}
+          </div>
         </div>
 
         {coverImageUrl && (
@@ -89,10 +105,38 @@ export function ArticlePreview({
           </div>
         )}
 
-        <div
-          className="article-prose mx-auto mt-10 max-w-[760px]"
-          dangerouslySetInnerHTML={{ __html: contentHtml || "<p></p>" }}
-        />
+        <div className="mx-auto max-w-[760px]">
+          {headings.length >= 2 && (
+            <nav
+              aria-label="この記事の目次"
+              className="article-print-hidden mt-9 rounded-2xl border border-pink/10 bg-white p-5 shadow-soft sm:p-6"
+            >
+              <p className="flex items-center gap-2 text-[11px] font-black text-ink">
+                <List size={16} className="text-pink" aria-hidden="true" />
+                この記事の目次
+              </p>
+              <ol className="mt-4 space-y-2.5">
+                {headings.map((heading) => (
+                  <li key={heading.id} className={heading.level > 2 ? "pl-4" : ""}>
+                    <a
+                      href={`#${heading.id}`}
+                      className="text-[11px] font-bold leading-5 text-ink/55 transition hover:text-pink"
+                    >
+                      {heading.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
+          <div
+            className="article-prose mt-10 scroll-mt-24"
+            dangerouslySetInnerHTML={{ __html: contentHtml || "<p></p>" }}
+          />
+          {articleUrl && (
+            <ArticleShareActions title={title} canonicalUrl={articleUrl} />
+          )}
+        </div>
       </div>
     </article>
   );

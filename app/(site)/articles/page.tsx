@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BookOpen,
   CalendarDays,
+  Rss,
   Search,
   X,
 } from "lucide-react";
@@ -25,7 +26,13 @@ export async function generateMetadata({
   return {
     title: q ? `「${q.slice(0, 40)}」の記事検索` : "最新記事",
     description: "ハーモニーランドのおでかけ準備や楽しみ方を紹介する記事ページです。",
-    alternates: { canonical: "/articles" },
+    alternates: {
+      canonical: "/articles",
+      types: {
+        "application/rss+xml": "/articles/feed.xml",
+        "application/feed+json": "/articles/feed.json",
+      },
+    },
     robots: filtered ? { index: false, follow: true } : undefined,
   };
 }
@@ -112,6 +119,15 @@ export default async function ArticlesPage({
         description="来園準備や楽しみ方、周辺旅行のヒントを、やさしく読みやすくまとめます。"
         tone="pink"
       />
+      <div className="mt-4 flex justify-end">
+        <Link
+          href="/articles/feed.xml"
+          className="inline-flex items-center gap-2 text-[10px] font-black text-ink/35 transition hover:text-pink"
+        >
+          <Rss size={13} aria-hidden="true" />
+          RSSで新着記事を購読
+        </Link>
+      </div>
 
       <form action="/articles" className="mt-7 flex flex-col gap-2 sm:flex-row">
         {tag && <input type="hidden" name="tag" value={tag} />}

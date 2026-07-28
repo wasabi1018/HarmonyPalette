@@ -10,7 +10,13 @@ export const metadata: Metadata = {
     template: "%s | Harmony Palette",
   },
   description: "ハーモニーランドの今日会えるキャラクター、グリーティング予定、イベント、周辺情報を見つけやすく整理した非公式ファンサイトです。",
-  alternates: { canonical: "/" },
+  alternates: {
+    canonical: "/",
+    types: {
+      "application/rss+xml": "/articles/feed.xml",
+      "application/feed+json": "/articles/feed.json",
+    },
+  },
   openGraph: {
     title: "Harmony Palette | ハーモニーランドの情報サイト",
     description: "今日会えるキャラクターから周辺旅行まで、ハーモニーランドをもっと楽しむための情報サイト。",
