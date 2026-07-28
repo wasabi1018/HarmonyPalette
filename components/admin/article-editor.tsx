@@ -169,6 +169,8 @@ export function ArticleEditor({
   const [restoringRevisionId, setRestoringRevisionId] = useState("");
   const coverInputRef = useRef<HTMLInputElement>(null);
   const bodyInputRef = useRef<HTMLInputElement>(null);
+  const autoSaveRef = useRef<() => void>(() => {});
+  const changeVersionRef = useRef(0);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -203,6 +205,7 @@ export function ArticleEditor({
       },
     },
     onUpdate: () => {
+      changeVersionRef.current += 1;
       setSaveState("dirty");
       setMessage("");
     },
@@ -231,7 +234,18 @@ export function ArticleEditor({
     return () => window.removeEventListener("keydown", close);
   }, [previewOpen]);
 
+  useEffect(() => {
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      if (saveState !== "dirty" && saveState !== "saving") return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [saveState]);
+
   const markDirty = () => {
+    changeVersionRef.current += 1;
     setSaveState("dirty");
     setMessage("");
   };
@@ -291,7 +305,7 @@ export function ArticleEditor({
     }
   };
 
-  const save = async (nextStatus: ArticleStatus) => {
+  const save = async (nextStatus: ArticleStatus, isAutoSave = false) => {
     if (!title.trim()) {
       setMessage("タイトルを入力してください。");
       setSaveState("error");
@@ -316,6 +330,7 @@ export function ArticleEditor({
       }
     }
 
+    const saveVersion = changeVersionRef.current;
     setSaveState("saving");
     setMessage("");
     const payload = {
@@ -335,9 +350,14 @@ export function ArticleEditor({
     try {
       if (demoMode) {
         await new Promise((resolve) => window.setTimeout(resolve, 350));
-        setStatus(nextStatus);
-        setSaveState("saved");
-        setMessage(savedMessage(nextStatus));
+        if (changeVersionRef.current === saveVersion) {
+          setStatus(nextStatus);
+          setSaveState("saved");
+          setMessage(isAutoSave ? "下書きを自動保存しました。" : savedMessage(nextStatus));
+        } else {
+          setSaveState("dirty");
+          setMessage("保存後に追加の変更があります。");
+        }
         return;
       }
 
@@ -359,10 +379,15 @@ export function ArticleEditor({
 
       const created = !articleId;
       setArticleId(data.article.id);
-      setStatus(data.article.status);
-      setPublishedAt(localDateTime(data.article.publishedAt));
-      setSaveState("saved");
-      setMessage(savedMessage(data.article.status));
+      if (changeVersionRef.current === saveVersion) {
+        setStatus(data.article.status);
+        setPublishedAt(localDateTime(data.article.publishedAt));
+        setSaveState("saved");
+        setMessage(isAutoSave ? "下書きを自動保存しました。" : savedMessage(data.article.status));
+      } else {
+        setSaveState("dirty");
+        setMessage("保存後に追加の変更があります。");
+      }
       if (created) {
         router.replace(`/admin/articles/${data.article.id}`);
       } else {
@@ -370,12 +395,30 @@ export function ArticleEditor({
         const revisionData = await revisionResponse.json() as { revisions?: ArticleRevision[] };
         if (revisionResponse.ok && revisionData.revisions) setRevisions(revisionData.revisions);
       }
-      router.refresh();
+      if (!isAutoSave) router.refresh();
     } catch (error) {
       setSaveState("error");
       setMessage(error instanceof Error ? error.message : "記事の保存に失敗しました。");
     }
   };
+
+  autoSaveRef.current = () => {
+    void save("draft", true);
+  };
+
+  useEffect(() => {
+    if (
+      !articleId
+      || status !== "draft"
+      || saveState !== "dirty"
+      || setupError
+      || !title.trim()
+      || !editor
+      || editor.isEmpty
+    ) return;
+    const timer = window.setTimeout(() => autoSaveRef.current(), 15_000);
+    return () => window.clearTimeout(timer);
+  }, [articleId, editor, saveState, setupError, status, title]);
 
   const restoreRevision = async (revision: ArticleRevision) => {
     if (!articleId) return;

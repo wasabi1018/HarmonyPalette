@@ -18,6 +18,7 @@ export type ArticleSummary = {
   coverImageUrl: string;
   status: ArticleStatus;
   publishedAt: string | null;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
   tags: ArticleTag[];

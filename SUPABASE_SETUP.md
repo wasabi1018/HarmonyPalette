@@ -10,12 +10,15 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/202607220002_character_display_order.sql`
 - `supabase/migrations/202607270001_articles.sql`
 - `supabase/migrations/202607280001_article_operations.sql`
+- `supabase/migrations/202607280002_article_trash.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read
 policies, the private source-document bucket, and the public `article-images`
 bucket used by the article editor. The final migration adds scheduled
 publication, SEO fields, and article revision history.
+The trash migration adds recoverable deletion and ensures removed articles are
+excluded from public reads.
 
 ## 2. Configure server-only secrets
 
@@ -73,6 +76,9 @@ After applying the articles migration, sign in and open `/admin/articles`.
 - Choose **予約公開** and a future date to publish through the scheduled batch.
 - Configure the search title and description, and restore an earlier saved
   revision when needed.
+- Existing drafts are automatically saved after 15 seconds of unsaved editing.
+- Duplicate an article as a new draft, or move an article to the trash and
+  restore it later. Permanent deletion is only available inside the trash.
 - Published articles appear under `/articles`; readers can filter them by tag.
 
 ## 6. Scheduled import

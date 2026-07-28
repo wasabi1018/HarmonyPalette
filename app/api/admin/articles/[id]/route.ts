@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
-  deleteArticle,
   getAdminArticle,
+  trashArticle,
   updateArticle,
 } from "@/lib/articles/repository";
 import { isUuid, parseArticleInput } from "@/lib/articles/validation";
@@ -91,10 +91,11 @@ export async function DELETE(
   if (!isUuid(id)) return NextResponse.json({ error: "記事IDが正しくありません。" }, { status: 400 });
 
   try {
-    return await deleteArticle(id)
+    const access = await getAdminAccess();
+    return await trashArticle(id, access.ok ? access.user.id : null)
       ? NextResponse.json({ ok: true })
       : NextResponse.json({ error: "記事が見つかりません。" }, { status: 404 });
   } catch (error) {
-    return errorResponse(error, "記事の削除に失敗しました。");
+    return errorResponse(error, "記事をゴミ箱へ移動できませんでした。");
   }
 }

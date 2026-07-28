@@ -58,6 +58,7 @@ function mapSummary(row: Row): ArticleSummary {
     coverImageUrl: asText(row.cover_image_url),
     status,
     publishedAt: row.published_at ? asText(row.published_at) : null,
+    deletedAt: row.deleted_at ? asText(row.deleted_at) : null,
     createdAt: asText(row.created_at),
     updatedAt: asText(row.updated_at),
     tags: extractTags(row),
@@ -88,6 +89,7 @@ const articleSelection = `
   cover_image_url,
   status,
   published_at,
+  deleted_at,
   created_at,
   updated_at,
   article_tags (
@@ -179,6 +181,7 @@ export async function listAdminArticles() {
   const { data, error } = await client
     .from("articles")
     .select(articleSelection)
+    .is("deleted_at", null)
     .order("updated_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []).map((row) => mapSummary(row as Row));
@@ -190,6 +193,7 @@ export async function getAdminArticle(id: string) {
     .from("articles")
     .select(articleSelection)
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle();
   if (error) throw new Error(error.message);
   return data ? mapRecord(data as Row) : null;
@@ -197,15 +201,28 @@ export async function getAdminArticle(id: string) {
 
 export async function listTags() {
   const client = requireAdminClient();
-  const [{ data: tags, error: tagsError }, { data: relations, error: relationsError }] = await Promise.all([
+  const [
+    { data: tags, error: tagsError },
+    { data: relations, error: relationsError },
+    { data: activeArticles, error: articlesError },
+  ] = await Promise.all([
     client.from("tags").select("id,name,slug,color,created_at,updated_at").order("name"),
-    client.from("article_tags").select("tag_id"),
+    client.from("article_tags").select("tag_id,article_id"),
+    client.from("articles").select("id").is("deleted_at", null),
   ]);
-  if (tagsError || relationsError) {
-    throw new Error(tagsError?.message || relationsError?.message || "タグの取得に失敗しました。");
+  if (tagsError || relationsError || articlesError) {
+    throw new Error(
+      tagsError?.message
+      || relationsError?.message
+      || articlesError?.message
+      || "タグの取得に失敗しました。",
+    );
   }
+  const activeArticleIds = new Set((activeArticles ?? []).map((article) => asText((article as Row).id)));
   const counts = new Map<string, number>();
   (relations ?? []).forEach((relation) => {
+    const articleId = asText((relation as Row).article_id);
+    if (!activeArticleIds.has(articleId)) return;
     const tagId = asText((relation as Row).tag_id);
     counts.set(tagId, (counts.get(tagId) || 0) + 1);
   });
@@ -335,6 +352,7 @@ export async function publishDueArticles(now = new Date()) {
     .from("articles")
     .update({ status: "published" })
     .eq("status", "scheduled")
+    .is("deleted_at", null)
     .lte("published_at", now.toISOString())
     .select("id");
   if (error) throw new Error(error.message);
@@ -343,16 +361,114 @@ export async function publishDueArticles(now = new Date()) {
   return { publishedCount: articleIds.length, articleIds };
 }
 
-export async function deleteArticle(id: string) {
+export async function trashArticle(id: string, userId: string | null) {
+  const client = requireAdminClient();
+  const { data, error } = await client
+    .from("articles")
+    .update({
+      status: "draft",
+      published_at: null,
+      deleted_at: new Date().toISOString(),
+      deleted_by: userId,
+      updated_by: userId,
+    })
+    .eq("id", id)
+    .is("deleted_at", null)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return Boolean(data);
+}
+
+export async function listTrashedArticles() {
+  const client = requireAdminClient();
+  const { data, error } = await client
+    .from("articles")
+    .select(articleSelection)
+    .not("deleted_at", "is", null)
+    .order("deleted_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => mapSummary(row as Row));
+}
+
+export async function restoreTrashedArticle(id: string, userId: string | null) {
+  const client = requireAdminClient();
+  const { data, error } = await client
+    .from("articles")
+    .update({
+      status: "draft",
+      published_at: null,
+      deleted_at: null,
+      deleted_by: null,
+      updated_by: userId,
+    })
+    .eq("id", id)
+    .not("deleted_at", "is", null)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  await createArticleRevision(client, id, userId);
+  return getAdminArticle(id);
+}
+
+export async function permanentlyDeleteArticle(id: string) {
   const client = requireAdminClient();
   const { data, error } = await client
     .from("articles")
     .delete()
     .eq("id", id)
+    .not("deleted_at", "is", null)
     .select("id")
     .maybeSingle();
   if (error) throw new Error(error.message);
   return Boolean(data);
+}
+
+export async function duplicateArticle(id: string, userId: string | null) {
+  const client = requireAdminClient();
+  const [{ data: source, error: sourceError }, { data: relations, error: relationsError }] = await Promise.all([
+    client.from("articles").select(articleSelection).eq("id", id).is("deleted_at", null).maybeSingle(),
+    client.from("article_tags").select("tag_id").eq("article_id", id),
+  ]);
+  if (sourceError || relationsError) {
+    throw new Error(sourceError?.message || relationsError?.message || "記事の複製に失敗しました。");
+  }
+  if (!source) return null;
+
+  const article = mapRecord(source as Row);
+  const baseSlug = `${article.slug}-copy`.slice(0, 112);
+  let slug = baseSlug;
+  let available = false;
+  for (let index = 1; index <= 99; index += 1) {
+    const candidate = index === 1 ? baseSlug : `${baseSlug}-${index}`.slice(0, 120);
+    const { data: existing, error } = await client
+      .from("articles")
+      .select("id")
+      .eq("slug", candidate)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!existing) {
+      slug = candidate;
+      available = true;
+      break;
+    }
+  }
+  if (!available) slug = `${baseSlug}-${Date.now().toString(36)}`.slice(0, 120);
+
+  return createArticle({
+    title: `${article.title}（コピー）`.slice(0, 160),
+    slug,
+    excerpt: article.excerpt,
+    seoTitle: article.seoTitle,
+    seoDescription: article.seoDescription,
+    contentJson: article.contentJson,
+    contentHtml: article.contentHtml,
+    coverImageUrl: article.coverImageUrl,
+    status: "draft",
+    publishedAt: null,
+    tagIds: (relations ?? []).map((relation) => asText((relation as Row).tag_id)).filter(Boolean),
+  }, userId);
 }
 
 export async function createTag(input: { name: string; slug: string; color: string }) {
@@ -397,6 +513,7 @@ export async function listPublishedArticles(tagSlug?: string) {
     .from("articles")
     .select(articleSelection)
     .eq("status", "published")
+    .is("deleted_at", null)
     .lte("published_at", new Date().toISOString())
     .order("published_at", { ascending: false });
   const { data, error } = await query;
@@ -418,6 +535,7 @@ export async function getPublishedArticle(slug: string) {
     .select(articleSelection)
     .eq("slug", slug)
     .eq("status", "published")
+    .is("deleted_at", null)
     .lte("published_at", new Date().toISOString())
     .maybeSingle();
   if (error) {
