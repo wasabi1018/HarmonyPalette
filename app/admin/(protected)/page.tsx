@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronRight,
   FileText,
+  Instagram,
   Settings2,
   ShieldCheck,
   UsersRound,
@@ -38,6 +39,28 @@ export default function AdminPage() {
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <Link
+          href="/admin/instagram"
+          className="group flex items-center gap-4 rounded-[22px] border border-pink/10 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-pink/25"
+        >
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-pink/10 text-pink">
+            <Instagram size={22} aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <strong className="block text-[15px] font-black text-ink">
+              Instagram画像作成
+            </strong>
+            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
+              週次画像・月分セット・投稿文をまとめて作成
+            </span>
+          </span>
+          <ChevronRight
+            size={18}
+            className="shrink-0 text-pink transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </Link>
+
         <Link
           href="/admin/schedule"
           className="group flex items-center gap-4 rounded-[22px] border border-pink/10 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-pink/25"

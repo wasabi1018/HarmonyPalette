@@ -11,6 +11,7 @@ import {
   FileText,
   Home,
   Images,
+  Instagram,
   Menu,
   Settings,
   Tag,
@@ -34,6 +35,7 @@ const navigation = [
   { href: "/admin/analytics", label: "アクセス分析", icon: BarChart3, exact: false },
   { href: "/admin/backup", label: "バックアップ", icon: Archive, exact: false },
   { href: "/admin/schedule", label: "スケジュール", icon: CalendarDays, exact: false },
+  { href: "/admin/instagram", label: "Instagram画像", icon: Instagram, exact: false },
   { href: "/admin/characters", label: "キャラクター", icon: UsersRound, exact: false },
 ] as const;
 
