@@ -16,6 +16,8 @@ export type Character = {
   isFanStudioRegular: boolean;
   themeColor: string;
   displayOrder?: number;
+  birthdayMonth: number | null;
+  birthdayDay: number | null;
 };
 
 export type GreetingSchedule = {

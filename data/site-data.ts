@@ -13,6 +13,8 @@ export const characters: Character[] = [
     officialUrl: "https://www.harmonyland.jp/",
     isFanStudioRegular: true,
     themeColor: "#f7a6bd",
+    birthdayMonth: null,
+    birthdayDay: null,
   },
   {
     id: "kuromi",
@@ -24,6 +26,8 @@ export const characters: Character[] = [
     officialUrl: "https://www.harmonyland.jp/",
     isFanStudioRegular: true,
     themeColor: "#b99bd5",
+    birthdayMonth: null,
+    birthdayDay: null,
   },
   {
     id: "cinnamoroll",
@@ -35,6 +39,8 @@ export const characters: Character[] = [
     officialUrl: "https://www.harmonyland.jp/",
     isFanStudioRegular: true,
     themeColor: "#9ecde8",
+    birthdayMonth: null,
+    birthdayDay: null,
   },
   {
     id: "pompompurin",
@@ -46,6 +52,8 @@ export const characters: Character[] = [
     officialUrl: "https://www.harmonyland.jp/",
     isFanStudioRegular: true,
     themeColor: "#f4cf7b",
+    birthdayMonth: null,
+    birthdayDay: null,
   },
   {
     id: "hello-kitty",
@@ -57,6 +65,8 @@ export const characters: Character[] = [
     officialUrl: "https://www.harmonyland.jp/",
     isFanStudioRegular: false,
     themeColor: "#ef8099",
+    birthdayMonth: null,
+    birthdayDay: null,
   },
   {
     id: "daniel",
@@ -68,6 +78,8 @@ export const characters: Character[] = [
     officialUrl: "https://www.harmonyland.jp/",
     isFanStudioRegular: false,
     themeColor: "#86b7d9",
+    birthdayMonth: null,
+    birthdayDay: null,
   },
 ];
 

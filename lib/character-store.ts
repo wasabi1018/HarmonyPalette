@@ -52,6 +52,8 @@ export function mergeCharactersWithNames(catalog: Character[], names: string[]) 
       isFanStudioRegular: false,
       themeColor: "#ef8099",
       displayOrder: 999,
+      birthdayMonth: null,
+      birthdayDay: null,
     });
   });
   return Array.from(byName.values()).sort(compareCharacters);

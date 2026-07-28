@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { Character } from "@/data/types";
+import { isValidBirthday } from "@/lib/character-birthday";
 import { getSupabaseReadClient } from "@/lib/supabase/server";
 
 function compareCharacters(a: Character, b: Character) {
@@ -12,6 +13,10 @@ function compareCharacters(a: Character, b: Character) {
 }
 
 function mapCharacter(row: Record<string, unknown>): Character {
+  const birthdayMonth = Number(row.birthday_month);
+  const birthdayDay = Number(row.birthday_day);
+  const hasValidBirthday = isValidBirthday(birthdayMonth, birthdayDay);
+
   return {
     id: String(row.id),
     slug: String(row.slug),
@@ -23,6 +28,8 @@ function mapCharacter(row: Record<string, unknown>): Character {
     isFanStudioRegular: Boolean(row.is_fan_studio_regular),
     themeColor: String(row.theme_color || "#ef8099"),
     displayOrder: Number.isFinite(Number(row.display_order)) ? Number(row.display_order) : 999,
+    birthdayMonth: hasValidBirthday ? birthdayMonth : null,
+    birthdayDay: hasValidBirthday ? birthdayDay : null,
   };
 }
 

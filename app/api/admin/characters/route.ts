@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { isValidBirthday } from "@/lib/character-birthday";
 import { assertImportAuthorization, getSupabaseAdminClient } from "@/lib/supabase/server";
 
 type CharacterInput = {
@@ -12,6 +13,8 @@ type CharacterInput = {
   isFanStudioRegular?: unknown;
   themeColor?: unknown;
   displayOrder?: unknown;
+  birthdayMonth?: unknown;
+  birthdayDay?: unknown;
 };
 
 function normalizeSlug(value: string) {
@@ -22,6 +25,42 @@ function normalizeSlug(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
+}
+
+function hasOwn(input: CharacterInput, key: keyof CharacterInput) {
+  return Object.prototype.hasOwnProperty.call(input, key);
+}
+
+function parseBirthdayPart(value: unknown) {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "number" && typeof value !== "string") return Number.NaN;
+  if (typeof value === "string" && value.trim() === "") return null;
+  const number = Number(value);
+  return Number.isInteger(number) ? number : Number.NaN;
+}
+
+function parseBirthdayInput(input: CharacterInput, isUpdate: boolean) {
+  const hasMonth = hasOwn(input, "birthdayMonth");
+  const hasDay = hasOwn(input, "birthdayDay");
+  if (!hasMonth && !hasDay) {
+    return isUpdate
+      ? {}
+      : { birthday_month: null, birthday_day: null };
+  }
+
+  const month = parseBirthdayPart(input.birthdayMonth);
+  const day = parseBirthdayPart(input.birthdayDay);
+  if (month === null && day === null) {
+    return { birthday_month: null, birthday_day: null };
+  }
+  if (month === null || day === null) {
+    throw new Error("誕生月と誕生日は両方入力してください。");
+  }
+  if (!isValidBirthday(month, day)) {
+    throw new Error("存在する誕生日を入力してください。");
+  }
+
+  return { birthday_month: month, birthday_day: day };
 }
 
 function parseCharacterInput(input: CharacterInput, requireId: boolean) {
@@ -60,6 +99,7 @@ function parseCharacterInput(input: CharacterInput, requireId: boolean) {
     is_fan_studio_regular: Boolean(input.isFanStudioRegular),
     theme_color: themeColor,
     display_order: displayOrder,
+    ...parseBirthdayInput(input, requireId),
   };
 }
 

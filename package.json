@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:birthday": "tsx --test lib/character-birthday.test.ts",
     "import:official": "tsx scripts/import-official.ts",
     "import:official:scheduled": "tsx scripts/import-official.ts --persist --fanstudio"
   },
