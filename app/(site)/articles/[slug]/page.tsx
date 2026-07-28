@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ArticlePreview } from "@/components/admin/article-preview";
+import { ArticleViewTracker } from "@/components/article-view-tracker";
 import { OfficialNotice } from "@/components/official-notice";
 import { getPublishedArticle } from "@/lib/articles/repository";
 
@@ -82,6 +83,7 @@ export default async function ArticleDetailPage({
 
   return (
     <>
+      <ArticleViewTracker slug={article.slug} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

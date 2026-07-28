@@ -12,6 +12,7 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/202607280001_article_operations.sql`
 - `supabase/migrations/202607280002_article_trash.sql`
 - `supabase/migrations/202607280003_article_media.sql`
+- `supabase/migrations/202607280004_article_analytics.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read
@@ -22,6 +23,8 @@ The trash migration adds recoverable deletion and ensures removed articles are
 excluded from public reads.
 The media migration records uploaded image metadata and alternative text for
 reuse in the article editor.
+The analytics migration stores privacy-friendly daily article view totals
+without IP addresses, cookies, or user-agent data.
 
 ## 2. Configure server-only secrets
 
@@ -84,6 +87,8 @@ After applying the articles migration, sign in and open `/admin/articles`.
   restore it later. Permanent deletion is only available inside the trash.
 - Open `/admin/media` to upload reusable images and maintain alternative text.
   Images referenced by a current article or revision cannot be deleted.
+- Open `/admin/analytics` to compare 7, 30, or 90 days of article traffic,
+  review popular articles, and export the aggregate data as CSV.
 - Published articles appear under `/articles`; readers can filter them by tag.
 
 ## 6. Scheduled import

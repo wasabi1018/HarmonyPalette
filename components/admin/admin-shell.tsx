@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart3,
   CalendarDays,
   FileText,
   Home,
@@ -26,6 +27,7 @@ const navigation = [
   { href: "/admin/articles", label: "記事", icon: FileText, exact: false },
   { href: "/admin/tags", label: "タグ", icon: Tag, exact: false },
   { href: "/admin/media", label: "メディア", icon: Images, exact: false },
+  { href: "/admin/analytics", label: "アクセス分析", icon: BarChart3, exact: false },
   { href: "/admin/schedule", label: "スケジュール", icon: CalendarDays, exact: false },
 ] as const;
 

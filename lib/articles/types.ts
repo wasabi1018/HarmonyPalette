@@ -22,6 +22,28 @@ export type ArticleMedia = {
   updatedAt: string;
 };
 
+export type ArticleAnalyticsPoint = {
+  date: string;
+  views: number;
+};
+
+export type ArticleAnalyticsItem = {
+  id: string;
+  title: string;
+  slug: string;
+  coverImageUrl: string;
+  views: number;
+};
+
+export type ArticleAnalyticsData = {
+  rangeDays: number;
+  totalViews: number;
+  todayViews: number;
+  averageViews: number;
+  daily: ArticleAnalyticsPoint[];
+  topArticles: ArticleAnalyticsItem[];
+};
+
 export type ArticleSummary = {
   id: string;
   title: string;

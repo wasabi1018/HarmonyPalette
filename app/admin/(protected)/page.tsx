@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  BarChart3,
   CalendarDays,
   ChevronRight,
   FileText,
@@ -76,6 +77,28 @@ export default function AdminPage() {
           <ChevronRight
             size={18}
             className="shrink-0 text-lavender transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </Link>
+
+        <Link
+          href="/admin/analytics"
+          className="group flex items-center gap-4 rounded-[22px] border border-mint/15 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-mint/30"
+        >
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-mint/10 text-[#4d987a]">
+            <BarChart3 size={22} aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <strong className="block text-[15px] font-black text-ink">
+              記事アクセス分析
+            </strong>
+            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
+              閲覧推移、人気記事、期間別CSVを確認
+            </span>
+          </span>
+          <ChevronRight
+            size={18}
+            className="shrink-0 text-[#4d987a] transition-transform group-hover:translate-x-0.5"
             aria-hidden="true"
           />
         </Link>
