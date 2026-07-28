@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, CakeSlice, CalendarDays, Check, LoaderCircle, MapPin, Search, Sparkles, SlidersHorizontal } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Character } from "@/data/types";
 import { DataStatePanel } from "@/components/data-state-panel";
 import {
@@ -62,6 +62,15 @@ export function CharacterBrowser({
   const currentTime = useMemo(currentTimeInJapan, []);
   const [query, setQuery] = useState("");
   const [onlyScheduled, setOnlyScheduled] = useState(false);
+  const [highlightedCharacterHash, setHighlightedCharacterHash] = useState("");
+
+  useEffect(() => {
+    const syncHighlightedCharacter = () => setHighlightedCharacterHash(window.location.hash);
+    syncHighlightedCharacter();
+    window.addEventListener("hashchange", syncHighlightedCharacter);
+    return () => window.removeEventListener("hashchange", syncHighlightedCharacter);
+  }, []);
+
   const filtered = useMemo(() => characters.filter((character) => {
     const matchesQuery = `${character.name}${character.nameKana}`.includes(query.trim());
     const matchesSchedule = !onlyScheduled || entries.some((entry) => (
@@ -121,13 +130,18 @@ export function CharacterBrowser({
           const scheduleLoading = scheduleState.status === "loading";
           const scheduleUnavailable = scheduleState.status === "error" || scheduleState.status === "unavailable";
           const scheduleHref = `/schedule?character=${encodeURIComponent(character.name)}&from=${today}&to=${scheduleTo}#schedule-results`;
+          const isHighlighted = highlightedCharacterHash === `#character-${encodeURIComponent(character.slug)}`;
           const nextDate = next && next.date <= today && (next.endDate ?? next.date) >= today
             ? "今日"
             : next
               ? compactDate(next.date)
               : "";
           return (
-            <article key={character.id} className="group rounded-[22px] border border-pink/10 bg-white p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-card">
+            <article
+              key={character.id}
+              id={`character-${character.slug}`}
+              className={`group scroll-mt-24 rounded-[22px] border p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-card ${isHighlighted ? "border-pink/50 bg-[#fff9fb] ring-4 ring-pink/10" : "border-pink/10 bg-white"}`}
+            >
               <div className="flex items-center gap-3">
                 <CharacterAvatar character={character} size="md" />
                 <div className="min-w-0 flex-1">

@@ -28,6 +28,7 @@ export function HomeBirthdayRibbon() {
   }
 
   const { birthday, daysUntil } = birthdays[0];
+  const featuredCharacter = birthdays[0].character;
   const names = characterNames(birthdays.map(({ character }) => character.name));
   const timing = daysUntil === 0 ? "今日が誕生日！" : `あと${daysUntil}日`;
   const message = daysUntil === 0
@@ -40,7 +41,8 @@ export function HomeBirthdayRibbon() {
       className="mx-auto max-w-[1200px] px-4 pt-5 sm:px-6 lg:px-8"
     >
       <Link
-        href="/characters"
+        href={`/characters#character-${encodeURIComponent(featuredCharacter.slug)}`}
+        aria-label={`キャラクター一覧で${names}の誕生日を見る`}
         className="group relative flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[20px] border border-pink/20 bg-gradient-to-r from-[#fff0f5] via-white to-[#f6f1ff] px-4 py-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-pink/35 hover:shadow-card sm:gap-4 sm:px-5"
       >
         <span
