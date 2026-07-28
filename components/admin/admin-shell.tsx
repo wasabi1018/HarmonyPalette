@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Archive,
   BarChart3,
   BookCopy,
   CalendarDays,
@@ -30,6 +31,7 @@ const navigation = [
   { href: "/admin/series", label: "シリーズ", icon: BookCopy, exact: false },
   { href: "/admin/media", label: "メディア", icon: Images, exact: false },
   { href: "/admin/analytics", label: "アクセス分析", icon: BarChart3, exact: false },
+  { href: "/admin/backup", label: "バックアップ", icon: Archive, exact: false },
   { href: "/admin/schedule", label: "スケジュール", icon: CalendarDays, exact: false },
 ] as const;
 

@@ -106,6 +106,9 @@ After applying the articles migration, sign in and open `/admin/articles`.
 - Open `/admin/series` to create an article series, then choose the series and
   reading order in the article editor. Published series have their own landing
   pages and previous/next article navigation.
+- Open `/admin/backup` to download a complete JSON data backup or a CSV article
+  catalog. Media metadata and URLs are included, but image binaries remain in
+  Supabase Storage.
 - Published articles appear under `/articles`; readers can filter them by tag.
 
 ## 6. Scheduled import
