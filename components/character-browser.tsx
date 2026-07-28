@@ -9,6 +9,7 @@ import {
   daysUntilBirthday,
   formatCharacterBirthday,
   getCharacterBirthday,
+  isBirthdayCountdownVisible,
   todayInJapan,
 } from "@/lib/character-birthday";
 import { useCharacters } from "@/lib/character-store";
@@ -41,7 +42,7 @@ function matchesCharacter(entry: ScheduleEntry, character: Character) {
 
 function birthdayTimingLabel(daysUntil: number) {
   if (daysUntil === 0) return "今日が誕生日！";
-  if (daysUntil <= 30) return `あと${daysUntil}日`;
+  if (isBirthdayCountdownVisible(daysUntil)) return `あと${daysUntil}日`;
   return null;
 }
 

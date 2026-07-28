@@ -14,6 +14,7 @@ export type CharacterBirthdayOccurrence = {
 
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 const MAX_NEXT_BIRTHDAY_YEAR_OFFSET = 8;
+export const BIRTHDAY_COUNTDOWN_WINDOW_DAYS = 30;
 
 function daysInMonth(year: number, month: number) {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
@@ -109,6 +110,12 @@ export function daysUntilBirthday(
   const currentTime = Date.UTC(current.year, current.month - 1, current.day);
   const nextTime = Date.UTC(next.year, next.month - 1, next.day);
   return Math.round((nextTime - currentTime) / DAY_IN_MILLISECONDS);
+}
+
+export function isBirthdayCountdownVisible(daysUntil: number) {
+  return Number.isInteger(daysUntil)
+    && daysUntil >= 0
+    && daysUntil <= BIRTHDAY_COUNTDOWN_WINDOW_DAYS;
 }
 
 export function getUpcomingCharacterBirthdays(

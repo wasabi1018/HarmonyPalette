@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { events, spots } from "@/data/site-data";
 import { formatDate } from "@/lib/format";
+import { HomeBirthdayRibbon } from "./home-birthday-ribbon";
 import { HomeHeroStats } from "./home-hero-stats";
 import { HomeTodaySections } from "./home-today-sections";
 import { OfficialNotice } from "./official-notice";
@@ -229,6 +230,7 @@ export function HomeSections() {
   return (
     <>
       <Hero />
+      <HomeBirthdayRibbon />
       <HomeTodaySections />
       <ExploreCards />
       <NewsAndTrip />

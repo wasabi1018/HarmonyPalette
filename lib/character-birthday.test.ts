@@ -8,6 +8,7 @@ import {
   getNextBirthdayDate,
   getNextCharacterBirthdayGroup,
   getUpcomingCharacterBirthdays,
+  isBirthdayCountdownVisible,
   isValidBirthday,
   todayInJapan,
 } from "@/lib/character-birthday";
@@ -91,4 +92,12 @@ test("最も近い同日誕生日をグループで返す", () => {
   ], "2026-12-30");
 
   assert.deepEqual(group.map(({ character: item }) => item.id), ["same-1", "same-2"]);
+});
+
+test("誕生日カウントダウンは30日前から当日まで表示する", () => {
+  assert.equal(isBirthdayCountdownVisible(31), false);
+  assert.equal(isBirthdayCountdownVisible(30), true);
+  assert.equal(isBirthdayCountdownVisible(1), true);
+  assert.equal(isBirthdayCountdownVisible(0), true);
+  assert.equal(isBirthdayCountdownVisible(-1), false);
 });
