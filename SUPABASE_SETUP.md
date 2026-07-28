@@ -97,6 +97,10 @@ After applying the articles migration, sign in and open `/admin/articles`.
 - Readers can use an automatically generated table of contents, reading-time
   estimate, share/copy/print controls, RSS, and JSON Feed. These delivery
   features do not require an additional database migration.
+- Editors see a real-time publication quality score for titles, search
+  metadata, heading order, image alternative text, link URLs, internal link
+  availability, cover images, and tags. Publication warns about remaining
+  issues without interrupting draft or automatic saves.
 - Published articles appear under `/articles`; readers can filter them by tag.
 
 ## 6. Scheduled import

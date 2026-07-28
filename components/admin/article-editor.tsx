@@ -44,6 +44,12 @@ import type {
   ArticleTag,
 } from "@/lib/articles/types";
 import { ArticlePreview } from "@/components/admin/article-preview";
+import { ArticleQualityPanel } from "@/components/admin/article-quality-panel";
+import {
+  assessArticleQuality,
+  type ArticleLinkCheck,
+  type ArticleQualityTarget,
+} from "@/lib/articles/quality";
 
 type ArticleEditorProps = {
   initialArticle: ArticleRecord | null;
@@ -163,6 +169,8 @@ export function ArticleEditor({
   );
   const [tagQuery, setTagQuery] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [linkChecks, setLinkChecks] = useState<ArticleLinkCheck[]>([]);
+  const [checkingLinks, setCheckingLinks] = useState(false);
   const [message, setMessage] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
@@ -213,6 +221,7 @@ export function ArticleEditor({
     },
     onUpdate: () => {
       changeVersionRef.current += 1;
+      setLinkChecks([]);
       setSaveState("dirty");
       setMessage("");
     },
@@ -238,6 +247,29 @@ export function ArticleEditor({
   }, [mediaItems, mediaQuery]);
   const contentHtml = editor?.getHTML() || initialArticle?.contentHtml || "<p></p>";
   const characterCount = editor?.getText().replace(/\s/g, "").length || 0;
+  const qualityReport = useMemo(() => assessArticleQuality({
+    title,
+    slug,
+    excerpt,
+    seoTitle,
+    seoDescription,
+    coverImageUrl,
+    tagCount: selectedTagIds.length,
+    contentHtml,
+    contentLength: characterCount,
+    linkChecks,
+  }), [
+    title,
+    slug,
+    excerpt,
+    seoTitle,
+    seoDescription,
+    coverImageUrl,
+    selectedTagIds.length,
+    contentHtml,
+    characterCount,
+    linkChecks,
+  ]);
 
   useEffect(() => {
     if (!previewOpen) return;
@@ -274,6 +306,39 @@ export function ArticleEditor({
     changeVersionRef.current += 1;
     setSaveState("dirty");
     setMessage("");
+  };
+
+  const focusQualityTarget = (target: ArticleQualityTarget) => {
+    const element = document.getElementById(`quality-${target}`);
+    element?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => {
+      if (target === "content") {
+        editor?.chain().focus().run();
+        return;
+      }
+      element?.querySelector<HTMLElement>("input, textarea, select, button")?.focus();
+    }, 350);
+  };
+
+  const checkInternalLinks = async () => {
+    setCheckingLinks(true);
+    const results = await Promise.all(qualityReport.internalLinks.map(async (url) => {
+      try {
+        const response = await fetch(url, {
+          method: "HEAD",
+          cache: "no-store",
+        });
+        return {
+          url,
+          status: response.ok ? "reachable" : "broken",
+          httpStatus: response.status,
+        } satisfies ArticleLinkCheck;
+      } catch {
+        return { url, status: "unknown" } satisfies ArticleLinkCheck;
+      }
+    }));
+    setLinkChecks(results);
+    setCheckingLinks(false);
   };
 
   const handleTitleChange = (value: string) => {
@@ -375,6 +440,20 @@ export function ArticleEditor({
       const scheduleTime = Date.parse(publishedAt);
       if (!Number.isFinite(scheduleTime) || scheduleTime <= Date.now()) {
         setMessage("予約公開日時は現在より後の日時を指定してください。");
+        setSaveState("error");
+        return;
+      }
+    }
+    if (
+      nextStatus !== "draft"
+      && !isAutoSave
+      && (qualityReport.errorCount > 0 || qualityReport.warningCount > 0)
+    ) {
+      const confirmed = window.confirm(
+        `公開前チェックにエラー${qualityReport.errorCount}件、警告${qualityReport.warningCount}件があります。このまま${nextStatus === "scheduled" ? "予約" : "公開"}しますか？`,
+      );
+      if (!confirmed) {
+        setMessage("公開を中止しました。公開前チェックを確認してください。");
         setSaveState("error");
         return;
       }
@@ -576,7 +655,7 @@ export function ArticleEditor({
       <div className="grid min-h-[calc(100vh-64px)] xl:grid-cols-[minmax(0,1fr)_310px]">
         <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-7 xl:border-r xl:border-pink/10">
           <div className="mx-auto max-w-[850px]">
-            <label className="block">
+            <label id="quality-title" className="block scroll-mt-28">
               <span className="flex items-center gap-2 text-[11px] font-black text-ink/60">
                 タイトル
                 <span className="rounded-full bg-pink/10 px-2 py-0.5 text-[8px] text-pink">必須</span>
@@ -589,7 +668,7 @@ export function ArticleEditor({
               />
             </label>
 
-            <section className="mt-6">
+            <section id="quality-cover" className="mt-6 scroll-mt-28">
               <div className="flex items-center justify-between gap-3">
                 <p className="flex items-center gap-2 text-[11px] font-black text-ink/60">
                   アイキャッチ画像
@@ -659,7 +738,7 @@ export function ArticleEditor({
               </button>
             </section>
 
-            <section className="mt-6">
+            <section id="quality-content" className="mt-6 scroll-mt-28">
               <p className="flex items-center gap-2 text-[11px] font-black text-ink/60">
                 本文
                 <span className="rounded-full bg-pink/10 px-2 py-0.5 text-[8px] text-pink">必須</span>
@@ -851,7 +930,14 @@ export function ArticleEditor({
 
         <aside className="bg-[#fffcfd] px-4 py-6 sm:px-6 xl:px-5">
           <div className="mx-auto max-w-[850px] xl:sticky xl:top-[88px] xl:max-w-none">
-            <h2 className="text-[14px] font-black text-ink">公開設定</h2>
+            <ArticleQualityPanel
+              report={qualityReport}
+              checkingLinks={checkingLinks}
+              onCheckLinks={() => void checkInternalLinks()}
+              onSelectTarget={focusQualityTarget}
+            />
+
+            <h2 className="mt-7 text-[14px] font-black text-ink">公開設定</h2>
 
             <label className="mt-5 block">
               <span className="text-[10px] font-black text-ink/50">ステータス</span>
@@ -892,7 +978,7 @@ export function ArticleEditor({
               )}
             </label>
 
-            <label className="mt-5 block">
+            <label id="quality-slug" className="mt-5 block scroll-mt-28">
               <span className="text-[10px] font-black text-ink/50">スラッグ（URL）</span>
               <input
                 value={slug}
@@ -937,7 +1023,7 @@ export function ArticleEditor({
               )}
             </div>
 
-            <div className="mt-6 border-t border-pink/10 pt-5">
+            <div id="quality-tags" className="mt-6 scroll-mt-28 border-t border-pink/10 pt-5">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-[10px] font-black text-ink/50">タグ</h3>
                 <a href="/admin/tags" className="inline-flex items-center gap-1 text-[9px] font-black text-pink hover:underline">
@@ -995,7 +1081,7 @@ export function ArticleEditor({
               </div>
             </div>
 
-            <label className="mt-6 block border-t border-pink/10 pt-5">
+            <label id="quality-excerpt" className="mt-6 block scroll-mt-28 border-t border-pink/10 pt-5">
               <span className="text-[10px] font-black text-ink/50">抜粋</span>
               <textarea
                 value={excerpt}
@@ -1016,7 +1102,7 @@ export function ArticleEditor({
               <p className="mt-1 text-[9px] font-bold leading-4 text-ink/30">
                 未入力の場合は記事タイトルと抜粋を使用します。
               </p>
-              <label className="mt-3 block">
+              <label id="quality-seo-title" className="mt-3 block scroll-mt-28">
                 <span className="text-[9px] font-black text-ink/45">検索結果のタイトル</span>
                 <input
                   value={seoTitle}
@@ -1030,7 +1116,7 @@ export function ArticleEditor({
                 />
                 <span className="mt-1 block text-right text-[8px] font-bold text-ink/30">{seoTitle.length} / 60</span>
               </label>
-              <label className="mt-3 block">
+              <label id="quality-seo-description" className="mt-3 block scroll-mt-28">
                 <span className="text-[9px] font-black text-ink/45">検索結果の説明文</span>
                 <textarea
                   value={seoDescription}
