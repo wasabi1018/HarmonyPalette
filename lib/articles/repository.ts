@@ -527,6 +527,95 @@ export async function listPublishedArticles(tagSlug?: string) {
     : articles;
 }
 
+export async function searchPublishedArticles({
+  query = "",
+  tagSlug = "",
+  page = 1,
+  pageSize = 9,
+}: {
+  query?: string;
+  tagSlug?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const client = getSupabaseReadClient();
+  const safePage = Math.max(1, Math.floor(page));
+  const safePageSize = Math.min(24, Math.max(1, Math.floor(pageSize)));
+  const normalizedQuery = query.normalize("NFKC").trim().slice(0, 80);
+  const normalizedTag = tagSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 80);
+  if (!client) {
+    return { articles: [] as ArticleSummary[], total: 0, page: safePage, totalPages: 0 };
+  }
+
+  const { data: matches, error: searchError } = await client.rpc(
+    "search_published_articles",
+    {
+      search_query: normalizedQuery,
+      filter_tag_slug: normalizedTag,
+      result_limit: safePageSize,
+      result_offset: (safePage - 1) * safePageSize,
+    },
+  );
+  if (searchError) throw new Error(searchError.message);
+  const matchRows = (matches ?? []) as Row[];
+  const ids = matchRows.map((row) => asText(row.article_id)).filter(Boolean);
+  const total = Number(matchRows[0]?.total_count || 0);
+  if (ids.length === 0) {
+    return {
+      articles: [] as ArticleSummary[],
+      total,
+      page: safePage,
+      totalPages: total ? Math.ceil(total / safePageSize) : 0,
+    };
+  }
+
+  const { data, error } = await client
+    .from("articles")
+    .select(articleSelection)
+    .in("id", ids)
+    .eq("status", "published")
+    .is("deleted_at", null)
+    .lte("published_at", new Date().toISOString());
+  if (error) throw new Error(error.message);
+  const articleMap = new Map(
+    (data ?? []).map((row) => {
+      const article = mapSummary(row as Row);
+      return [article.id, article];
+    }),
+  );
+  return {
+    articles: ids.map((id) => articleMap.get(id)).filter((article): article is ArticleSummary => Boolean(article)),
+    total,
+    page: safePage,
+    totalPages: Math.ceil(total / safePageSize),
+  };
+}
+
+export async function listRelatedArticles(
+  articleId: string,
+  tagIds: string[],
+  limit = 3,
+) {
+  const articles = await listPublishedArticles();
+  const selectedTagIds = new Set(tagIds);
+  return articles
+    .filter((article) => article.id !== articleId)
+    .map((article) => ({
+      article,
+      score: article.tags.reduce(
+        (score, tag) => score + (selectedTagIds.has(tag.id) ? 1 : 0),
+        0,
+      ),
+    }))
+    .sort((left, right) => (
+      right.score - left.score
+      || new Date(right.article.publishedAt || 0).getTime()
+        - new Date(left.article.publishedAt || 0).getTime()
+    ))
+    .slice(0, Math.max(0, limit))
+    .map(({ article }) => article);
+}
+
 export async function getPublishedArticle(slug: string) {
   const client = getSupabaseReadClient();
   if (!client) return null;
