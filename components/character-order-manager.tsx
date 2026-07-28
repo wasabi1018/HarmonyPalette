@@ -1,8 +1,9 @@
 "use client";
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownAZ, Pencil, Plus, Save, Search, Trash2, UserRound, X } from "lucide-react";
+import { ArrowDownAZ, CakeSlice, Pencil, Plus, Save, Search, Trash2, UserRound, X } from "lucide-react";
 import type { Character } from "@/data/types";
+import { formatCharacterBirthday, getCharacterBirthday } from "@/lib/character-birthday";
 import { compareCharacters, refreshCharacters, useCharacters } from "@/lib/character-store";
 
 const inputClass = "min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none transition-colors placeholder:text-ink/30 focus:border-pink focus:ring-4 focus:ring-pink/10";
@@ -18,6 +19,8 @@ type CharacterForm = {
   isFanStudioRegular: boolean;
   themeColor: string;
   displayOrder: number;
+  birthdayMonth: number | null;
+  birthdayDay: number | null;
 };
 
 const emptyForm: CharacterForm = {
@@ -29,7 +32,15 @@ const emptyForm: CharacterForm = {
   isFanStudioRegular: false,
   themeColor: "#ef8099",
   displayOrder: 999,
+  birthdayMonth: null,
+  birthdayDay: null,
 };
+
+const birthdayMonths = Array.from({ length: 12 }, (_, index) => index + 1);
+
+function birthdayDaysInMonth(month: number) {
+  return new Date(Date.UTC(2000, month, 0)).getUTCDate();
+}
 
 export function CharacterOrderManager() {
   const { characters } = useCharacters({ fallbackToSamples: true });
@@ -41,6 +52,12 @@ export function CharacterOrderManager() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState("");
   const [feedback, setFeedback] = useState("");
+  const birthdayDays = useMemo(
+    () => form.birthdayMonth
+      ? Array.from({ length: birthdayDaysInMonth(form.birthdayMonth) }, (_, index) => index + 1)
+      : [],
+    [form.birthdayMonth],
+  );
 
   useEffect(() => {
     setOrders((current) => Object.fromEntries(
@@ -79,6 +96,8 @@ export function CharacterOrderManager() {
       isFanStudioRegular: character.isFanStudioRegular,
       themeColor: character.themeColor,
       displayOrder: character.displayOrder ?? 999,
+      birthdayMonth: character.birthdayMonth,
+      birthdayDay: character.birthdayDay,
     });
     setEditorOpen(true);
     setFeedback("");
@@ -177,7 +196,7 @@ export function CharacterOrderManager() {
           </p>
           <h2 className="mt-1 text-xl font-black text-ink">キャラクター管理</h2>
           <p className="mt-1 text-[12px] font-bold leading-5 text-ink/50">
-            キャラクターの登録・編集・削除と表示順を管理します。同じ表示順の場合は名前の昇順です。
+            キャラクターの基本情報・誕生日・表示順を管理します。同じ表示順の場合は名前の昇順です。
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
@@ -209,6 +228,62 @@ export function CharacterOrderManager() {
             <label><span className={labelClass}>表示順</span><input type="number" min={0} max={999999} step={1} value={form.displayOrder} onChange={(event) => setForm((current) => ({ ...current, displayOrder: Number(event.target.value) }))} className={inputClass} /></label>
             <label className="sm:col-span-2"><span className={labelClass}>公式プロフィールURL</span><input value={form.officialUrl} onChange={(event) => setForm((current) => ({ ...current, officialUrl: event.target.value }))} placeholder="https://..." className={inputClass} /></label>
             <label><span className={labelClass}>テーマカラー</span><span className="flex min-h-11 items-center gap-3 rounded-xl border border-ink/10 bg-white px-3"><input type="color" value={form.themeColor} onChange={(event) => setForm((current) => ({ ...current, themeColor: event.target.value }))} className="h-8 w-12 cursor-pointer border-0 bg-transparent" aria-label="テーマカラー" /><span className="text-[12px] font-black text-ink/60">{form.themeColor}</span></span></label>
+            <fieldset className="rounded-2xl border border-pink/10 bg-white p-3 sm:col-span-2 lg:col-span-3">
+              <legend className="px-1 text-[11px] font-black text-ink/55">誕生日</legend>
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+                <label>
+                  <span className={labelClass}>月</span>
+                  <select
+                    value={form.birthdayMonth ?? ""}
+                    onChange={(event) => {
+                      const birthdayMonth = event.target.value ? Number(event.target.value) : null;
+                      setForm((current) => ({
+                        ...current,
+                        birthdayMonth,
+                        birthdayDay: birthdayMonth
+                          && current.birthdayDay
+                          && current.birthdayDay <= birthdayDaysInMonth(birthdayMonth)
+                          ? current.birthdayDay
+                          : null,
+                      }));
+                    }}
+                    className={inputClass}
+                  >
+                    <option value="">未設定</option>
+                    {birthdayMonths.map((month) => <option key={month} value={month}>{month}月</option>)}
+                  </select>
+                </label>
+                <label>
+                  <span className={labelClass}>日</span>
+                  <select
+                    value={form.birthdayDay ?? ""}
+                    onChange={(event) => setForm((current) => ({
+                      ...current,
+                      birthdayDay: event.target.value ? Number(event.target.value) : null,
+                    }))}
+                    disabled={form.birthdayMonth === null}
+                    required={form.birthdayMonth !== null}
+                    className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-45`}
+                  >
+                    <option value="">日を選択</option>
+                    {birthdayDays.map((day) => <option key={day} value={day}>{day}日</option>)}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setForm((current) => ({
+                    ...current,
+                    birthdayMonth: null,
+                    birthdayDay: null,
+                  }))}
+                  disabled={form.birthdayMonth === null && form.birthdayDay === null}
+                  className="min-h-11 rounded-xl border border-ink/10 px-4 text-[11px] font-black text-ink/50 transition hover:border-pink/30 hover:text-pink disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  未設定に戻す
+                </button>
+              </div>
+              <p className="mt-2 text-[10px] font-bold leading-5 text-ink/40">誕生年は登録しません。2月29日も選択できます。</p>
+            </fieldset>
           </div>
 
           <label className="mt-3 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-white px-3 text-[12px] font-bold text-ink/65 sm:w-fit">
@@ -233,33 +308,40 @@ export function CharacterOrderManager() {
       </div>
 
       <div className="mt-3 grid max-h-[500px] gap-2 overflow-y-auto pr-1 lg:grid-cols-2">
-        {orderedCharacters.map((character) => (
-          <article key={character.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-ink/10 bg-[#fffdfd] px-3 py-2.5">
-            <span className="h-9 w-9 shrink-0 rounded-xl border-2 border-white shadow-soft" style={{ backgroundColor: character.themeColor }} aria-hidden="true" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[12px] font-black text-ink">{character.name}</p>
-              <p className="mt-0.5 truncate text-[10px] font-bold text-ink/35">{character.nameKana || "よみがな未登録"}・{character.slug}</p>
-            </div>
-            <label className="shrink-0">
-              <span className="sr-only">{character.name}の表示順</span>
-              <input
-                type="number"
-                min={0}
-                max={999999}
-                step={1}
-                value={orders[character.id] ?? 999}
-                onChange={(event) => {
-                  dirtyOrderIds.current.add(character.id);
-                  setOrders((current) => ({ ...current, [character.id]: Number(event.target.value) }));
-                }}
-                className={`${inputClass} w-20 text-right`}
-                aria-label={`${character.name}の表示順`}
-              />
-            </label>
-            <button type="button" onClick={() => openEdit(character)} aria-label={`${character.name}を編集`} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-lavender/15 bg-lavender/5 text-lavender hover:bg-lavender/10"><Pencil size={15} aria-hidden="true" /></button>
-            <button type="button" onClick={() => deleteCharacter(character)} disabled={deletingId === character.id} aria-label={`${character.name}を削除`} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 disabled:opacity-40"><Trash2 size={15} aria-hidden="true" /></button>
-          </article>
-        ))}
+        {orderedCharacters.map((character) => {
+          const birthday = getCharacterBirthday(character);
+          return (
+            <article key={character.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-ink/10 bg-[#fffdfd] px-3 py-2.5">
+              <span className="h-9 w-9 shrink-0 rounded-xl border-2 border-white shadow-soft" style={{ backgroundColor: character.themeColor }} aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[12px] font-black text-ink">{character.name}</p>
+                <p className="mt-0.5 truncate text-[10px] font-bold text-ink/35">{character.nameKana || "よみがな未登録"}・{character.slug}</p>
+                <p className={`mt-1 flex items-center gap-1 text-[10px] font-black ${birthday ? "text-pink" : "text-ink/30"}`}>
+                  <CakeSlice size={11} aria-hidden="true" />
+                  {birthday ? formatCharacterBirthday(birthday) : "誕生日未登録"}
+                </p>
+              </div>
+              <label className="shrink-0">
+                <span className="sr-only">{character.name}の表示順</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={999999}
+                  step={1}
+                  value={orders[character.id] ?? 999}
+                  onChange={(event) => {
+                    dirtyOrderIds.current.add(character.id);
+                    setOrders((current) => ({ ...current, [character.id]: Number(event.target.value) }));
+                  }}
+                  className={`${inputClass} w-20 text-right`}
+                  aria-label={`${character.name}の表示順`}
+                />
+              </label>
+              <button type="button" onClick={() => openEdit(character)} aria-label={`${character.name}を編集`} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-lavender/15 bg-lavender/5 text-lavender hover:bg-lavender/10"><Pencil size={15} aria-hidden="true" /></button>
+              <button type="button" onClick={() => deleteCharacter(character)} disabled={deletingId === character.id} aria-label={`${character.name}を削除`} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 disabled:opacity-40"><Trash2 size={15} aria-hidden="true" /></button>
+            </article>
+          );
+        })}
         {orderedCharacters.length === 0 && <p className="rounded-xl border border-dashed border-pink/20 p-6 text-center text-[12px] font-bold text-ink/45 lg:col-span-2">該当するキャラクターはありません。</p>}
       </div>
 

@@ -14,6 +14,7 @@ import {
   Menu,
   Settings,
   Tag,
+  UsersRound,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,6 +34,7 @@ const navigation = [
   { href: "/admin/analytics", label: "アクセス分析", icon: BarChart3, exact: false },
   { href: "/admin/backup", label: "バックアップ", icon: Archive, exact: false },
   { href: "/admin/schedule", label: "スケジュール", icon: CalendarDays, exact: false },
+  { href: "/admin/characters", label: "キャラクター", icon: UsersRound, exact: false },
 ] as const;
 
 function BrandLogo() {

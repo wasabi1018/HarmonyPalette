@@ -7,6 +7,7 @@ import {
   FileText,
   Settings2,
   ShieldCheck,
+  UsersRound,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -49,12 +50,34 @@ export default function AdminPage() {
               スケジュール管理
             </strong>
             <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
-              イベント、グリーティング、キャラクター台帳を管理
+              イベント、グリーティング、公開予定を管理
             </span>
           </span>
           <ChevronRight
             size={18}
             className="shrink-0 text-pink transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </Link>
+
+        <Link
+          href="/admin/characters"
+          className="group flex items-center gap-4 rounded-[22px] border border-sky/15 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-sky/30"
+        >
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sky/10 text-sky">
+            <UsersRound size={22} aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <strong className="block text-[15px] font-black text-ink">
+              キャラクター管理
+            </strong>
+            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
+              基本情報、誕生日、公開画面の表示順を管理
+            </span>
+          </span>
+          <ChevronRight
+            size={18}
+            className="shrink-0 text-sky transition-transform group-hover:translate-x-0.5"
             aria-hidden="true"
           />
         </Link>
