@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/cron/publish-articles",
-      "schedule": "*/10 * * * *"
+      "schedule": "10 21 * * *"
     }
   ]
 }
