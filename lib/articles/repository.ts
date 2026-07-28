@@ -151,6 +151,11 @@ async function createArticleRevision(
       || "変更履歴の作成に失敗しました。",
     );
   }
+  const { data: assignment } = await client
+    .from("articles")
+    .select("series_id,series_order")
+    .eq("id", articleId)
+    .maybeSingle();
 
   const record = mapRecord(article as Row);
   const snapshot: ArticleInput = {
@@ -165,6 +170,8 @@ async function createArticleRevision(
     status: record.status,
     publishedAt: record.publishedAt,
     tagIds: (relations ?? []).map((relation) => asText((relation as Row).tag_id)).filter(Boolean),
+    seriesId: assignment?.series_id ? asText((assignment as Row).series_id) : null,
+    seriesOrder: assignment?.series_order ? Number((assignment as Row).series_order) : null,
   };
   const revisionNumber = Number((latest as Row | null)?.revision_number || 0) + 1;
   const { error } = await client.from("article_revisions").insert({
@@ -234,7 +241,7 @@ export async function listTags() {
 
 export async function createArticle(input: ArticleInput, userId: string | null) {
   const client = requireAdminClient();
-  const { tagIds, ...article } = input;
+  const { tagIds, seriesId, seriesOrder, ...article } = input;
   const { data, error } = await client
     .from("articles")
     .insert({
@@ -248,6 +255,8 @@ export async function createArticle(input: ArticleInput, userId: string | null) 
       cover_image_url: article.coverImageUrl,
       status: article.status,
       published_at: article.publishedAt,
+      series_id: seriesId,
+      series_order: seriesId ? seriesOrder : null,
       created_by: userId,
       updated_by: userId,
     })
@@ -266,7 +275,7 @@ export async function updateArticle(
   userId: string | null,
 ) {
   const client = requireAdminClient();
-  const { tagIds, ...article } = input;
+  const { tagIds, seriesId, seriesOrder, ...article } = input;
   const { data, error } = await client
     .from("articles")
     .update({
@@ -280,6 +289,8 @@ export async function updateArticle(
       cover_image_url: article.coverImageUrl,
       status: article.status,
       published_at: article.publishedAt,
+      series_id: seriesId,
+      series_order: seriesId ? seriesOrder : null,
       updated_by: userId,
     })
     .eq("id", id)
@@ -455,6 +466,11 @@ export async function duplicateArticle(id: string, userId: string | null) {
     }
   }
   if (!available) slug = `${baseSlug}-${Date.now().toString(36)}`.slice(0, 120);
+  const { data: assignment } = await client
+    .from("articles")
+    .select("series_id,series_order")
+    .eq("id", id)
+    .maybeSingle();
 
   return createArticle({
     title: `${article.title}（コピー）`.slice(0, 160),
@@ -468,6 +484,8 @@ export async function duplicateArticle(id: string, userId: string | null) {
     status: "draft",
     publishedAt: null,
     tagIds: (relations ?? []).map((relation) => asText((relation as Row).tag_id)).filter(Boolean),
+    seriesId: assignment?.series_id ? asText((assignment as Row).series_id) : null,
+    seriesOrder: assignment?.series_order ? Number((assignment as Row).series_order) + 1 : null,
   }, userId);
 }
 

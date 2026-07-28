@@ -14,6 +14,7 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/202607280003_article_media.sql`
 - `supabase/migrations/202607280004_article_analytics.sql`
 - `supabase/migrations/202607280005_article_search.sql`
+- `supabase/migrations/202607280006_article_series.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read
@@ -28,6 +29,7 @@ The analytics migration stores privacy-friendly daily article view totals
 without IP addresses, cookies, or user-agent data.
 The search migration adds Japanese-friendly partial matching indexes and a
 published-article search function.
+The series migration groups ordered articles into public reading collections.
 
 ## 2. Configure server-only secrets
 
@@ -101,6 +103,9 @@ After applying the articles migration, sign in and open `/admin/articles`.
   metadata, heading order, image alternative text, link URLs, internal link
   availability, cover images, and tags. Publication warns about remaining
   issues without interrupting draft or automatic saves.
+- Open `/admin/series` to create an article series, then choose the series and
+  reading order in the article editor. Published series have their own landing
+  pages and previous/next article navigation.
 - Published articles appear under `/articles`; readers can filter them by tag.
 
 ## 6. Scheduled import

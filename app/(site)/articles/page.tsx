@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
+  BookCopy,
   BookOpen,
   CalendarDays,
   Rss,
@@ -15,6 +16,7 @@ import {
   listPublishedArticles,
   searchPublishedArticles,
 } from "@/lib/articles/repository";
+import { listPublishedArticleSeries } from "@/lib/articles/series-repository";
 
 export async function generateMetadata({
   searchParams,
@@ -83,8 +85,12 @@ export default async function ArticlesPage({
     totalPages: 0,
   };
   let allArticles: Awaited<ReturnType<typeof listPublishedArticles>> = [];
+  let publishedSeries: Awaited<ReturnType<typeof listPublishedArticleSeries>> = [];
   try {
-    allArticles = await listPublishedArticles();
+    [allArticles, publishedSeries] = await Promise.all([
+      listPublishedArticles(),
+      listPublishedArticleSeries().catch(() => []),
+    ]);
   } catch {
     allArticles = [];
   }
@@ -128,6 +134,27 @@ export default async function ArticlesPage({
           RSSで新着記事を購読
         </Link>
       </div>
+
+      {publishedSeries.length > 0 && (
+        <section className="mt-6 rounded-2xl border border-pink/10 bg-white p-4 shadow-soft sm:p-5">
+          <p className="flex items-center gap-2 text-[10px] font-black text-ink/55">
+            <BookCopy size={15} className="text-pink" aria-hidden="true" />
+            記事シリーズ
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {publishedSeries.map((series) => (
+              <Link
+                key={series.id}
+                href={`/articles/series/${series.slug}`}
+                className="inline-flex min-h-9 items-center gap-2 rounded-full border border-pink/15 bg-pink/[0.03] px-3.5 text-[10px] font-black text-ink/55 transition hover:border-pink/30 hover:text-pink"
+              >
+                {series.title}
+                <span className="text-[8px] text-ink/30">{series.articleCount || 0}記事</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <form action="/articles" className="mt-7 flex flex-col gap-2 sm:flex-row">
         {tag && <input type="hidden" name="tag" value={tag} />}

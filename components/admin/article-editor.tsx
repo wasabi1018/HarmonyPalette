@@ -40,6 +40,7 @@ import type {
   ArticleRecord,
   ArticleMedia,
   ArticleRevision,
+  ArticleSeries,
   ArticleStatus,
   ArticleTag,
 } from "@/lib/articles/types";
@@ -56,6 +57,9 @@ type ArticleEditorProps = {
   availableTags: ArticleTag[];
   initialRevisions?: ArticleRevision[];
   initialMedia?: ArticleMedia[];
+  availableSeries?: ArticleSeries[];
+  initialSeriesId?: string | null;
+  initialSeriesOrder?: number | null;
   setupError?: string;
   demoMode?: boolean;
 };
@@ -150,6 +154,9 @@ export function ArticleEditor({
   availableTags,
   initialRevisions = [],
   initialMedia = [],
+  availableSeries = [],
+  initialSeriesId = null,
+  initialSeriesOrder = null,
   setupError = "",
   demoMode = false,
 }: ArticleEditorProps) {
@@ -167,6 +174,8 @@ export function ArticleEditor({
   const [selectedTagIds, setSelectedTagIds] = useState(
     initialArticle?.tags.map((tag) => tag.id) || [],
   );
+  const [seriesId, setSeriesId] = useState(initialSeriesId || "");
+  const [seriesOrder, setSeriesOrder] = useState(initialSeriesOrder || 1);
   const [tagQuery, setTagQuery] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [linkChecks, setLinkChecks] = useState<ArticleLinkCheck[]>([]);
@@ -474,6 +483,8 @@ export function ArticleEditor({
       status: nextStatus,
       publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
       tagIds: selectedTagIds,
+      seriesId: seriesId || null,
+      seriesOrder: seriesId ? seriesOrder : null,
     };
 
     try {
@@ -1079,6 +1090,51 @@ export function ArticleEditor({
                   <span className="text-[9px] font-bold text-ink/30">タグはまだ選択されていません。</span>
                 )}
               </div>
+            </div>
+
+            <div className="mt-6 border-t border-pink/10 pt-5">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-[10px] font-black text-ink/50">記事シリーズ</h3>
+                <a href="/admin/series" className="inline-flex items-center gap-1 text-[9px] font-black text-pink hover:underline">
+                  シリーズを管理
+                  <ExternalLink size={11} aria-hidden="true" />
+                </a>
+              </div>
+              <select
+                value={seriesId}
+                onChange={(event) => {
+                  setSeriesId(event.target.value);
+                  if (!event.target.value) setSeriesOrder(1);
+                  markDirty();
+                }}
+                className="mt-2 min-h-10 w-full rounded-xl border border-ink/10 bg-white px-3 text-[10px] font-bold text-ink outline-none focus:border-pink"
+              >
+                <option value="">シリーズなし</option>
+                {availableSeries.map((series) => (
+                  <option key={series.id} value={series.id}>{series.title}</option>
+                ))}
+              </select>
+              {seriesId && (
+                <label className="mt-3 flex items-center justify-between gap-3 text-[9px] font-black text-ink/45">
+                  シリーズ内の表示順
+                  <input
+                    type="number"
+                    min={1}
+                    max={9999}
+                    value={seriesOrder}
+                    onChange={(event) => {
+                      setSeriesOrder(Math.min(9999, Math.max(1, Number(event.target.value) || 1)));
+                      markDirty();
+                    }}
+                    className="min-h-9 w-24 rounded-lg border border-ink/10 px-3 text-right text-[10px] font-bold text-ink outline-none focus:border-pink"
+                  />
+                </label>
+              )}
+              {availableSeries.length === 0 && (
+                <p className="mt-2 text-[9px] font-bold leading-4 text-ink/30">
+                  シリーズを作成すると、連載記事としてまとめられます。
+                </p>
+              )}
             </div>
 
             <label id="quality-excerpt" className="mt-6 block scroll-mt-28 border-t border-pink/10 pt-5">

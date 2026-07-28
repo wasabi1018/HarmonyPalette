@@ -128,6 +128,15 @@ export function parseArticleInput(value: unknown): ArticleInput {
       typeof id === "string" && UUID_PATTERN.test(id)
     )))).slice(0, 20)
     : [];
+  const seriesId = typeof input.seriesId === "string" && UUID_PATTERN.test(input.seriesId)
+    ? input.seriesId
+    : null;
+  const rawSeriesOrder = Number(input.seriesOrder);
+  const seriesOrder = seriesId && Number.isInteger(rawSeriesOrder)
+    ? Math.min(9999, Math.max(1, rawSeriesOrder))
+    : seriesId
+      ? 1
+      : null;
 
   let publishedAt: string | null = null;
   if (status === "published" || status === "scheduled") {
@@ -157,6 +166,8 @@ export function parseArticleInput(value: unknown): ArticleInput {
     status: status as ArticleStatus,
     publishedAt,
     tagIds,
+    seriesId,
+    seriesOrder,
   };
 }
 
@@ -173,6 +184,18 @@ export function parseTagInput(value: unknown) {
     throw new Error("カラーは#から始まる6桁のカラーコードで入力してください。");
   }
   return { name, slug, color };
+}
+
+export function parseSeriesInput(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("シリーズデータの形式が正しくありません。");
+  }
+  const input = value as Record<string, unknown>;
+  const title = requiredText(input.title, "シリーズ名", 100);
+  const slug = normalizeArticleSlug(requiredText(input.slug, "スラッグ", 80)).slice(0, 80);
+  if (!slug) throw new Error("スラッグは半角英数字を含めて入力してください。");
+  const description = optionalText(input.description, "説明", 300);
+  return { title, slug, description };
 }
 
 export function isUuid(value: string) {

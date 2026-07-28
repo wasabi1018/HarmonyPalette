@@ -8,6 +8,10 @@ import {
   listTags,
 } from "@/lib/articles/repository";
 import { isUuid } from "@/lib/articles/validation";
+import {
+  getAdminArticleSeriesAssignment,
+  listArticleSeries,
+} from "@/lib/articles/series-repository";
 
 export const metadata: Metadata = {
   title: "記事を編集",
@@ -25,11 +29,16 @@ export default async function EditArticlePage({
   if (!isUuid(id)) notFound();
 
   try {
-    const [article, tags, revisions, media] = await Promise.all([
+    const [article, tags, revisions, media, series, assignment] = await Promise.all([
       getAdminArticle(id),
       listTags(),
       listArticleRevisions(id),
       listArticleMedia().catch(() => []),
+      listArticleSeries().catch(() => []),
+      getAdminArticleSeriesAssignment(id).catch(() => ({
+        seriesId: null,
+        seriesOrder: null,
+      })),
     ]);
     if (!article) notFound();
     return (
@@ -38,6 +47,9 @@ export default async function EditArticlePage({
         availableTags={tags}
         initialRevisions={revisions}
         initialMedia={media}
+        availableSeries={series}
+        initialSeriesId={assignment.seriesId}
+        initialSeriesOrder={assignment.seriesOrder}
       />
     );
   } catch {

@@ -8,6 +8,21 @@ export type ArticleTag = {
   articleCount?: number;
 };
 
+export type ArticleSeries = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  articleCount?: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ArticleSeriesAssignment = {
+  seriesId: string | null;
+  seriesOrder: number | null;
+};
+
 export type ArticleMedia = {
   id: string;
   storagePath: string;
@@ -86,4 +101,6 @@ export type ArticleInput = {
   status: ArticleStatus;
   publishedAt: string | null;
   tagIds: string[];
+  seriesId: string | null;
+  seriesOrder: number | null;
 };
