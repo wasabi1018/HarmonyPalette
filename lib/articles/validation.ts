@@ -96,6 +96,8 @@ export function parseArticleInput(value: unknown): ArticleInput {
   if (!slug) throw new Error("スラッグは半角英数字を含めて入力してください。");
 
   const excerpt = optionalText(input.excerpt, "抜粋", 240);
+  const seoTitle = optionalText(input.seoTitle, "SEOタイトル", 60);
+  const seoDescription = optionalText(input.seoDescription, "SEO説明文", 160);
   const coverImageUrl = optionalText(input.coverImageUrl, "アイキャッチ画像URL", 2000);
   if (
     coverImageUrl
@@ -105,7 +107,11 @@ export function parseArticleInput(value: unknown): ArticleInput {
     throw new Error("アイキャッチ画像URLはhttps://または/から始まるパスで入力してください。");
   }
 
-  const status = input.status === "published" ? "published" : "draft";
+  let status: ArticleStatus = input.status === "published"
+    ? "published"
+    : input.status === "scheduled"
+      ? "scheduled"
+      : "draft";
   const rawContentJson = input.contentJson;
   if (!rawContentJson || typeof rawContentJson !== "object" || Array.isArray(rawContentJson)) {
     throw new Error("本文データの形式が正しくありません。");
@@ -124,12 +130,17 @@ export function parseArticleInput(value: unknown): ArticleInput {
     : [];
 
   let publishedAt: string | null = null;
-  if (status === "published") {
+  if (status === "published" || status === "scheduled") {
     if (typeof input.publishedAt === "string" && input.publishedAt.trim()) {
       const timestamp = Date.parse(input.publishedAt);
       if (!Number.isFinite(timestamp)) throw new Error("公開日時の形式が正しくありません。");
       publishedAt = new Date(timestamp).toISOString();
+      if (status === "scheduled" && timestamp <= Date.now()) {
+        throw new Error("予約公開日時は現在より後の日時を指定してください。");
+      }
+      if (status === "published" && timestamp > Date.now()) status = "scheduled";
     } else {
+      if (status === "scheduled") throw new Error("予約公開日時を入力してください。");
       publishedAt = new Date().toISOString();
     }
   }
@@ -138,6 +149,8 @@ export function parseArticleInput(value: unknown): ArticleInput {
     title,
     slug,
     excerpt,
+    seoTitle,
+    seoDescription,
     contentJson: rawContentJson as Record<string, unknown>,
     contentHtml,
     coverImageUrl,

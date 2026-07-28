@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArticleEditor } from "@/components/admin/article-editor";
 import {
   getAdminArticle,
+  listArticleRevisions,
   listTags,
 } from "@/lib/articles/repository";
 import { isUuid } from "@/lib/articles/validation";
@@ -23,9 +24,19 @@ export default async function EditArticlePage({
   if (!isUuid(id)) notFound();
 
   try {
-    const [article, tags] = await Promise.all([getAdminArticle(id), listTags()]);
+    const [article, tags, revisions] = await Promise.all([
+      getAdminArticle(id),
+      listTags(),
+      listArticleRevisions(id),
+    ]);
     if (!article) notFound();
-    return <ArticleEditor initialArticle={article} availableTags={tags} />;
+    return (
+      <ArticleEditor
+        initialArticle={article}
+        availableTags={tags}
+        initialRevisions={revisions}
+      />
+    );
   } catch {
     return (
       <ArticleEditor

@@ -1,4 +1,4 @@
-export type ArticleStatus = "draft" | "published";
+export type ArticleStatus = "draft" | "scheduled" | "published";
 
 export type ArticleTag = {
   id: string;
@@ -13,6 +13,8 @@ export type ArticleSummary = {
   title: string;
   slug: string;
   excerpt: string;
+  seoTitle: string;
+  seoDescription: string;
   coverImageUrl: string;
   status: ArticleStatus;
   publishedAt: string | null;
@@ -26,10 +28,21 @@ export type ArticleRecord = ArticleSummary & {
   contentHtml: string;
 };
 
+export type ArticleRevision = {
+  id: string;
+  articleId: string;
+  revisionNumber: number;
+  title: string;
+  status: ArticleStatus;
+  createdAt: string;
+};
+
 export type ArticleInput = {
   title: string;
   slug: string;
   excerpt: string;
+  seoTitle: string;
+  seoDescription: string;
   contentJson: Record<string, unknown>;
   contentHtml: string;
   coverImageUrl: string;

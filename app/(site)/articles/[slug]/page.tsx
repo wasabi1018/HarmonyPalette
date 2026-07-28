@@ -8,6 +8,8 @@ import { getPublishedArticle } from "@/lib/articles/repository";
 
 export const dynamic = "force-dynamic";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://harmony-palette.example";
+
 export async function generateMetadata({
   params,
 }: {
@@ -17,11 +19,29 @@ export async function generateMetadata({
   try {
     const article = await getPublishedArticle(slug);
     if (!article) return { title: "記事が見つかりません" };
+    const title = article.seoTitle || article.title;
+    const description = article.seoDescription || article.excerpt || `${article.title}の記事です。`;
+    const url = `/articles/${article.slug}`;
     return {
-      title: article.title,
-      description: article.excerpt || `${article.title}の記事です。`,
-      alternates: { canonical: `/articles/${article.slug}` },
-      openGraph: article.coverImageUrl ? { images: [article.coverImageUrl] } : undefined,
+      title,
+      description,
+      alternates: { canonical: url },
+      openGraph: {
+        type: "article",
+        title,
+        description,
+        url,
+        publishedTime: article.publishedAt || undefined,
+        modifiedTime: article.updatedAt,
+        tags: article.tags.map((tag) => tag.name),
+        images: article.coverImageUrl ? [article.coverImageUrl] : undefined,
+      },
+      twitter: {
+        card: article.coverImageUrl ? "summary_large_image" : "summary",
+        title,
+        description,
+        images: article.coverImageUrl ? [article.coverImageUrl] : undefined,
+      },
     };
   } catch {
     return { title: "記事" };
@@ -41,9 +61,33 @@ export default async function ArticleDetailPage({
     article = null;
   }
   if (!article) notFound();
+  const articleUrl = `${siteUrl}/articles/${article.slug}`;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.seoTitle || article.title,
+    description: article.seoDescription || article.excerpt,
+    image: article.coverImageUrl ? [article.coverImageUrl] : undefined,
+    datePublished: article.publishedAt,
+    dateModified: article.updatedAt,
+    mainEntityOfPage: articleUrl,
+    url: articleUrl,
+    publisher: {
+      "@type": "Organization",
+      name: "Harmony Palette",
+      url: siteUrl,
+    },
+    keywords: article.tags.map((tag) => tag.name).join(", "),
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
+      />
       <ArticlePreview
         title={article.title}
         excerpt={article.excerpt}

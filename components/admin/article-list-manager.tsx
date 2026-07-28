@@ -33,6 +33,24 @@ function formatDate(value: string | null) {
   }).format(date);
 }
 
+const statusLabel = {
+  draft: "下書き",
+  scheduled: "予約公開",
+  published: "公開中",
+} as const;
+
+const statusClass = {
+  draft: "bg-[#fff7e6] text-[#926e27]",
+  scheduled: "bg-[#eef4ff] text-[#536fa8]",
+  published: "bg-[#eef9f4] text-[#35745f]",
+} as const;
+
+const statusDot = {
+  draft: "bg-[#f0b64b]",
+  scheduled: "bg-[#7291c9]",
+  published: "bg-[#57b78e]",
+} as const;
+
 export function ArticleListManager({
   initialArticles,
   availableTags,
@@ -122,6 +140,7 @@ export function ArticleListManager({
           >
             <option value="all">すべての状態</option>
             <option value="draft">下書き</option>
+            <option value="scheduled">予約公開</option>
             <option value="published">公開中</option>
           </select>
         </label>
@@ -180,13 +199,9 @@ export function ArticleListManager({
               </div>
             </div>
             <div>
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-black ${
-                article.status === "published"
-                  ? "bg-[#eef9f4] text-[#35745f]"
-                  : "bg-[#fff7e6] text-[#926e27]"
-              }`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${article.status === "published" ? "bg-[#57b78e]" : "bg-[#f0b64b]"}`} />
-                {article.status === "published" ? "公開中" : "下書き"}
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-black ${statusClass[article.status]}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${statusDot[article.status]}`} />
+                {statusLabel[article.status]}
               </span>
             </div>
             <p className="inline-flex items-center gap-2 text-[9px] font-bold text-ink/40">

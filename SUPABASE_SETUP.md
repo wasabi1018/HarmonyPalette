@@ -9,11 +9,13 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/202607220001_schedule_import.sql`
 - `supabase/migrations/202607220002_character_display_order.sql`
 - `supabase/migrations/202607270001_articles.sql`
+- `supabase/migrations/202607280001_article_operations.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read
 policies, the private source-document bucket, and the public `article-images`
-bucket used by the article editor.
+bucket used by the article editor. The final migration adds scheduled
+publication, SEO fields, and article revision history.
 
 ## 2. Configure server-only secrets
 
@@ -22,6 +24,7 @@ Copy `.env.example` to `.env.local` and set:
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://bnbdwstvrjgmfftmmofx.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+NEXT_PUBLIC_SITE_URL=https://your-public-site.example
 SUPABASE_SECRET_KEY=your_secret_key
 ADMIN_EMAILS=admin@example.com
 ADMIN_IMPORT_SECRET=your_long_random_admin_secret
@@ -67,13 +70,18 @@ After applying the articles migration, sign in and open `/admin/articles`.
   public `article-images` bucket and limited to 10MB each.
 - Assign tags, preview the unsaved article, then save it as a draft or publish
   it.
+- Choose **予約公開** and a future date to publish through the scheduled batch.
+- Configure the search title and description, and restore an earlier saved
+  revision when needed.
 - Published articles appear under `/articles`; readers can filter them by tag.
 
 ## 6. Scheduled import
 
 `vercel.json` calls `/api/cron/import-schedules` daily at 21:00 UTC (06:00 JST). The route archives and saves candidates as drafts. With the recommended `AUTO_PUBLISH_IMPORTS=false`, an administrator must review and publish them.
 
-For non-Vercel hosting, call the same route from an external scheduler with:
+It also calls `/api/cron/publish-articles` every 10 minutes to publish due
+articles. For non-Vercel hosting, call the same routes from an external
+scheduler with:
 
 ```text
 Authorization: Bearer <CRON_SECRET>

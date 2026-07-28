@@ -15,6 +15,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  History,
   ExternalLink,
   ImageIcon,
   Italic,
@@ -25,6 +26,7 @@ import {
   Palette,
   Quote,
   Redo2,
+  RotateCcw,
   Save,
   Search,
   Trash2,
@@ -35,6 +37,7 @@ import {
 } from "lucide-react";
 import type {
   ArticleRecord,
+  ArticleRevision,
   ArticleStatus,
   ArticleTag,
 } from "@/lib/articles/types";
@@ -43,6 +46,7 @@ import { ArticlePreview } from "@/components/admin/article-preview";
 type ArticleEditorProps = {
   initialArticle: ArticleRecord | null;
   availableTags: ArticleTag[];
+  initialRevisions?: ArticleRevision[];
   setupError?: string;
   demoMode?: boolean;
 };
@@ -59,6 +63,23 @@ function localDateTime(value: string | null) {
   if (Number.isNaN(date.getTime())) return "";
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
   return local.toISOString().slice(0, 16);
+}
+
+function formatRevisionDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ja-JP", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function savedMessage(status: ArticleStatus) {
+  if (status === "published") return "記事を公開しました。";
+  if (status === "scheduled") return "予約公開を設定しました。";
+  return "下書きを保存しました。";
 }
 
 function fallbackSlug() {
@@ -118,6 +139,7 @@ function ToolbarButton({
 export function ArticleEditor({
   initialArticle,
   availableTags,
+  initialRevisions = [],
   setupError = "",
   demoMode = false,
 }: ArticleEditorProps) {
@@ -127,6 +149,8 @@ export function ArticleEditor({
   const [slug, setSlug] = useState(initialArticle?.slug || fallbackSlug());
   const [slugTouched, setSlugTouched] = useState(Boolean(initialArticle?.slug));
   const [excerpt, setExcerpt] = useState(initialArticle?.excerpt || "");
+  const [seoTitle, setSeoTitle] = useState(initialArticle?.seoTitle || "");
+  const [seoDescription, setSeoDescription] = useState(initialArticle?.seoDescription || "");
   const [coverImageUrl, setCoverImageUrl] = useState(initialArticle?.coverImageUrl || "");
   const [status, setStatus] = useState<ArticleStatus>(initialArticle?.status || "draft");
   const [publishedAt, setPublishedAt] = useState(localDateTime(initialArticle?.publishedAt || null));
@@ -141,6 +165,8 @@ export function ArticleEditor({
   const [colorOpen, setColorOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [uploading, setUploading] = useState<"cover" | "body" | "">("");
+  const [revisions, setRevisions] = useState(initialRevisions);
+  const [restoringRevisionId, setRestoringRevisionId] = useState("");
   const coverInputRef = useRef<HTMLInputElement>(null);
   const bodyInputRef = useRef<HTMLInputElement>(null);
 
@@ -281,6 +307,14 @@ export function ArticleEditor({
       setSaveState("error");
       return;
     }
+    if (nextStatus === "scheduled") {
+      const scheduleTime = Date.parse(publishedAt);
+      if (!Number.isFinite(scheduleTime) || scheduleTime <= Date.now()) {
+        setMessage("予約公開日時は現在より後の日時を指定してください。");
+        setSaveState("error");
+        return;
+      }
+    }
 
     setSaveState("saving");
     setMessage("");
@@ -288,11 +322,13 @@ export function ArticleEditor({
       title: title.trim(),
       slug: normalizeSlug(slug),
       excerpt: excerpt.trim(),
+      seoTitle: seoTitle.trim(),
+      seoDescription: seoDescription.trim(),
       contentJson: editor.getJSON(),
       contentHtml: editor.getHTML(),
       coverImageUrl,
       status: nextStatus,
-      publishedAt,
+      publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
       tagIds: selectedTagIds,
     };
 
@@ -301,7 +337,7 @@ export function ArticleEditor({
         await new Promise((resolve) => window.setTimeout(resolve, 350));
         setStatus(nextStatus);
         setSaveState("saved");
-        setMessage(nextStatus === "published" ? "記事を公開しました。" : "下書きを保存しました。");
+        setMessage(savedMessage(nextStatus));
         return;
       }
 
@@ -326,14 +362,38 @@ export function ArticleEditor({
       setStatus(data.article.status);
       setPublishedAt(localDateTime(data.article.publishedAt));
       setSaveState("saved");
-      setMessage(nextStatus === "published" ? "記事を公開しました。" : "下書きを保存しました。");
+      setMessage(savedMessage(data.article.status));
       if (created) {
         router.replace(`/admin/articles/${data.article.id}`);
+      } else {
+        const revisionResponse = await fetch(`/api/admin/articles/${data.article.id}/revisions`);
+        const revisionData = await revisionResponse.json() as { revisions?: ArticleRevision[] };
+        if (revisionResponse.ok && revisionData.revisions) setRevisions(revisionData.revisions);
       }
       router.refresh();
     } catch (error) {
       setSaveState("error");
       setMessage(error instanceof Error ? error.message : "記事の保存に失敗しました。");
+    }
+  };
+
+  const restoreRevision = async (revision: ArticleRevision) => {
+    if (!articleId) return;
+    if (!window.confirm(`リビジョン ${revision.revisionNumber} の内容へ復元し、下書きに戻しますか？現在の内容も履歴として残ります。`)) return;
+    setRestoringRevisionId(revision.id);
+    setMessage("");
+    try {
+      const response = await fetch(
+        `/api/admin/articles/${articleId}/revisions/${revision.id}/restore`,
+        { method: "POST" },
+      );
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error || "変更履歴の復元に失敗しました。");
+      window.location.reload();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "変更履歴の復元に失敗しました。");
+      setSaveState("error");
+      setRestoringRevisionId("");
     }
   };
 
@@ -395,21 +455,21 @@ export function ArticleEditor({
           </button>
           <button
             type="button"
-            onClick={() => save(status === "published" ? "published" : "draft")}
+            onClick={() => save("draft")}
             disabled={saveState === "saving" || Boolean(setupError)}
             className="hidden min-h-10 items-center gap-2 rounded-xl border border-pink/20 bg-pink/5 px-4 text-[11px] font-black text-pink transition hover:bg-pink/10 disabled:opacity-40 sm:inline-flex"
           >
             <Save size={14} aria-hidden="true" />
-            {status === "published" ? "更新を保存" : "下書き保存"}
+            {status === "draft" ? "下書き保存" : "下書きに戻す"}
           </button>
           <button
             type="button"
-            onClick={() => save("published")}
+            onClick={() => save(status === "scheduled" ? "scheduled" : "published")}
             disabled={saveState === "saving" || Boolean(setupError)}
             className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-pink px-4 text-[11px] font-black text-white shadow-[0_8px_18px_rgba(235,110,152,0.22)] transition hover:bg-[#df5c89] disabled:opacity-40"
           >
             {saveState === "saving" ? <LoaderCircle size={14} className="animate-spin" /> : <Check size={14} />}
-            {status === "published" ? "更新する" : "公開する"}
+            {status === "scheduled" ? "予約する" : status === "published" ? "更新する" : "公開する"}
           </button>
         </div>
       </header>
@@ -701,6 +761,7 @@ export function ArticleEditor({
                   className="min-h-11 w-full appearance-none rounded-xl border border-ink/10 bg-white px-4 pr-10 text-[11px] font-black text-ink outline-none focus:border-pink"
                 >
                   <option value="draft">● 下書き</option>
+                  <option value="scheduled">● 予約公開</option>
                   <option value="published">● 公開</option>
                 </select>
                 <ChevronDown size={14} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/35" />
@@ -708,7 +769,9 @@ export function ArticleEditor({
             </label>
 
             <label className="mt-5 block">
-              <span className="text-[10px] font-black text-ink/50">公開日時</span>
+              <span className="text-[10px] font-black text-ink/50">
+                {status === "scheduled" ? "予約公開日時" : "公開日時"}
+              </span>
               <input
                 type="datetime-local"
                 value={publishedAt}
@@ -718,6 +781,11 @@ export function ArticleEditor({
                 }}
                 className="mt-2 min-h-11 w-full rounded-xl border border-ink/10 bg-white px-3 text-[11px] font-bold text-ink outline-none focus:border-pink"
               />
+              {status === "scheduled" && (
+                <span className="mt-2 block text-[9px] font-bold leading-4 text-ink/35">
+                  指定日時を過ぎると定期バッチで公開されます。
+                </span>
+              )}
             </label>
 
             <label className="mt-5 block">
@@ -841,14 +909,98 @@ export function ArticleEditor({
               <span className="mt-1 block text-right text-[9px] font-bold text-ink/30">{excerpt.length} / 240</span>
             </label>
 
+            <div className="mt-6 border-t border-pink/10 pt-5">
+              <h3 className="text-[10px] font-black text-ink/50">SEO設定</h3>
+              <p className="mt-1 text-[9px] font-bold leading-4 text-ink/30">
+                未入力の場合は記事タイトルと抜粋を使用します。
+              </p>
+              <label className="mt-3 block">
+                <span className="text-[9px] font-black text-ink/45">検索結果のタイトル</span>
+                <input
+                  value={seoTitle}
+                  maxLength={60}
+                  onChange={(event) => {
+                    setSeoTitle(event.target.value);
+                    markDirty();
+                  }}
+                  placeholder={title || "記事タイトル"}
+                  className="mt-2 min-h-10 w-full rounded-xl border border-ink/10 bg-white px-3 text-[10px] font-bold text-ink outline-none placeholder:text-ink/25 focus:border-pink"
+                />
+                <span className="mt-1 block text-right text-[8px] font-bold text-ink/30">{seoTitle.length} / 60</span>
+              </label>
+              <label className="mt-3 block">
+                <span className="text-[9px] font-black text-ink/45">検索結果の説明文</span>
+                <textarea
+                  value={seoDescription}
+                  maxLength={160}
+                  rows={4}
+                  onChange={(event) => {
+                    setSeoDescription(event.target.value);
+                    markDirty();
+                  }}
+                  placeholder={excerpt || "記事の内容を短く説明"}
+                  className="mt-2 w-full resize-y rounded-xl border border-ink/10 bg-white px-3 py-2.5 text-[10px] font-bold leading-5 text-ink outline-none placeholder:text-ink/25 focus:border-pink"
+                />
+                <span className="mt-1 block text-right text-[8px] font-bold text-ink/30">{seoDescription.length} / 160</span>
+              </label>
+            </div>
+
+            {articleId && (
+              <div className="mt-6 border-t border-pink/10 pt-5">
+                <h3 className="flex items-center gap-2 text-[10px] font-black text-ink/50">
+                  <History size={14} aria-hidden="true" />
+                  変更履歴
+                </h3>
+                <p className="mt-1 text-[9px] font-bold leading-4 text-ink/30">
+                  保存ごとの内容を復元できます。
+                </p>
+                <div className="mt-3 space-y-2">
+                  {revisions.slice(0, 8).map((revision, index) => (
+                    <div
+                      key={revision.id}
+                      className="flex items-center justify-between gap-2 rounded-xl border border-ink/[0.07] bg-white px-3 py-2.5"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-black text-ink/55">
+                          #{revision.revisionNumber}
+                          {index === 0 && <span className="ml-2 text-pink">最新</span>}
+                        </p>
+                        <p className="mt-0.5 text-[8px] font-bold text-ink/30">
+                          {formatRevisionDate(revision.createdAt)}
+                        </p>
+                      </div>
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => void restoreRevision(revision)}
+                          disabled={Boolean(restoringRevisionId)}
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2 text-[9px] font-black text-pink transition hover:bg-pink/[0.06] disabled:opacity-40"
+                        >
+                          {restoringRevisionId === revision.id
+                            ? <LoaderCircle size={12} className="animate-spin" />
+                            : <RotateCcw size={12} />}
+                          復元
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {revisions.length === 0 && (
+                    <p className="rounded-xl border border-dashed border-ink/10 bg-white px-3 py-4 text-center text-[9px] font-bold text-ink/30">
+                      次回保存時から履歴が記録されます。
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <button
               type="button"
-              onClick={() => save(status === "published" ? "published" : "draft")}
+              onClick={() => save("draft")}
               disabled={saveState === "saving" || Boolean(setupError)}
               className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-pink/20 bg-white text-[11px] font-black text-pink transition hover:bg-pink/[0.04] disabled:opacity-40 sm:hidden"
             >
               <Save size={14} aria-hidden="true" />
-              {status === "published" ? "更新を保存" : "下書き保存"}
+              {status === "draft" ? "下書き保存" : "下書きに戻す"}
             </button>
 
             {message && (

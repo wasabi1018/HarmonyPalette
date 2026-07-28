@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const siteUrl = "https://harmony-palette.example";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://harmony-palette.example";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

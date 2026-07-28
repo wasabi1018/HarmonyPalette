@@ -4,10 +4,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   ArticleInput,
   ArticleRecord,
+  ArticleRevision,
   ArticleStatus,
   ArticleSummary,
   ArticleTag,
 } from "@/lib/articles/types";
+import { parseArticleInput } from "@/lib/articles/validation";
 import {
   getSupabaseAdminClient,
   getSupabaseReadClient,
@@ -41,12 +43,18 @@ function extractTags(row: Row) {
 }
 
 function mapSummary(row: Row): ArticleSummary {
-  const status: ArticleStatus = row.status === "published" ? "published" : "draft";
+  const status: ArticleStatus = row.status === "published"
+    ? "published"
+    : row.status === "scheduled"
+      ? "scheduled"
+      : "draft";
   return {
     id: asText(row.id),
     title: asText(row.title),
     slug: asText(row.slug),
     excerpt: asText(row.excerpt),
+    seoTitle: asText(row.seo_title),
+    seoDescription: asText(row.seo_description),
     coverImageUrl: asText(row.cover_image_url),
     status,
     publishedAt: row.published_at ? asText(row.published_at) : null,
@@ -73,6 +81,8 @@ const articleSelection = `
   title,
   slug,
   excerpt,
+  seo_title,
+  seo_description,
   content_json,
   content_html,
   cover_image_url,
@@ -113,6 +123,55 @@ async function replaceArticleTags(
     );
     if (insertError) throw new Error(insertError.message);
   }
+}
+
+async function createArticleRevision(
+  client: SupabaseClient,
+  articleId: string,
+  userId: string | null,
+) {
+  const [{ data: article, error: articleError }, { data: relations, error: relationsError }, { data: latest, error: latestError }] = await Promise.all([
+    client.from("articles").select(articleSelection).eq("id", articleId).single(),
+    client.from("article_tags").select("tag_id").eq("article_id", articleId),
+    client
+      .from("article_revisions")
+      .select("revision_number")
+      .eq("article_id", articleId)
+      .order("revision_number", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (articleError || relationsError || latestError) {
+    throw new Error(
+      articleError?.message
+      || relationsError?.message
+      || latestError?.message
+      || "変更履歴の作成に失敗しました。",
+    );
+  }
+
+  const record = mapRecord(article as Row);
+  const snapshot: ArticleInput = {
+    title: record.title,
+    slug: record.slug,
+    excerpt: record.excerpt,
+    seoTitle: record.seoTitle,
+    seoDescription: record.seoDescription,
+    contentJson: record.contentJson,
+    contentHtml: record.contentHtml,
+    coverImageUrl: record.coverImageUrl,
+    status: record.status,
+    publishedAt: record.publishedAt,
+    tagIds: (relations ?? []).map((relation) => asText((relation as Row).tag_id)).filter(Boolean),
+  };
+  const revisionNumber = Number((latest as Row | null)?.revision_number || 0) + 1;
+  const { error } = await client.from("article_revisions").insert({
+    article_id: articleId,
+    revision_number: revisionNumber,
+    snapshot,
+    created_by: userId,
+  });
+  if (error) throw new Error(error.message);
 }
 
 export async function listAdminArticles() {
@@ -165,6 +224,8 @@ export async function createArticle(input: ArticleInput, userId: string | null) 
       title: article.title,
       slug: article.slug,
       excerpt: article.excerpt,
+      seo_title: article.seoTitle,
+      seo_description: article.seoDescription,
       content_json: article.contentJson,
       content_html: article.contentHtml,
       cover_image_url: article.coverImageUrl,
@@ -178,6 +239,7 @@ export async function createArticle(input: ArticleInput, userId: string | null) 
   if (error) throw new Error(error.message);
   const id = asText((data as Row).id);
   await replaceArticleTags(client, id, tagIds);
+  await createArticleRevision(client, id, userId);
   return getAdminArticle(id);
 }
 
@@ -194,6 +256,8 @@ export async function updateArticle(
       title: article.title,
       slug: article.slug,
       excerpt: article.excerpt,
+      seo_title: article.seoTitle,
+      seo_description: article.seoDescription,
       content_json: article.contentJson,
       content_html: article.contentHtml,
       cover_image_url: article.coverImageUrl,
@@ -207,7 +271,76 @@ export async function updateArticle(
   if (error) throw new Error(error.message);
   if (!data) return null;
   await replaceArticleTags(client, id, tagIds);
+  await createArticleRevision(client, id, userId);
   return getAdminArticle(id);
+}
+
+export async function listArticleRevisions(articleId: string): Promise<ArticleRevision[]> {
+  const client = requireAdminClient();
+  const { data, error } = await client
+    .from("article_revisions")
+    .select("id,article_id,revision_number,snapshot,created_at")
+    .eq("article_id", articleId)
+    .order("revision_number", { ascending: false })
+    .limit(20);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((item) => {
+    const row = item as Row;
+    const snapshot = row.snapshot && typeof row.snapshot === "object" && !Array.isArray(row.snapshot)
+      ? row.snapshot as Row
+      : {};
+    const snapshotStatus: ArticleStatus = snapshot.status === "published"
+      ? "published"
+      : snapshot.status === "scheduled"
+        ? "scheduled"
+        : "draft";
+    return {
+      id: asText(row.id),
+      articleId: asText(row.article_id),
+      revisionNumber: Number(row.revision_number || 0),
+      title: asText(snapshot.title),
+      status: snapshotStatus,
+      createdAt: asText(row.created_at),
+    };
+  });
+}
+
+export async function restoreArticleRevision(
+  articleId: string,
+  revisionId: string,
+  userId: string | null,
+) {
+  const client = requireAdminClient();
+  const { data, error } = await client
+    .from("article_revisions")
+    .select("snapshot")
+    .eq("id", revisionId)
+    .eq("article_id", articleId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const snapshot = data.snapshot && typeof data.snapshot === "object" && !Array.isArray(data.snapshot)
+    ? data.snapshot as Row
+    : {};
+  return updateArticle(
+    articleId,
+    parseArticleInput({ ...snapshot, status: "draft", publishedAt: null }),
+    userId,
+  );
+}
+
+export async function publishDueArticles(now = new Date()) {
+  const client = requireAdminClient();
+  const { data, error } = await client
+    .from("articles")
+    .update({ status: "published" })
+    .eq("status", "scheduled")
+    .lte("published_at", now.toISOString())
+    .select("id");
+  if (error) throw new Error(error.message);
+  const articleIds = (data ?? []).map((row) => asText((row as Row).id));
+  await Promise.all(articleIds.map((articleId) => createArticleRevision(client, articleId, null)));
+  return { publishedCount: articleIds.length, articleIds };
 }
 
 export async function deleteArticle(id: string) {
@@ -264,6 +397,7 @@ export async function listPublishedArticles(tagSlug?: string) {
     .from("articles")
     .select(articleSelection)
     .eq("status", "published")
+    .lte("published_at", new Date().toISOString())
     .order("published_at", { ascending: false });
   const { data, error } = await query;
   if (error) {
@@ -284,6 +418,7 @@ export async function getPublishedArticle(slug: string) {
     .select(articleSelection)
     .eq("slug", slug)
     .eq("status", "published")
+    .lte("published_at", new Date().toISOString())
     .maybeSingle();
   if (error) {
     if (error.code === "42P01") return null;
