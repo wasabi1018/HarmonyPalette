@@ -17,12 +17,12 @@ export function Header() {
         <Link href="/" className="flex min-w-0 items-center" onClick={() => setIsOpen(false)}>
           <div className="relative h-11 w-[154px] shrink-0 overflow-hidden sm:w-[188px]" aria-label="Harmony Palette ロゴ">
             <Image
-              src="/logo.png"
+              src="/logo-compact.png"
               alt="Harmony Palette"
-              width={220}
-              height={147}
+              fill
               priority
-              className="absolute left-0 top-[-33px] h-auto w-[165px] max-w-none sm:top-[-39px] sm:w-[198px]"
+              className="object-contain object-center"
+              sizes="(max-width: 639px) 154px, 188px"
             />
           </div>
         </Link>

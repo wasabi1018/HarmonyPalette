@@ -43,12 +43,12 @@ function BrandLogo() {
   return (
     <div className="relative h-11 w-[172px] overflow-hidden" aria-label="Harmony Palette">
       <Image
-        src="/logo.png"
+        src="/logo-compact.png"
         alt="Harmony Palette"
-        width={220}
-        height={147}
+        fill
         priority
-        className="absolute left-0 top-[-33px] h-auto w-[165px] max-w-none"
+        className="object-contain object-center"
+        sizes="172px"
       />
     </div>
   );

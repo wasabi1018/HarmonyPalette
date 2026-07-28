@@ -10,11 +10,11 @@ export function Footer() {
         <div>
           <div className="relative h-14 w-[220px] overflow-hidden" aria-label="Harmony Palette ロゴ">
             <Image
-              src="/logo.png"
+              src="/logo-compact.png"
               alt="Harmony Palette"
-              width={220}
-              height={147}
-              className="absolute left-0 top-[-42px] h-auto w-[220px] max-w-none"
+              fill
+              className="object-contain object-center"
+              sizes="220px"
             />
           </div>
           <p className="mt-3 max-w-sm text-[13px] leading-6 text-ink/55">

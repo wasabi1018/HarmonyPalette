@@ -64,11 +64,11 @@ function Hero() {
         <aside className="overflow-hidden rounded-[24px] border border-pink/15 bg-white p-2.5 shadow-card sm:p-4" aria-label="今日の概要">
           <div className="relative aspect-[16/6] overflow-hidden rounded-[18px] bg-[#fffdfd] sm:aspect-[16/7]">
             <Image
-              src="/logo.png"
+              src="/logo-hero.png"
               alt="Harmony Palette ロゴ"
               fill
               priority
-              className="object-cover object-center"
+              className="object-contain object-center"
               sizes="(max-width: 1024px) 100vw, 520px"
             />
           </div>
