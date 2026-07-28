@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Check, LoaderCircle, MapPin, Search, Sparkles, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, CakeSlice, CalendarDays, Check, LoaderCircle, MapPin, Search, Sparkles, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Character } from "@/data/types";
 import { DataStatePanel } from "@/components/data-state-panel";
+import {
+  daysUntilBirthday,
+  formatCharacterBirthday,
+  getCharacterBirthday,
+  todayInJapan,
+} from "@/lib/character-birthday";
 import { useCharacters } from "@/lib/character-store";
 import { getEntryCharacterNames, type DataLoadStatus, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 import { CharacterAvatar } from "./character-avatar";
-
-function todayInJapan() {
-  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
-}
 
 function currentTimeInJapan() {
   return new Intl.DateTimeFormat("ja-JP", {
@@ -35,6 +37,12 @@ function compactDate(value: string) {
 
 function matchesCharacter(entry: ScheduleEntry, character: Character) {
   return entry.characterIds.includes(character.id) || getEntryCharacterNames(entry).includes(character.name);
+}
+
+function birthdayTimingLabel(daysUntil: number) {
+  if (daysUntil === 0) return "今日が誕生日！";
+  if (daysUntil <= 30) return `あと${daysUntil}日`;
+  return null;
 }
 
 export function CharacterBrowser({
@@ -105,6 +113,10 @@ export function CharacterBrowser({
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{filtered.map((character) => {
           const next = nextScheduleFor(character);
+          const birthday = getCharacterBirthday(character);
+          const birthdayTiming = birthday
+            ? birthdayTimingLabel(daysUntilBirthday(birthday, today))
+            : null;
           const scheduleLoading = scheduleState.status === "loading";
           const scheduleUnavailable = scheduleState.status === "error" || scheduleState.status === "unavailable";
           const scheduleHref = `/schedule?character=${encodeURIComponent(character.name)}&from=${today}&to=${scheduleTo}#schedule-results`;
@@ -117,7 +129,22 @@ export function CharacterBrowser({
             <article key={character.id} className="group rounded-[22px] border border-pink/10 bg-white p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-card">
               <div className="flex items-center gap-3">
                 <CharacterAvatar character={character} size="md" />
-                <h3 className="min-w-0 truncate font-black text-ink group-hover:text-pink">{character.name}</h3>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate font-black text-ink group-hover:text-pink">{character.name}</h3>
+                  {birthday && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <p className="inline-flex items-center gap-1.5 rounded-full bg-lavender/10 px-2 py-1 text-[10px] font-black text-lavender">
+                        <CakeSlice size={11} aria-hidden="true" />
+                        誕生日 {formatCharacterBirthday(birthday)}
+                      </p>
+                      {birthdayTiming && (
+                        <span className={`rounded-full px-2 py-1 text-[9px] font-black ${birthdayTiming === "今日が誕生日！" ? "bg-pink text-white" : "bg-pink/10 text-pink"}`}>
+                          {birthdayTiming}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="mt-3 rounded-[14px] bg-[#fff9fb] px-3 py-2.5">
                 {scheduleLoading ? (

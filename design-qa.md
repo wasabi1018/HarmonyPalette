@@ -58,3 +58,41 @@ The full desktop comparison remains readable at source resolution, so a separate
 ## Final result
 
 passed
+
+---
+
+# Character Birthday Card Countdown — Design QA
+
+## Scope
+
+- Removed the standalone “もうすぐ誕生日” section.
+- Moved birthday timing into each character card, directly beside the birthday date.
+- Display timing only from 30 days before the birthday through the birthday itself.
+
+## Visual truth and evidence
+
+- Source: `C:/Users/mkcs1/AppData/Local/Temp/codex-clipboard-29d16a58-0f78-4550-a630-5a688efec2e2.png`
+- Implementation route: `http://127.0.0.1:3000/characters`
+- Comparison input: the supplied source and the live desktop card capture were combined into one visual review.
+- Desktop viewport: 1207 × 900 CSS pixels.
+- Mobile viewport: 390 × 844 CSS pixels.
+
+## Functional checks
+
+- The standalone birthday section is absent.
+- ポムポムプリン displays “今日が誕生日！” beside “誕生日 7月28日”.
+- マイメロディ displays “あと2日” beside “誕生日 7月30日”.
+- ハローキティ displays “誕生日 11月1日” without a timing badge because it is more than 30 days away.
+- The mobile layout has no horizontal overflow.
+- Browser console showed no errors or warnings.
+
+## Severity review
+
+- P0: none.
+- P1: none.
+- P2: none.
+- P3: none.
+
+## Final result
+
+passed
