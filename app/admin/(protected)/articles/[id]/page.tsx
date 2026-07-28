@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleEditor } from "@/components/admin/article-editor";
+import { listArticleMedia } from "@/lib/articles/media-repository";
 import {
   getAdminArticle,
   listArticleRevisions,
@@ -24,10 +25,11 @@ export default async function EditArticlePage({
   if (!isUuid(id)) notFound();
 
   try {
-    const [article, tags, revisions] = await Promise.all([
+    const [article, tags, revisions, media] = await Promise.all([
       getAdminArticle(id),
       listTags(),
       listArticleRevisions(id),
+      listArticleMedia().catch(() => []),
     ]);
     if (!article) notFound();
     return (
@@ -35,6 +37,7 @@ export default async function EditArticlePage({
         initialArticle={article}
         availableTags={tags}
         initialRevisions={revisions}
+        initialMedia={media}
       />
     );
   } catch {

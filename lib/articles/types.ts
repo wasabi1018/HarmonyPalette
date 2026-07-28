@@ -8,6 +8,20 @@ export type ArticleTag = {
   articleCount?: number;
 };
 
+export type ArticleMedia = {
+  id: string;
+  storagePath: string;
+  publicUrl: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  width: number | null;
+  height: number | null;
+  altText: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ArticleSummary = {
   id: string;
   title: string;

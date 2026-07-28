@@ -83,7 +83,7 @@ export function ArticlePreview({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={coverImageUrl}
-              alt=""
+              alt={`${title || "記事"}のアイキャッチ画像`}
               className="aspect-[3/1] w-full object-cover"
             />
           </div>

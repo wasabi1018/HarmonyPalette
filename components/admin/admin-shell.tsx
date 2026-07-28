@@ -7,6 +7,7 @@ import {
   CalendarDays,
   FileText,
   Home,
+  Images,
   Menu,
   Settings,
   Tag,
@@ -24,6 +25,7 @@ const navigation = [
   { href: "/admin", label: "管理トップ", icon: Home, exact: true },
   { href: "/admin/articles", label: "記事", icon: FileText, exact: false },
   { href: "/admin/tags", label: "タグ", icon: Tag, exact: false },
+  { href: "/admin/media", label: "メディア", icon: Images, exact: false },
   { href: "/admin/schedule", label: "スケジュール", icon: CalendarDays, exact: false },
 ] as const;
 

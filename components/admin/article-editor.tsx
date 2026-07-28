@@ -18,6 +18,7 @@ import {
   History,
   ExternalLink,
   ImageIcon,
+  Images,
   Italic,
   Link2,
   List,
@@ -37,6 +38,7 @@ import {
 } from "lucide-react";
 import type {
   ArticleRecord,
+  ArticleMedia,
   ArticleRevision,
   ArticleStatus,
   ArticleTag,
@@ -47,6 +49,7 @@ type ArticleEditorProps = {
   initialArticle: ArticleRecord | null;
   availableTags: ArticleTag[];
   initialRevisions?: ArticleRevision[];
+  initialMedia?: ArticleMedia[];
   setupError?: string;
   demoMode?: boolean;
 };
@@ -140,6 +143,7 @@ export function ArticleEditor({
   initialArticle,
   availableTags,
   initialRevisions = [],
+  initialMedia = [],
   setupError = "",
   demoMode = false,
 }: ArticleEditorProps) {
@@ -165,6 +169,9 @@ export function ArticleEditor({
   const [colorOpen, setColorOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [uploading, setUploading] = useState<"cover" | "body" | "">("");
+  const [mediaItems, setMediaItems] = useState(initialMedia);
+  const [mediaPicker, setMediaPicker] = useState<"cover" | "body" | "">("");
+  const [mediaQuery, setMediaQuery] = useState("");
   const [revisions, setRevisions] = useState(initialRevisions);
   const [restoringRevisionId, setRestoringRevisionId] = useState("");
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -222,6 +229,13 @@ export function ArticleEditor({
       && (!query || `${tag.name} ${tag.slug}`.toLocaleLowerCase("ja").includes(query))
     ));
   }, [availableTags, selectedTagIds, tagQuery]);
+  const filteredMedia = useMemo(() => {
+    const query = mediaQuery.trim().toLocaleLowerCase("ja");
+    if (!query) return mediaItems;
+    return mediaItems.filter((item) => (
+      `${item.fileName} ${item.altText}`.toLocaleLowerCase("ja").includes(query)
+    ));
+  }, [mediaItems, mediaQuery]);
   const contentHtml = editor?.getHTML() || initialArticle?.contentHtml || "<p></p>";
   const characterCount = editor?.getText().replace(/\s/g, "").length || 0;
 
@@ -233,6 +247,18 @@ export function ArticleEditor({
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, [previewOpen]);
+
+  useEffect(() => {
+    if (!mediaPicker) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMediaPicker("");
+        setMediaQuery("");
+      }
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [mediaPicker]);
 
   useEffect(() => {
     const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
@@ -270,6 +296,7 @@ export function ArticleEditor({
 
     try {
       let url = "";
+      let altText = file.name;
       if (demoMode) {
         url = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -280,19 +307,28 @@ export function ArticleEditor({
       } else {
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("altText", file.name.replace(/\.[^.]+$/, ""));
         const response = await fetch("/api/admin/article-images", {
           method: "POST",
           body: formData,
         });
-        const data = await response.json() as { url?: string; error?: string };
+        const data = await response.json() as {
+          url?: string;
+          media?: ArticleMedia;
+          error?: string;
+        };
         if (!response.ok || !data.url) throw new Error(data.error || "画像のアップロードに失敗しました。");
         url = data.url;
+        if (data.media) {
+          altText = data.media.altText || data.media.fileName;
+          setMediaItems((items) => [data.media as ArticleMedia, ...items]);
+        }
       }
 
       if (placement === "cover") {
         setCoverImageUrl(url);
       } else {
-        editor?.chain().focus().setImage({ src: url, alt: file.name }).run();
+        editor?.chain().focus().setImage({ src: url, alt: altText }).run();
       }
       markDirty();
     } catch (error) {
@@ -303,6 +339,20 @@ export function ArticleEditor({
       if (coverInputRef.current) coverInputRef.current.value = "";
       if (bodyInputRef.current) bodyInputRef.current.value = "";
     }
+  };
+
+  const selectMedia = (item: ArticleMedia) => {
+    if (mediaPicker === "cover") {
+      setCoverImageUrl(item.publicUrl);
+    } else if (mediaPicker === "body") {
+      editor?.chain().focus().setImage({
+        src: item.publicUrl,
+        alt: item.altText || item.fileName,
+      }).run();
+    }
+    setMediaPicker("");
+    setMediaQuery("");
+    markDirty();
   };
 
   const save = async (nextStatus: ArticleStatus, isAutoSave = false) => {
@@ -599,6 +649,14 @@ export function ArticleEditor({
                   <span className="mt-1 text-[9px] font-bold text-ink/30">JPEG・PNG・WebP・GIF / 10MBまで</span>
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setMediaPicker("cover")}
+                className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-lg px-2 text-[10px] font-black text-pink hover:bg-pink/[0.04]"
+              >
+                <Images size={14} aria-hidden="true" />
+                メディアライブラリから選択
+              </button>
             </section>
 
             <section className="mt-6">
@@ -760,6 +818,9 @@ export function ArticleEditor({
                   <ToolbarButton label="画像を挿入" disabled={!editor || uploading === "body"} onClick={() => bodyInputRef.current?.click()}>
                     {uploading === "body" ? <LoaderCircle size={16} className="animate-spin" /> : <ImageIcon size={16} />}
                   </ToolbarButton>
+                  <ToolbarButton label="ライブラリから画像を挿入" disabled={!editor} onClick={() => setMediaPicker("body")}>
+                    <Images size={16} />
+                  </ToolbarButton>
                   <span className="mx-1 h-5 w-px shrink-0 bg-ink/10" />
                   <ToolbarButton label="箇条書き" active={editor?.isActive("bulletList")} disabled={!editor} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
                     <List size={16} />
@@ -850,15 +911,13 @@ export function ArticleEditor({
             <div className="mt-6 border-t border-pink/10 pt-5">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-[10px] font-black text-ink/50">アイキャッチ画像</h3>
-                {coverImageUrl && (
-                  <button
-                    type="button"
-                    onClick={() => coverInputRef.current?.click()}
-                    className="text-[9px] font-black text-pink hover:underline"
-                  >
-                    変更
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setMediaPicker("cover")}
+                  className="text-[9px] font-black text-pink hover:underline"
+                >
+                  ライブラリ
+                </button>
               </div>
               {coverImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -1061,6 +1120,82 @@ export function ArticleEditor({
           </div>
         </aside>
       </div>
+
+      {mediaPicker && (
+        <div className="fixed inset-0 z-[80] grid place-items-center bg-ink/25 p-4 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="media-picker-title"
+            className="flex max-h-[86vh] w-full max-w-[900px] flex-col overflow-hidden rounded-3xl border border-pink/10 bg-white shadow-[0_24px_70px_rgba(62,53,64,0.2)]"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-pink/10 px-5 py-4">
+              <div>
+                <h2 id="media-picker-title" className="text-[15px] font-black text-ink">
+                  {mediaPicker === "cover" ? "アイキャッチ画像を選択" : "本文へ画像を挿入"}
+                </h2>
+                <p className="mt-1 text-[9px] font-bold text-ink/35">登録済み画像は何度でも再利用できます。</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setMediaPicker("");
+                  setMediaQuery("");
+                }}
+                aria-label="メディアライブラリを閉じる"
+                className="grid h-10 w-10 place-items-center rounded-xl text-ink/40 hover:bg-pink/[0.05] hover:text-pink"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="border-b border-pink/10 px-5 py-3">
+              <label className="relative block">
+                <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/30" />
+                <input
+                  autoFocus
+                  value={mediaQuery}
+                  onChange={(event) => setMediaQuery(event.target.value)}
+                  placeholder="ファイル名・代替テキストを検索"
+                  className="min-h-11 w-full rounded-xl border border-ink/10 bg-white pl-10 pr-3 text-[11px] font-bold text-ink outline-none focus:border-pink"
+                />
+              </label>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
+              {filteredMedia.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredMedia.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => selectMedia(item)}
+                      className="overflow-hidden rounded-2xl border border-ink/[0.08] bg-white text-left transition hover:-translate-y-0.5 hover:border-pink/35 hover:shadow-soft"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.publicUrl} alt="" loading="lazy" className="aspect-[16/10] w-full bg-pink/[0.04] object-cover" />
+                      <span className="block p-3">
+                        <strong className="block truncate text-[10px] font-black text-ink">{item.fileName}</strong>
+                        <span className="mt-1 line-clamp-2 block text-[9px] font-bold leading-4 text-ink/40">
+                          {item.altText || "代替テキスト未設定"}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-16 text-center">
+                  <Images size={28} className="mx-auto text-pink/30" />
+                  <p className="mt-3 text-[11px] font-black text-ink/40">
+                    {mediaItems.length === 0 ? "登録済み画像はありません" : "条件に一致する画像がありません"}
+                  </p>
+                  <a href="/admin/media" className="mt-3 inline-flex text-[10px] font-black text-pink hover:underline">
+                    メディア管理を開く
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {previewOpen && (
         <div className="fixed inset-0 z-[70] overflow-y-auto bg-[#fffafd]">
