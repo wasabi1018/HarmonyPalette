@@ -26,13 +26,24 @@ import {
 import {
   fanStudioFallbackName,
   isFanStudioGreeting,
+  shortFanStudioLocation,
   specialAppearance,
 } from "@/lib/schedule-display";
 
 type GenerationMode = "week" | "month";
-type ImageTemplate = "overview" | "fan-studio";
+type ImageTemplate = "overview" | "fan-studio" | "fan-studio-daily";
 type ThemeKey = "pink" | "sky" | "lavender";
 type FanStudioCellState = "none" | "normal" | "special";
+
+type DailyFanStudioItem = {
+  name: string;
+  special: boolean;
+};
+
+type DailyFanStudioRow = {
+  time: string;
+  cells: DailyFanStudioItem[][];
+};
 
 type WeekPeriod = {
   id: string;
@@ -53,6 +64,8 @@ const CARD_WIDTH = 1080;
 const CARD_HEIGHT = 1350;
 const FAN_STUDIO_EVENT = "ファンスタジオ";
 const DEFAULT_SPECIAL_LEGEND = "特別な姿の回あり";
+const DEFAULT_SPECIAL_EMOJI = "☀️";
+const DEFAULT_SPECIAL_EMOJI_MEANING = "日焼けした姿";
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 const themes: Record<ThemeKey, Theme> = {
   pink: {
@@ -141,6 +154,11 @@ function formatShortDate(value: string, withWeekday = true) {
 
 function formatLongRange(period: WeekPeriod) {
   return `${formatShortDate(period.start)} – ${formatShortDate(period.end)}`;
+}
+
+function formatJapaneseDate(value: string) {
+  const date = dateFromIso(value);
+  return `${date.getUTCFullYear()}年${date.getUTCMonth() + 1}月${date.getUTCDate()}日（${WEEKDAYS[date.getUTCDay()]}）`;
 }
 
 function dateParts(value: string) {
@@ -232,7 +250,53 @@ function buildFanStudioRows(
   }));
 }
 
+function roomSortValue(room: string) {
+  const roomNumber = Number(room.match(/\d+/)?.[0]);
+  return Number.isFinite(roomNumber) ? roomNumber : Number.MAX_SAFE_INTEGER;
+}
+
+function buildDailyFanStudioSchedule(date: string, entries: ScheduleEntry[]) {
+  const dailyEntries = entries.filter(
+    (entry) => isFanStudioGreeting(entry) && entryOccursOn(entry, date),
+  );
+  const rooms = Array.from(
+    new Set(dailyEntries.map((entry) => shortFanStudioLocation(entry.location))),
+  ).sort((left, right) => (
+    roomSortValue(left) - roomSortValue(right)
+    || left.localeCompare(right, "ja")
+  ));
+  const times = Array.from(
+    new Set(dailyEntries.map((entry) => entry.startTime).filter(Boolean)),
+  ).sort();
+
+  const rows: DailyFanStudioRow[] = times.map((time) => ({
+    time,
+    cells: rooms.map((room) => {
+      const items = new Map<string, boolean>();
+      dailyEntries
+        .filter(
+          (entry) =>
+            entry.startTime === time
+            && shortFanStudioLocation(entry.location) === room,
+        )
+        .forEach((entry) => {
+          const special = Boolean(specialAppearance(entry));
+          characterNamesForEntry(entry).forEach((name) => {
+            items.set(name, Boolean(items.get(name)) || special);
+          });
+        });
+
+      return Array.from(items, ([name, special]) => ({ name, special }));
+    }),
+  }));
+
+  return { rooms, rows };
+}
+
 function fileNameForPeriod(period: WeekPeriod, template: ImageTemplate) {
+  if (template === "fan-studio-daily") {
+    return `harmony-palette_fanstudio_daily_${period.start}.png`;
+  }
   if (template === "fan-studio") {
     return `harmony-palette_fanstudio_${period.start}_${period.end}.png`;
   }
@@ -952,6 +1016,300 @@ export function FanStudioInstagramCard({
   );
 }
 
+export function DailyFanStudioInstagramCard({
+  date,
+  entries,
+  theme,
+  specialEmoji,
+  specialEmojiMeaning,
+}: {
+  date: string;
+  entries: ScheduleEntry[];
+  theme: Theme;
+  specialEmoji: string;
+  specialEmojiMeaning: string;
+}) {
+  const { rooms, rows } = buildDailyFanStudioSchedule(date, entries);
+  const rowGap = rows.length >= 13 ? 4 : rows.length >= 10 ? 6 : 8;
+  const timeWidth = 150;
+  const tableColumns = `${timeWidth}px repeat(${Math.max(rooms.length, 1)}, minmax(0, 1fr))`;
+  const cellFontSize = rooms.length >= 3 ? 20 : 23;
+  const compactRows = rows.length >= 12;
+
+  return (
+    <article
+      style={{
+        position: "relative",
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
+        overflow: "hidden",
+        background: theme.canvas,
+        color: "#3e3540",
+        fontFamily: '"Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif',
+        padding: "40px 46px 30px",
+      }}
+    >
+      <span
+        style={{
+          position: "absolute",
+          width: 330,
+          height: 330,
+          right: -120,
+          top: -160,
+          borderRadius: "50%",
+          background: theme.soft,
+        }}
+      />
+      <span
+        style={{
+          position: "absolute",
+          width: 190,
+          height: 190,
+          left: -100,
+          bottom: -62,
+          borderRadius: "50%",
+          background: theme.soft,
+        }}
+      />
+
+      <header style={{ position: "relative", height: 305 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <span
+              style={{
+                display: "grid",
+                width: 56,
+                height: 56,
+                placeItems: "center",
+                borderRadius: 16,
+                background: theme.accent,
+                color: "#fff",
+                fontSize: 30,
+                fontWeight: 900,
+              }}
+            >
+              H
+            </span>
+            <span style={{ fontSize: 30, fontWeight: 900, letterSpacing: "0.02em" }}>
+              Harmony <span style={{ color: theme.accentDark }}>Palette</span>
+            </span>
+          </div>
+          <span
+            style={{
+              borderRadius: 999,
+              border: `2px solid ${theme.soft}`,
+              background: "rgba(255,255,255,0.58)",
+              color: theme.accentDark,
+              padding: "12px 26px",
+              fontSize: 22,
+              fontWeight: 900,
+              letterSpacing: "0.1em",
+            }}
+          >
+            DAILY SCHEDULE
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: "inline-flex",
+            marginTop: 32,
+            borderRadius: 999,
+            background: theme.soft,
+            color: theme.secondary,
+            padding: "9px 24px",
+            fontSize: 17,
+            fontWeight: 900,
+            letterSpacing: "0.14em",
+          }}
+        >
+          GREETING SCHEDULE
+        </div>
+
+        <div style={{ marginTop: 20 }}>
+          <h1 style={{ margin: 0, fontSize: 68, fontWeight: 900, letterSpacing: "-0.04em", lineHeight: 1.08 }}>
+            ファンスタジオ
+          </h1>
+          <p style={{ margin: "12px 0 0", fontSize: 31, fontWeight: 900, letterSpacing: "-0.02em" }}>
+            {formatJapaneseDate(date)}
+          </p>
+        </div>
+
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: 0,
+            display: "flex",
+            maxWidth: 760,
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            transform: "translateX(-50%)",
+            whiteSpace: "nowrap",
+            fontSize: specialEmojiMeaning.length >= 18 ? 18 : 21,
+            fontWeight: 900,
+          }}
+        >
+          <span style={{ fontSize: 30, lineHeight: 1 }}>{specialEmoji}</span>
+          <span>{specialEmojiMeaning}</span>
+        </div>
+      </header>
+
+      <main
+        style={{
+          position: "relative",
+          display: "grid",
+          height: 903,
+          gridTemplateRows: rows.length > 0
+            ? `64px repeat(${rows.length}, minmax(0, 1fr))`
+            : "64px 1fr",
+          gap: rowGap,
+          marginTop: 12,
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            minWidth: 0,
+            gridTemplateColumns: tableColumns,
+            overflow: "hidden",
+            borderRadius: 22,
+            background: theme.accent,
+            color: "#fff",
+            boxShadow: `0 8px 22px ${theme.soft}`,
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              placeItems: "center",
+              borderRight: "2px solid rgba(255,255,255,0.24)",
+              fontSize: 23,
+              fontWeight: 900,
+            }}
+          >
+            時間
+          </div>
+          {rooms.map((room) => (
+            <div
+              key={room}
+              style={{
+                display: "grid",
+                minWidth: 0,
+                placeItems: "center",
+                borderRight: "2px solid rgba(255,255,255,0.2)",
+                fontSize: 25,
+                fontWeight: 900,
+              }}
+            >
+              {room}
+            </div>
+          ))}
+        </div>
+
+        {rows.length > 0 ? rows.map((row) => (
+          <section
+            key={row.time}
+            style={{
+              display: "grid",
+              minWidth: 0,
+              gridTemplateColumns: tableColumns,
+              overflow: "hidden",
+              border: `2px solid ${theme.soft}`,
+              borderRadius: 18,
+              background: "#fff",
+              boxShadow: "0 6px 18px rgba(98,66,88,0.055)",
+            }}
+          >
+            <time
+              style={{
+                display: "grid",
+                placeItems: "center",
+                borderRight: `2px solid ${theme.soft}`,
+                fontSize: compactRows ? 22 : 27,
+                fontWeight: 900,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {row.time}
+            </time>
+            {row.cells.map((items, roomIndex) => (
+              <div
+                key={`${row.time}-${rooms[roomIndex]}`}
+                style={{
+                  display: "flex",
+                  minWidth: 0,
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
+                  borderRight: `2px solid ${theme.soft}`,
+                  padding: "4px 10px",
+                  textAlign: "center",
+                }}
+              >
+                {items.map((item) => (
+                  <span
+                    key={item.name}
+                    style={{
+                      maxWidth: "100%",
+                      fontSize: items.length >= 2 || compactRows ? Math.max(16, cellFontSize - 3) : cellFontSize,
+                      fontWeight: 900,
+                      lineHeight: 1.28,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {item.name}{item.special ? ` ${specialEmoji}` : ""}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </section>
+        )) : (
+          <div
+            style={{
+              display: "grid",
+              placeItems: "center",
+              border: `2px solid ${theme.soft}`,
+              borderRadius: 22,
+              background: "#fff",
+              color: "#9b919c",
+              fontSize: 24,
+              fontWeight: 900,
+            }}
+          >
+            この日のファンスタジオ予定はありません
+          </div>
+        )}
+      </main>
+
+      <footer
+        style={{
+          position: "relative",
+          display: "flex",
+          height: 52,
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 24,
+          marginTop: 12,
+          color: "#776d79",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <CircleAlert size={36} fill={theme.accent} color="#fff" strokeWidth={2.4} />
+          <p style={{ maxWidth: 650, margin: 0, fontSize: 14, fontWeight: 800, lineHeight: 1.5 }}>
+            内容は変更になる場合があります。お出かけ前に公式サイトの最新情報をご確認ください。
+          </p>
+        </div>
+        <p style={{ margin: 0, color: theme.accentDark, fontSize: 24, fontWeight: 900, whiteSpace: "nowrap" }}>
+          Harmony Palette
+        </p>
+      </footer>
+    </article>
+  );
+}
+
 function usePreviewScale() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.5);
@@ -993,6 +1351,8 @@ export function InstagramScheduleStudio() {
   const [selectedMonth, setSelectedMonth] = useState(today.slice(0, 7));
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [specialLegend, setSpecialLegend] = useState(DEFAULT_SPECIAL_LEGEND);
+  const [specialEmoji, setSpecialEmoji] = useState(DEFAULT_SPECIAL_EMOJI);
+  const [specialEmojiMeaning, setSpecialEmojiMeaning] = useState(DEFAULT_SPECIAL_EMOJI_MEANING);
   const [themeKey, setThemeKey] = useState<ThemeKey>("pink");
   const [previewIndex, setPreviewIndex] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -1001,14 +1361,17 @@ export function InstagramScheduleStudio() {
   const { containerRef, scale } = usePreviewScale();
 
   const periods = useMemo<WeekPeriod[]>(() => {
+    if (template === "fan-studio-daily") {
+      return [{ id: selectedDate, start: selectedDate, end: selectedDate }];
+    }
     if (mode === "month") return getMonthPeriods(selectedMonth);
     const start = startOfWeek(selectedDate);
     return [{ id: start, start, end: addDays(start, 6) }];
-  }, [mode, selectedDate, selectedMonth]);
+  }, [mode, selectedDate, selectedMonth, template]);
 
   useEffect(() => {
     setPreviewIndex(0);
-  }, [mode, selectedDate, selectedMonth]);
+  }, [mode, selectedDate, selectedMonth, template]);
 
   const periodRange = useMemo(
     () => ({
@@ -1059,15 +1422,36 @@ export function InstagramScheduleStudio() {
   const activePeriod = periods[Math.min(previewIndex, periods.length - 1)] ?? periods[0];
   const theme = themes[themeKey];
   const normalizedSpecialLegend = specialLegend.trim() || DEFAULT_SPECIAL_LEGEND;
+  const normalizedSpecialEmoji = specialEmoji.trim() || DEFAULT_SPECIAL_EMOJI;
+  const normalizedSpecialEmojiMeaning = specialEmojiMeaning.trim() || DEFAULT_SPECIAL_EMOJI_MEANING;
   const activeFanStudioRows = useMemo(
     () => buildFanStudioRows(activePeriod, scheduleState.entries, characterState.characters),
     [activePeriod, characterState.characters, scheduleState.entries],
   );
+  const activeDailyFanStudio = useMemo(
+    () => buildDailyFanStudioSchedule(activePeriod.start, scheduleState.entries),
+    [activePeriod.start, scheduleState.entries],
+  );
+  const isDailyTemplate = template === "fan-studio-daily";
+  const isBatchMode = !isDailyTemplate && mode === "month";
   const canDownload = template === "fan-studio"
     ? activeFanStudioRows.length > 0
-    : selectedEvents.length > 0;
+    : isDailyTemplate
+      ? activeDailyFanStudio.rows.length > 0
+      : selectedEvents.length > 0;
 
   const caption = useMemo(() => {
+    if (isDailyTemplate) {
+      return `＼${formatJapaneseDate(activePeriod.start)}のファンスタジオ／
+
+時間・部屋ごとの登場予定をまとめました。
+「${normalizedSpecialEmoji}」は「${normalizedSpecialEmojiMeaning}」を表します。
+
+※内容は変更になる場合があります。お出かけ前に公式サイトの最新情報をご確認ください。
+
+#ハーモニーランド #ファンスタジオ #サンリオ #大分観光 #HarmonyPalette`;
+    }
+
     if (template === "fan-studio") {
       if (mode === "month") {
         const [year, month] = selectedMonth.split("-").map(Number);
@@ -1111,7 +1495,16 @@ export function InstagramScheduleStudio() {
 ※内容は変更になる場合があります。お出かけ前に公式サイトの最新情報をご確認ください。
 
 #ハーモニーランド #サンリオ #大分観光 #子連れおでかけ #HarmonyPalette`;
-  }, [activePeriod, mode, normalizedSpecialLegend, selectedMonth, template]);
+  }, [
+    activePeriod,
+    isDailyTemplate,
+    mode,
+    normalizedSpecialEmoji,
+    normalizedSpecialEmojiMeaning,
+    normalizedSpecialLegend,
+    selectedMonth,
+    template,
+  ]);
 
   const handleCopyCaption = async () => {
     try {
@@ -1126,7 +1519,7 @@ export function InstagramScheduleStudio() {
     setIsDownloading(true);
     setFeedback("");
     try {
-      if (mode === "week") {
+      if (!isBatchMode) {
         const node = captureRefs.current.get(activePeriod.id);
         if (!node) throw new Error("画像の準備ができていません。");
         const blob = await captureCard(node);
@@ -1172,10 +1565,11 @@ export function InstagramScheduleStudio() {
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-[#fff8fb] p-1.5">
+          <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-[#fff8fb] p-1.5">
             {([
-              ["overview", "全体スケジュール"],
-              ["fan-studio", "ファンスタジオ"],
+              ["overview", "全体"],
+              ["fan-studio", "週間ファンスタジオ"],
+              ["fan-studio-daily", "日別ファンスタジオ"],
             ] as const).map(([value, label]) => (
               <button
                 key={value}
@@ -1196,7 +1590,9 @@ export function InstagramScheduleStudio() {
           <p className="mt-3 text-[10px] font-bold leading-5 text-ink/45">
             {template === "fan-studio"
               ? "キャラクターを縦軸、1週間の日付を横軸にした専用画像を作成します。"
-              : "選択したイベントを横軸に並べた、現在のスケジュール画像を作成します。"}
+              : template === "fan-studio-daily"
+                ? "時間を縦軸、予定のある部屋を横軸にした1日単位の画像を作成します。"
+                : "選択したイベントを横軸に並べた、現在のスケジュール画像を作成します。"}
           </p>
         </section>
 
@@ -1211,34 +1607,36 @@ export function InstagramScheduleStudio() {
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-[#fff8fb] p-1.5">
-            {([
-              ["week", "1週間"],
-              ["month", "1か月分"],
-            ] as const).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setMode(value)}
-                className={`min-h-11 rounded-xl px-3 text-[12px] font-black transition ${
-                  mode === value ? "bg-white text-pink shadow-sm" : "text-ink/45 hover:text-pink"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {!isDailyTemplate && (
+            <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-[#fff8fb] p-1.5">
+              {([
+                ["week", "1週間"],
+                ["month", "1か月分"],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setMode(value)}
+                  className={`min-h-11 rounded-xl px-3 text-[12px] font-black transition ${
+                    mode === value ? "bg-white text-pink shadow-sm" : "text-ink/45 hover:text-pink"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
 
           <label className="mt-4 block">
             <span className="mb-1.5 block text-[11px] font-black text-ink/55">
-              {mode === "week" ? "週に含まれる日" : "作成する月"}
+              {isDailyTemplate ? "作成する日" : mode === "week" ? "週に含まれる日" : "作成する月"}
             </span>
             <input
-              type={mode === "week" ? "date" : "month"}
-              value={mode === "week" ? selectedDate : selectedMonth}
+              type={isDailyTemplate || mode === "week" ? "date" : "month"}
+              value={isDailyTemplate || mode === "week" ? selectedDate : selectedMonth}
               onChange={(event) => {
                 if (!event.target.value) return;
-                if (mode === "week") setSelectedDate(event.target.value);
+                if (isDailyTemplate || mode === "week") setSelectedDate(event.target.value);
                 else setSelectedMonth(event.target.value);
               }}
               className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none transition focus:border-pink focus:ring-4 focus:ring-pink/10"
@@ -1246,7 +1644,9 @@ export function InstagramScheduleStudio() {
           </label>
 
           <p className="mt-3 rounded-xl bg-mint/10 px-3 py-2.5 text-[11px] font-bold leading-5 text-[#35745f]">
-            {mode === "week"
+            {isDailyTemplate
+              ? `${formatJapaneseDate(selectedDate)} の予定を1枚作成します。`
+              : mode === "week"
               ? `月曜始まりの ${formatLongRange(periods[0])} を作成します。`
               : `${periods.length}週間分を作成し、ZIPでまとめて保存します。`}
           </p>
@@ -1313,7 +1713,7 @@ export function InstagramScheduleStudio() {
                 )}
               </div>
             </>
-          ) : (
+          ) : template === "fan-studio" ? (
             <>
               <p className="text-[10px] font-black tracking-[0.16em] text-pink">3. APPEARANCE</p>
               <h2 className="mt-1 text-[17px] font-black text-ink">特別な姿の表示</h2>
@@ -1345,6 +1745,53 @@ export function InstagramScheduleStudio() {
               </div>
               <p className="mt-3 text-[10px] font-bold leading-5 text-ink/45">
                 この週は{activeFanStudioRows.length}キャラクターをテーブルに表示します。毎日会えるキャラクターも同じ表に含まれます。
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[10px] font-black tracking-[0.16em] text-pink">3. APPEARANCE</p>
+              <h2 className="mt-1 text-[17px] font-black text-ink">特別な姿の絵文字</h2>
+              <p className="mt-2 text-[11px] font-bold leading-5 text-ink/45">
+                特別な姿のキャラクター名の後ろと、画像上部の凡例に表示します。
+              </p>
+              <div className="mt-4 grid grid-cols-[88px_minmax(0,1fr)] gap-3">
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-black text-ink/55">
+                    絵文字
+                  </span>
+                  <input
+                    type="text"
+                    value={specialEmoji}
+                    maxLength={8}
+                    onChange={(event) => setSpecialEmoji(event.target.value)}
+                    placeholder={DEFAULT_SPECIAL_EMOJI}
+                    aria-label="特別な姿の絵文字"
+                    className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-center text-[20px] font-bold text-ink outline-none transition focus:border-pink focus:ring-4 focus:ring-pink/10"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-black text-ink/55">
+                    絵文字の意味
+                  </span>
+                  <input
+                    type="text"
+                    value={specialEmojiMeaning}
+                    maxLength={30}
+                    onChange={(event) => setSpecialEmojiMeaning(event.target.value)}
+                    placeholder={DEFAULT_SPECIAL_EMOJI_MEANING}
+                    aria-label="特別な姿の絵文字の意味"
+                    className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none transition focus:border-pink focus:ring-4 focus:ring-pink/10"
+                  />
+                </label>
+              </div>
+              <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-lavender/10 px-3 py-3 text-[12px] font-black text-[#745f99]">
+                <span className="text-[20px] leading-none">{normalizedSpecialEmoji}</span>
+                <span className="truncate">{normalizedSpecialEmojiMeaning}</span>
+              </div>
+              <p className="mt-3 text-[10px] font-bold leading-5 text-ink/45">
+                {activeDailyFanStudio.rooms.length > 0
+                  ? `${activeDailyFanStudio.rooms.length}部屋・${activeDailyFanStudio.rows.length}時間帯を表示します。予定のない部屋は自動で省略します。`
+                  : "この日は表示できるファンスタジオ予定がありません。"}
               </p>
             </>
           )}
@@ -1415,20 +1862,20 @@ export function InstagramScheduleStudio() {
           >
             {isDownloading ? (
               <LoaderCircle size={17} className="animate-spin" aria-hidden="true" />
-            ) : mode === "month" ? (
+            ) : isBatchMode ? (
               <Package size={17} aria-hidden="true" />
             ) : (
               <ImageDown size={17} aria-hidden="true" />
             )}
             {isDownloading
               ? "画像を作成中…"
-              : mode === "month"
+              : isBatchMode
                 ? `${periods.length}枚をまとめて保存`
                 : "PNG画像を保存"}
           </button>
         </div>
 
-        {mode === "month" && periods.length > 1 && (
+        {isBatchMode && periods.length > 1 && (
           <div className="mt-5 flex gap-2 overflow-x-auto pb-1" aria-label="週のプレビュー切り替え">
             {periods.map((period, index) => (
               <button
@@ -1464,7 +1911,15 @@ export function InstagramScheduleStudio() {
                   transformOrigin: "top left",
                 }}
               >
-                {template === "fan-studio" ? (
+                {template === "fan-studio-daily" ? (
+                  <DailyFanStudioInstagramCard
+                    date={activePeriod.start}
+                    entries={scheduleState.entries}
+                    theme={theme}
+                    specialEmoji={normalizedSpecialEmoji}
+                    specialEmojiMeaning={normalizedSpecialEmojiMeaning}
+                  />
+                ) : template === "fan-studio" ? (
                   <FanStudioInstagramCard
                     period={activePeriod}
                     entries={scheduleState.entries}
@@ -1496,6 +1951,8 @@ export function InstagramScheduleStudio() {
             <CalendarDays size={15} className="text-pink" aria-hidden="true" />
             {template === "fan-studio"
               ? "キャラクターが縦、1週間の日付が横に並びます"
+              : template === "fan-studio-daily"
+                ? "時間が縦、予定のある部屋だけが横に並びます"
               : "選択したイベントが画像の横軸に並びます"}
           </p>
           <p className="flex items-center gap-2 text-[10px] font-bold text-ink/40">
@@ -1533,6 +1990,11 @@ export function InstagramScheduleStudio() {
             この週に表示できるファンスタジオのキャラクターがいません。
           </p>
         )}
+        {template === "fan-studio-daily" && activeDailyFanStudio.rows.length === 0 && (
+          <p className="mt-3 text-[11px] font-bold text-[#b65364]">
+            この日に表示できるファンスタジオ予定がありません。
+          </p>
+        )}
       </section>
 
       <div
@@ -1547,13 +2009,21 @@ export function InstagramScheduleStudio() {
       >
         {periods.map((period, index) => (
           <div
-            key={`${period.id}-${template}-${themeKey}-${selectedEvents.join("|")}-${normalizedSpecialLegend}`}
+            key={`${period.id}-${template}-${themeKey}-${selectedEvents.join("|")}-${normalizedSpecialLegend}-${normalizedSpecialEmoji}-${normalizedSpecialEmojiMeaning}`}
             ref={(node) => {
               if (node) captureRefs.current.set(period.id, node);
               else captureRefs.current.delete(period.id);
             }}
           >
-            {template === "fan-studio" ? (
+            {template === "fan-studio-daily" ? (
+              <DailyFanStudioInstagramCard
+                date={period.start}
+                entries={scheduleState.entries}
+                theme={theme}
+                specialEmoji={normalizedSpecialEmoji}
+                specialEmojiMeaning={normalizedSpecialEmojiMeaning}
+              />
+            ) : template === "fan-studio" ? (
               <FanStudioInstagramCard
                 period={period}
                 entries={scheduleState.entries}
