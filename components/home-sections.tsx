@@ -8,9 +8,11 @@ import {
   Ticket,
 } from "lucide-react";
 import type { ArticleSummary } from "@/lib/articles/types";
+import type { InstagramPostUrls } from "@/data/instagram-posts";
 import { HomeBirthdayRibbon } from "./home-birthday-ribbon";
 import { HomeHeroStats } from "./home-hero-stats";
 import { HomeTodaySections } from "./home-today-sections";
+import { InstagramEmbedSection } from "./instagram-embed-section";
 import { SectionHeading } from "./section-heading";
 
 function Hero() {
@@ -83,7 +85,13 @@ function formatArticleDate(value: string | null) {
   }).format(date);
 }
 
-function JournalSection({ latestArticles }: { latestArticles: ArticleSummary[] }) {
+function JournalSection({
+  latestArticles,
+  instagramPostUrls,
+}: {
+  latestArticles: ArticleSummary[];
+  instagramPostUrls: InstagramPostUrls;
+}) {
   return (
     <section className="mx-auto max-w-[1200px] px-4 pb-4 pt-12 sm:px-6 lg:px-8">
       <Link
@@ -173,17 +181,27 @@ function JournalSection({ latestArticles }: { latestArticles: ArticleSummary[] }
           <p className="mt-3 text-[12px] font-black text-ink/45">最新記事を準備しています。</p>
         </div>
       )}
+      <InstagramEmbedSection postUrls={instagramPostUrls} />
     </section>
   );
 }
 
-export function HomeSections({ latestArticles }: { latestArticles: ArticleSummary[] }) {
+export function HomeSections({
+  latestArticles,
+  instagramPostUrls,
+}: {
+  latestArticles: ArticleSummary[];
+  instagramPostUrls: InstagramPostUrls;
+}) {
   return (
     <>
       <Hero />
       <HomeBirthdayRibbon />
       <HomeTodaySections />
-      <JournalSection latestArticles={latestArticles} />
+      <JournalSection
+        latestArticles={latestArticles}
+        instagramPostUrls={instagramPostUrls}
+      />
     </>
   );
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { HomeSections } from "@/components/home-sections";
+import { defaultInstagramPostUrls } from "@/data/instagram-posts";
 import { listPublishedArticles } from "@/lib/articles/repository";
+import { getInstagramEmbedSettings } from "@/lib/instagram-settings";
 
 export const metadata: Metadata = {
   title: "ハーモニーランドの「楽しい！」がそろう場所",
@@ -16,15 +18,25 @@ export default async function HomePage() {
     name: "Harmony Palette",
     description: "ハーモニーランドを応援する非公式ファンサイト",
     url: "https://harmony-palette.example",
+    sameAs: ["https://www.instagram.com/harmony__palette/"],
   };
   let latestArticles: Awaited<ReturnType<typeof listPublishedArticles>> = [];
+  let instagramPostUrls = [...defaultInstagramPostUrls] as [string, string];
   try {
-    latestArticles = await listPublishedArticles({
-      destination: "articles",
-      limit: 3,
-    });
+    const [articles, instagramSettings] = await Promise.all([
+      listPublishedArticles({
+        destination: "articles",
+        limit: 3,
+      }).catch(() => []),
+      getInstagramEmbedSettings().catch(() => ({
+        postUrls: [...defaultInstagramPostUrls] as [string, string],
+        updatedAt: null,
+      })),
+    ]);
+    latestArticles = articles;
+    instagramPostUrls = instagramSettings.postUrls;
   } catch {
     latestArticles = [];
   }
-  return <><HomeSections latestArticles={latestArticles} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /></>;
+  return <><HomeSections latestArticles={latestArticles} instagramPostUrls={instagramPostUrls} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /></>;
 }

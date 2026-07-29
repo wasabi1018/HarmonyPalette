@@ -1,14 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, Instagram, Sparkles } from "lucide-react";
+import { InstagramEmbedSettingsForm } from "@/components/admin/instagram-embed-settings-form";
 import { InstagramScheduleStudio } from "@/components/admin/instagram-schedule-studio";
+import { defaultInstagramPostUrls } from "@/data/instagram-posts";
+import { getInstagramEmbedSettings } from "@/lib/instagram-settings";
 
 export const metadata: Metadata = {
   title: "Instagram画像作成",
   description: "全体予定とファンスタジオの週間・日別予定をInstagram投稿画像にまとめます。",
 };
 
-export default function AdminInstagramPage() {
+export default async function AdminInstagramPage() {
+  let postUrls = [...defaultInstagramPostUrls] as [string, string];
+  let setupError = "";
+  try {
+    postUrls = (await getInstagramEmbedSettings()).postUrls;
+  } catch (error) {
+    setupError = error instanceof Error
+      ? error.message
+      : "Instagram表示設定の取得に失敗しました。";
+  }
+
   return (
     <div className="mx-auto max-w-[1420px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <nav
@@ -43,6 +56,10 @@ export default function AdminInstagramPage() {
         </div>
       </div>
 
+      <InstagramEmbedSettingsForm
+        initialPostUrls={postUrls}
+        setupError={setupError}
+      />
       <InstagramScheduleStudio />
     </div>
   );
