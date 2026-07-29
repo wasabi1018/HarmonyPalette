@@ -1342,8 +1342,8 @@ async function captureCard(node: HTMLElement) {
 }
 
 export function InstagramScheduleStudio() {
-  const scheduleState = useScheduleEntries({ fallbackToSamples: true });
-  const characterState = useCharacters({ fallbackToSamples: true });
+  const scheduleState = useScheduleEntries({ fallbackToBundled: true });
+  const characterState = useCharacters();
   const today = useMemo(todayInJapan, []);
   const [template, setTemplate] = useState<ImageTemplate>("overview");
   const [mode, setMode] = useState<GenerationMode>("week");

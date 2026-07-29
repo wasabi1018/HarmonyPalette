@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { characters, events, schedules } from "@/data/site-data";
 import officialScheduleData from "@/public/data/harmonyland-official-schedule-2026-07-03-08-15.json";
 import { parseScheduleImportDocument, type ImportedScheduleEntry, type ImportVerificationStatus } from "@/lib/schedule-import";
 
@@ -40,7 +39,7 @@ type StoredScheduleState = {
 export type DataLoadStatus = "loading" | "success" | "error" | "unavailable";
 
 type UseScheduleEntriesOptions = {
-  fallbackToSamples?: boolean;
+  fallbackToBundled?: boolean;
 };
 
 type PublishedScheduleResult = {
@@ -92,44 +91,9 @@ const EMPTY_STATE: StoredScheduleState = { customEntries: [], deletedIds: [] };
 const EMPTY_STATE_JSON = JSON.stringify(EMPTY_STATE);
 export const bundledOfficialImport = parseScheduleImportDocument(officialScheduleData);
 
-export const baseScheduleEntries: ScheduleEntry[] = [
-  ...schedules.map((schedule) => ({
-    id: `greeting:${schedule.id}`,
-    kind: "greeting" as const,
-    title: schedule.title,
-    date: schedule.date,
-    startTime: schedule.startTime,
-    endTime: schedule.endTime,
-    characterIds: schedule.characterIds,
-    scheduleType: String(schedule.greetingType),
-    location: schedule.location,
-    description: schedule.description,
-    officialUrl: schedule.officialUrl,
-    sourceName: schedule.sourceName,
-    updatedAt: schedule.updatedAt,
-    status: schedule.status,
-    isSample: true,
-  })),
-  ...events.map((event) => ({
-    id: `event:${event.id}`,
-    kind: "event" as const,
-    title: event.title,
-    date: event.startDate,
-    endDate: event.endDate,
-    startTime: event.startTime,
-    endTime: undefined,
-    characterIds: event.characterIds,
-    scheduleType: "季節イベント",
-    location: event.location,
-    description: event.description,
-    officialUrl: event.officialUrl,
-    sourceName: "イベント情報（サンプル）",
-    updatedAt: event.updatedAt,
-    status: event.status === "終了" ? ("completed" as const) : ("upcoming" as const),
-    isSample: true,
-  })),
-  ...bundledOfficialImport.entries,
-].sort(compareScheduleEntries);
+export const baseScheduleEntries: ScheduleEntry[] = bundledOfficialImport.entries
+  .map((entry) => ({ ...entry, isSample: true as const }))
+  .sort(compareScheduleEntries);
 
 function compareScheduleEntries(a: ScheduleEntry, b: ScheduleEntry) {
   return `${a.date}-${a.startTime}-${a.title}`.localeCompare(`${b.date}-${b.startTime}-${b.title}`, "ja");
@@ -180,7 +144,7 @@ function writeState(state: StoredScheduleState) {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-export function useScheduleEntries({ fallbackToSamples = false }: UseScheduleEntriesOptions = {}) {
+export function useScheduleEntries({ fallbackToBundled = false }: UseScheduleEntriesOptions = {}) {
   const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [remoteEntries, setRemoteEntries] = useState<ScheduleEntry[] | null>(null);
   const remoteEntriesRef = useRef<ScheduleEntry[] | null>(null);
@@ -230,14 +194,14 @@ export function useScheduleEntries({ fallbackToSamples = false }: UseScheduleEnt
   const entries = useMemo(() => {
     const state = parseState(raw);
     const deleted = new Set(state.deletedIds);
-    const sourceEntries = remoteEntries ?? (fallbackToSamples ? baseScheduleEntries : []);
+    const sourceEntries = remoteEntries ?? (fallbackToBundled ? baseScheduleEntries : []);
     const customIds = new Set(state.customEntries.map((entry) => entry.id));
     return [
       ...sourceEntries.filter((entry) => !deleted.has(entry.id) && !customIds.has(entry.id)),
       ...state.customEntries.filter((entry) => !deleted.has(entry.id)),
     ]
       .sort(compareScheduleEntries);
-  }, [fallbackToSamples, raw, remoteEntries]);
+  }, [fallbackToBundled, raw, remoteEntries]);
 
   const retry = useCallback(() => setRevision((current) => current + 1), []);
 
@@ -323,12 +287,6 @@ export function restoreBaseSchedule() {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-export function getCharacterNames(characterIds: string[]) {
-  return characterIds
-    .map((id) => characters.find((character) => character.id === id)?.name)
-    .filter(Boolean) as string[];
-}
-
 export function getEntryCharacterNames(entry: Pick<ScheduleEntry, "characterIds" | "characterNames">) {
-  return Array.from(new Set([...(entry.characterNames ?? []), ...getCharacterNames(entry.characterIds)]));
+  return Array.from(new Set(entry.characterNames ?? []));
 }

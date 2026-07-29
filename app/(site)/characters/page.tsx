@@ -29,5 +29,5 @@ export default async function CharactersPage() {
     initialStatus = "error";
   }
 
-  return <div className="mx-auto max-w-[1240px] px-4 pt-8 sm:px-6 lg:px-8 lg:pt-12"><PageIntro eyebrow="MEET THE CHARACTERS" title="会いたいキャラクターから探す。" description="今日会えるか、次はいつ会えるかを見つけやすく整理しました。画像は権利に配慮したプレースホルダーです。" tone="lavender" /><CharacterBrowser initialCharacters={characters} initialStatus={initialStatus} /><div className="mt-8"><OfficialNotice /></div></div>;
+  return <div className="mx-auto max-w-[1240px] px-4 pt-8 sm:px-6 lg:px-8 lg:pt-12"><PageIntro eyebrow="MEET THE CHARACTERS" title="会いたいキャラクターから探す。" description="今日会えるか、次はいつ会えるかを見つけやすく整理しました。キャラクターごとの登場予定を確認できます。" tone="lavender" /><CharacterBrowser initialCharacters={characters} initialStatus={initialStatus} /><div className="mt-8"><OfficialNotice /></div></div>;
 }

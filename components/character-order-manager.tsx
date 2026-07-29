@@ -43,7 +43,7 @@ function birthdayDaysInMonth(month: number) {
 }
 
 export function CharacterOrderManager() {
-  const { characters } = useCharacters({ fallbackToSamples: true });
+  const { characters } = useCharacters();
   const [orders, setOrders] = useState<Record<string, number>>({});
   const dirtyOrderIds = useRef(new Set<string>());
   const [query, setQuery] = useState("");

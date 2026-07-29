@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/data/types";
-import { characters as sampleCharacters } from "@/data/site-data";
 import type { DataLoadStatus } from "@/lib/schedule-store";
 
 const REFRESH_EVENT = "harmony-palette:characters-refresh";
@@ -66,7 +65,6 @@ export function refreshCharacters() {
 type UseCharactersOptions = {
   initialCharacters?: Character[];
   initialStatus?: DataLoadStatus;
-  fallbackToSamples?: boolean;
 };
 
 type RegisteredCharacterResult = {
@@ -101,7 +99,6 @@ function loadRegisteredCharacters(force = false) {
 export function useCharacters({
   initialCharacters,
   initialStatus,
-  fallbackToSamples = false,
 }: UseCharactersOptions = {}) {
   const [remoteCharacters, setRemoteCharacters] = useState<Character[] | null>(initialCharacters ?? null);
   const remoteCharactersRef = useRef<Character[] | null>(initialCharacters ?? null);
@@ -151,8 +148,8 @@ export function useCharacters({
   }, [revision]);
 
   const characters = useMemo(
-    () => [...(remoteCharacters ?? (fallbackToSamples ? sampleCharacters : []))].sort(compareCharacters),
-    [fallbackToSamples, remoteCharacters],
+    () => [...(remoteCharacters ?? [])].sort(compareCharacters),
+    [remoteCharacters],
   );
 
   const retry = useCallback(() => setRevision((current) => current + 1), []);

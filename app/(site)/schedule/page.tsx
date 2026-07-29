@@ -6,7 +6,7 @@ import { ScheduleBrowser } from "@/components/schedule-browser";
 
 export const metadata: Metadata = {
   title: "グリーティング・イベントスケジュール",
-  description: "日付、キャラクター、イベント種別、開催場所から、ハーモニーランドの予定を探せるサンプルスケジュールです。",
+  description: "日付、キャラクター、イベント種別、開催場所から、ハーモニーランドの予定を探せます。",
   alternates: { canonical: "/schedule" },
 };
 

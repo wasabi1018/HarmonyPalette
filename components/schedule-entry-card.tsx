@@ -34,7 +34,6 @@ export function ScheduleEntryCard({
                   {isEvent ? "イベント" : "グリーティング"}
                 </span>
                 <span className="rounded-full bg-[#f5f2f4] px-2.5 py-1.5 text-ink/60">{entry.scheduleType}</span>
-                {entry.isSample && <span className="rounded-full border border-ink/10 px-2.5 py-1.5 text-ink/45">サンプル</span>}
                 {entry.verificationStatus === "year-inferred" && <span className="rounded-full border border-[#f1d59c] bg-[#fff9ec] px-2.5 py-1.5 text-[#8a652c]">年は推定</span>}
               </span>
               <PlanToggleIndicator

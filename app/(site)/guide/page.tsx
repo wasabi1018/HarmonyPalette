@@ -101,9 +101,9 @@ export default async function GuidePage() {
       ) : (
         <div className="mt-8 rounded-[26px] border border-[#f4dfae] bg-white px-6 py-16 text-center shadow-soft">
           <BookOpen size={30} className="mx-auto text-[#c58b22]/40" aria-hidden="true" />
-          <h2 className="mt-4 text-[15px] font-black text-ink/55">ガイド記事を準備しています。</h2>
+          <h2 className="mt-4 text-[15px] font-black text-ink/55">現在、表示できるガイド記事はありません。</h2>
           <p className="mt-2 text-[12px] font-bold leading-6 text-ink/40">
-            来園前に役立つ情報を順次公開します。
+            来園前に、公式サイトの最新情報もあわせてご確認ください。
           </p>
         </div>
       )}

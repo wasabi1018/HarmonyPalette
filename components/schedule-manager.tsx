@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { type FormEvent, useMemo, useRef, useState } from "react";
 import { ArrowLeft, CalendarDays, Check, CircleAlert, LoaderCircle, Pencil, Plus, RotateCcw, Save, Trash2, X } from "lucide-react";
-import { sampleDate } from "@/data/site-data";
 import { mergeCharactersWithNames, useCharacters } from "@/lib/character-store";
 import {
   addScheduleEntry,
@@ -22,16 +21,20 @@ import {
 const inputClass = "min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none transition-colors placeholder:text-ink/30 focus:border-pink focus:ring-4 focus:ring-pink/10";
 const labelClass = "mb-1.5 block text-[11px] font-black text-ink/55";
 
+function todayInJapan() {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
+}
+
 export function ScheduleManager() {
-  const { entries } = useScheduleEntries({ fallbackToSamples: true });
-  const { characters: catalogCharacters } = useCharacters({ fallbackToSamples: true });
+  const { entries } = useScheduleEntries({ fallbackToBundled: true });
+  const { characters: catalogCharacters } = useCharacters();
   const characters = useMemo(() => mergeCharactersWithNames(
     catalogCharacters,
     entries.flatMap((entry) => getEntryCharacterNames(entry)),
   ), [catalogCharacters, entries]);
   const [kind, setKind] = useState<ScheduleEntryKind>("greeting");
   const [title, setTitle] = useState("");
-  const [date, setDate] = useState(sampleDate);
+  const [date, setDate] = useState(todayInJapan);
   const [endDate, setEndDate] = useState("");
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("10:20");
@@ -66,7 +69,7 @@ export function ScheduleManager() {
     setEditingId(null);
     setKind("greeting");
     setTitle("");
-    setDate(sampleDate);
+    setDate(todayInJapan());
     setEndDate("");
     setStartTime("10:00");
     setEndTime("10:20");
@@ -162,9 +165,9 @@ export function ScheduleManager() {
   };
 
   const handleRestore = () => {
-    if (!window.confirm("追加・削除した内容を消去し、最初のサンプル状態へ戻しますか？")) return;
+    if (!window.confirm("追加・削除した内容を消去し、既定の予定へ戻しますか？")) return;
     restoreBaseSchedule();
-    setFeedback("サンプル状態へ戻しました。");
+    setFeedback("既定の予定へ戻しました。");
   };
 
   return (
@@ -238,7 +241,7 @@ export function ScheduleManager() {
             return <article key={entry.id} className={`rounded-2xl border bg-[#fffdfd] p-3 ${editingId === entry.id ? "border-pink/40 ring-4 ring-pink/5" : "border-ink/10"}`}>
               <div className="flex items-start gap-3">
                 <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${entry.kind === "event" ? "bg-[#fff4df] text-[#a76624]" : "bg-pink/10 text-pink"}`}><CalendarDays size={18} aria-hidden="true" /></div>
-                <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-1.5 text-[9px] font-black"><span className={`rounded-full px-2 py-1 ${entry.kind === "event" ? "bg-[#fff4df] text-[#a76624]" : "bg-pink/10 text-pink"}`}>{entry.kind === "event" ? "イベント" : "グリーティング"}</span><span className="rounded-full bg-[#f5f2f4] px-2 py-1 text-ink/45">{entry.isSample ? "サンプル" : entry.isImported ? "JSON取込" : "追加データ"}</span></div><h3 className="mt-1.5 truncate text-[13px] font-black text-ink">{entry.title}</h3><p className="mt-1 text-[10px] font-bold text-ink/45">{entry.date.replaceAll("-", "/")} {entry.startTime}・{entry.location}</p>{names.length > 0 && <p className="mt-1 truncate text-[10px] font-bold text-ink/45">{names.join("・")}</p>}</div>
+                <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-1.5 text-[9px] font-black"><span className={`rounded-full px-2 py-1 ${entry.kind === "event" ? "bg-[#fff4df] text-[#a76624]" : "bg-pink/10 text-pink"}`}>{entry.kind === "event" ? "イベント" : "グリーティング"}</span><span className="rounded-full bg-[#f5f2f4] px-2 py-1 text-ink/45">{entry.isSample ? "公式取込" : entry.isImported ? "JSON取込" : "追加データ"}</span></div><h3 className="mt-1.5 truncate text-[13px] font-black text-ink">{entry.title}</h3><p className="mt-1 text-[10px] font-bold text-ink/45">{entry.date.replaceAll("-", "/")} {entry.startTime}・{entry.location}</p>{names.length > 0 && <p className="mt-1 truncate text-[10px] font-bold text-ink/45">{names.join("・")}</p>}</div>
                 <div className="flex shrink-0 gap-1.5">
                   <button type="button" onClick={() => openEdit(entry)} aria-label={`${entry.title}を編集`} className="grid h-10 w-10 place-items-center rounded-xl border border-lavender/15 bg-lavender/5 text-lavender hover:bg-lavender/10"><Pencil size={15} aria-hidden="true" /></button>
                   <button type="button" onClick={() => handleDelete(entry.id, entry.title)} aria-label={`${entry.title}を削除`} className="grid h-10 w-10 place-items-center rounded-xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-100"><Trash2 size={16} aria-hidden="true" /></button>
