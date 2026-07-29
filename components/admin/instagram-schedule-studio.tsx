@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toBlob } from "html-to-image";
+import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/data/types";
 import { sortCharacterNames, useCharacters } from "@/lib/character-store";
@@ -93,6 +94,20 @@ const themes: Record<ThemeKey, Theme> = {
     secondary: "#eb6e98",
   },
 };
+
+function InstagramCardLogo({ height }: { height: number }) {
+  return (
+    <Image
+      src="/logo-compact.png"
+      alt="Harmony Palette"
+      width={Math.round(height * 5.946)}
+      height={height}
+      priority
+      unoptimized
+      style={{ display: "block", height, width: "auto", objectFit: "contain" }}
+    />
+  );
+}
 
 function dateFromIso(value: string) {
   return new Date(`${value}T00:00:00Z`);
@@ -485,26 +500,7 @@ function ScheduleInstagramCard({
 
       <header style={{ position: "relative", height: 160 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <span
-              style={{
-                display: "grid",
-                width: 42,
-                height: 42,
-                placeItems: "center",
-                borderRadius: 14,
-                background: theme.accent,
-                color: "#fff",
-                fontSize: 23,
-                fontWeight: 900,
-              }}
-            >
-              H
-            </span>
-            <span style={{ fontSize: 23, fontWeight: 900, letterSpacing: "0.04em" }}>
-              Harmony <span style={{ color: theme.accentDark }}>Palette</span>
-            </span>
-          </div>
+          <InstagramCardLogo height={42} />
           <span
             style={{
               borderRadius: 999,
@@ -698,9 +694,6 @@ function ScheduleInstagramCard({
         <p style={{ maxWidth: 760, margin: 0, fontSize: 16, fontWeight: 800, lineHeight: 1.55 }}>
           内容は変更になる場合があります。お出かけ前に公式サイトの最新情報をご確認ください。
         </p>
-        <p style={{ margin: 0, color: theme.accentDark, fontSize: 17, fontWeight: 900 }}>
-          Harmony Palette
-        </p>
       </footer>
     </article>
   );
@@ -771,26 +764,7 @@ export function FanStudioInstagramCard({
 
       <header style={{ position: "relative", height: 354 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <span
-              style={{
-                display: "grid",
-                width: 56,
-                height: 56,
-                placeItems: "center",
-                borderRadius: 16,
-                background: theme.accent,
-                color: "#fff",
-                fontSize: 30,
-                fontWeight: 900,
-              }}
-            >
-              H
-            </span>
-            <span style={{ fontSize: 30, fontWeight: 900, letterSpacing: "0.02em" }}>
-              Harmony <span style={{ color: theme.accentDark }}>Palette</span>
-            </span>
-          </div>
+          <InstagramCardLogo height={56} />
           <span
             style={{
               borderRadius: 999,
@@ -1019,9 +993,6 @@ export function FanStudioInstagramCard({
             内容は変更になる場合があります。お出かけ前に公式サイトの最新情報をご確認ください。
           </p>
         </div>
-        <p style={{ margin: 0, color: theme.accentDark, fontSize: 24, fontWeight: 900, whiteSpace: "nowrap" }}>
-          Harmony Palette
-        </p>
       </footer>
     </article>
   );
@@ -1085,26 +1056,7 @@ export function DailyFanStudioInstagramCard({
 
       <header style={{ position: "relative", height: 305 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <span
-              style={{
-                display: "grid",
-                width: 56,
-                height: 56,
-                placeItems: "center",
-                borderRadius: 16,
-                background: theme.accent,
-                color: "#fff",
-                fontSize: 30,
-                fontWeight: 900,
-              }}
-            >
-              H
-            </span>
-            <span style={{ fontSize: 30, fontWeight: 900, letterSpacing: "0.02em" }}>
-              Harmony <span style={{ color: theme.accentDark }}>Palette</span>
-            </span>
-          </div>
+          <InstagramCardLogo height={56} />
           <span
             style={{
               borderRadius: 999,
@@ -1313,9 +1265,6 @@ export function DailyFanStudioInstagramCard({
             内容は変更になる場合があります。お出かけ前に公式サイトの最新情報をご確認ください。
           </p>
         </div>
-        <p style={{ margin: 0, color: theme.accentDark, fontSize: 24, fontWeight: 900, whiteSpace: "nowrap" }}>
-          Harmony Palette
-        </p>
       </footer>
     </article>
   );
