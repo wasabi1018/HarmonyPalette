@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useMemo, useRef, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, CalendarDays, Check, ChevronDown, CircleAlert, Filter, LoaderCircle, Pencil, Plus, Replace, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { mergeCharactersWithNames, useCharacters } from "@/lib/character-store";
 import {
@@ -31,8 +31,31 @@ type MultiSelectFilterProps = {
 };
 
 function MultiSelectFilter({ label, options, selected, onToggle, onClear }: MultiSelectFilterProps) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      const details = detailsRef.current;
+      if (details?.open && event.target instanceof Node && !details.contains(event.target)) {
+        details.open = false;
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && detailsRef.current?.open) {
+        detailsRef.current.open = false;
+        detailsRef.current.querySelector("summary")?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
   return (
-    <details className="group relative min-w-0">
+    <details ref={detailsRef} className="group relative min-w-0">
       <summary className={`flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-xl border px-3 text-[11px] font-black [&::-webkit-details-marker]:hidden ${selected.length > 0 ? "border-pink bg-pink/5 text-pink" : "border-ink/10 bg-white text-ink/60"}`}>
         <span className="min-w-0 truncate">{label}{selected.length > 0 ? `（${selected.length}件）` : ""}</span>
         <ChevronDown size={14} className="shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
@@ -40,7 +63,12 @@ function MultiSelectFilter({ label, options, selected, onToggle, onClear }: Mult
       <div className="absolute right-0 z-20 mt-2 w-[min(320px,calc(100vw-3rem))] rounded-2xl border border-pink/10 bg-white p-3 shadow-[0_18px_45px_rgba(57,42,50,0.16)]">
         <div className="mb-2 flex items-center justify-between gap-2">
           <p className="text-[10px] font-black text-ink/45">複数選択できます</p>
-          {selected.length > 0 && <button type="button" onClick={onClear} className="text-[10px] font-black text-pink hover:underline">選択解除</button>}
+          <div className="flex items-center gap-3">
+            {selected.length > 0 && <button type="button" onClick={onClear} className="text-[10px] font-black text-pink hover:underline">選択解除</button>}
+            <button type="button" onClick={() => { if (detailsRef.current) detailsRef.current.open = false; }} className="inline-flex min-h-8 items-center gap-1 rounded-lg bg-[#f5f2f4] px-2.5 text-[10px] font-black text-ink/55 hover:text-pink">
+              <X size={12} aria-hidden="true" />閉じる
+            </button>
+          </div>
         </div>
         <div className="max-h-60 space-y-1 overflow-y-auto pr-1">
           {options.map((option) => {
