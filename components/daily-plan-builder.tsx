@@ -430,7 +430,7 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
           <div className="relative">
             <p className="flex items-center gap-2 text-[11px] font-black tracking-[0.18em] text-pink"><Sparkles size={14} aria-hidden="true" />MY DAY PLAN</p>
             <h1 className="mt-2 font-display text-[28px] font-semibold leading-tight text-ink sm:text-[38px]">今日を、わたしらしく組み立てよう。</h1>
-            <p className="mt-3 max-w-2xl text-[13px] font-bold leading-6 text-ink/60 sm:text-[14px]">公式予定と休憩・移動をひとつにまとめて、この端末だけに保存します。</p>
+            <p className="mt-3 max-w-2xl text-[13px] font-bold leading-6 text-ink/60 sm:text-[14px]">公式予定と休憩・移動をひとつにまとめて、このブラウザにのみ保存します。</p>
           </div>
         </section>
 
