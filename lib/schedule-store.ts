@@ -246,6 +246,71 @@ export function updateScheduleEntry(id: string, updates: Omit<ScheduleEntry, "id
   return updated;
 }
 
+export type ScheduleBulkReplaceField = "title" | "character";
+
+type BulkReplaceLocalScheduleEntriesOptions = {
+  field: ScheduleBulkReplaceField;
+  from: string;
+  to: string;
+  targetIds: string[];
+  oldCharacterIds?: string[];
+  newCharacterId?: string;
+};
+
+export function bulkReplaceLocalScheduleEntries({
+  field,
+  from,
+  to,
+  targetIds,
+  oldCharacterIds = [],
+  newCharacterId,
+}: BulkReplaceLocalScheduleEntriesOptions) {
+  const state = parseState(window.localStorage.getItem(STORAGE_KEY));
+  const deletedIds = new Set(state.deletedIds);
+  const targetIdSet = new Set(targetIds);
+  const entriesById = new Map(baseScheduleEntries.map((entry) => [entry.id, entry]));
+  state.customEntries.forEach((entry) => entriesById.set(entry.id, entry));
+  const overridesById = new Map(state.customEntries.map((entry) => [entry.id, entry]));
+  const oldCharacterIdSet = new Set(oldCharacterIds);
+  const updatedAt = new Date().toISOString();
+  let updatedCount = 0;
+
+  entriesById.forEach((entry, id) => {
+    if (!targetIdSet.has(id) || deletedIds.has(id)) return;
+
+    if (field === "title") {
+      if (entry.title !== from) return;
+      overridesById.set(id, { ...entry, title: to, updatedAt, isSample: false });
+      updatedCount += 1;
+      return;
+    }
+
+    const characterNames = entry.characterNames ?? [];
+    if (!characterNames.includes(from)) return;
+    const nextCharacterNames = Array.from(new Set(
+      characterNames.map((name) => name === from ? to : name),
+    ));
+    const nextCharacterIds = entry.characterIds.filter((characterId) => !oldCharacterIdSet.has(characterId));
+    if (newCharacterId) nextCharacterIds.push(newCharacterId);
+    overridesById.set(id, {
+      ...entry,
+      characterIds: Array.from(new Set(nextCharacterIds)),
+      characterNames: nextCharacterNames,
+      updatedAt,
+      isSample: false,
+    });
+    updatedCount += 1;
+  });
+
+  if (updatedCount > 0) {
+    writeState({
+      customEntries: Array.from(overridesById.values()),
+      deletedIds: state.deletedIds,
+    });
+  }
+  return updatedCount;
+}
+
 export function importScheduleEntries(entries: ImportedScheduleEntry[]) {
   const state = parseState(window.localStorage.getItem(STORAGE_KEY));
   const baseIds = new Set(baseScheduleEntries.map((entry) => entry.id));

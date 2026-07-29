@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { type FormEvent, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CalendarDays, Check, CircleAlert, LoaderCircle, Pencil, Plus, RotateCcw, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, ChevronDown, CircleAlert, Filter, LoaderCircle, Pencil, Plus, Replace, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { mergeCharactersWithNames, useCharacters } from "@/lib/character-store";
 import {
   addScheduleEntry,
+  bulkReplaceLocalScheduleEntries,
   deleteScheduleEntry,
   eventTypeOptions,
   getEntryCharacterNames,
@@ -20,6 +21,44 @@ import {
 
 const inputClass = "min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none transition-colors placeholder:text-ink/30 focus:border-pink focus:ring-4 focus:ring-pink/10";
 const labelClass = "mb-1.5 block text-[11px] font-black text-ink/55";
+
+type MultiSelectFilterProps = {
+  label: string;
+  options: string[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  onClear: () => void;
+};
+
+function MultiSelectFilter({ label, options, selected, onToggle, onClear }: MultiSelectFilterProps) {
+  return (
+    <details className="group relative min-w-0">
+      <summary className={`flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-xl border px-3 text-[11px] font-black [&::-webkit-details-marker]:hidden ${selected.length > 0 ? "border-pink bg-pink/5 text-pink" : "border-ink/10 bg-white text-ink/60"}`}>
+        <span className="min-w-0 truncate">{label}{selected.length > 0 ? `（${selected.length}件）` : ""}</span>
+        <ChevronDown size={14} className="shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <div className="absolute right-0 z-20 mt-2 w-[min(320px,calc(100vw-3rem))] rounded-2xl border border-pink/10 bg-white p-3 shadow-[0_18px_45px_rgba(57,42,50,0.16)]">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-[10px] font-black text-ink/45">複数選択できます</p>
+          {selected.length > 0 && <button type="button" onClick={onClear} className="text-[10px] font-black text-pink hover:underline">選択解除</button>}
+        </div>
+        <div className="max-h-60 space-y-1 overflow-y-auto pr-1">
+          {options.map((option) => {
+            const checked = selected.includes(option);
+            return (
+              <label key={option} className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-xl px-2.5 text-[11px] font-bold ${checked ? "bg-pink/5 text-pink" : "text-ink/65 hover:bg-[#faf7f9]"}`}>
+                <input type="checkbox" checked={checked} onChange={() => onToggle(option)} className="sr-only" />
+                <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${checked ? "border-pink bg-pink text-white" : "border-ink/15"}`}>{checked && <Check size={12} aria-hidden="true" />}</span>
+                <span>{option}</span>
+              </label>
+            );
+          })}
+          {options.length === 0 && <p className="px-2 py-4 text-center text-[11px] font-bold text-ink/40">選択できる項目がありません。</p>}
+        </div>
+      </div>
+    </details>
+  );
+}
 
 function todayInJapan() {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
@@ -45,14 +84,38 @@ export function ScheduleManager() {
   const [officialUrl, setOfficialUrl] = useState("");
   const [sourceName, setSourceName] = useState("管理画面から登録");
   const [feedback, setFeedback] = useState("");
+  const [managementFeedback, setManagementFeedback] = useState("");
   const [filter, setFilter] = useState<"all" | ScheduleEntryKind>("all");
+  const [selectedTitles, setSelectedTitles] = useState<string[]>([]);
+  const [selectedCharacterNames, setSelectedCharacterNames] = useState<string[]>([]);
+  const [replacementField, setReplacementField] = useState<"title" | "character">("title");
+  const [replacementFrom, setReplacementFrom] = useState("");
+  const [replacementTo, setReplacementTo] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [replacing, setReplacing] = useState(false);
   const formSectionRef = useRef<HTMLElement>(null);
 
+  const titleOptions = useMemo(() => Array.from(new Set(entries.map((entry) => entry.title)))
+    .sort((a, b) => a.localeCompare(b, "ja")), [entries]);
+  const characterNameOptions = useMemo(() => Array.from(new Set(
+    entries.flatMap((entry) => getEntryCharacterNames(entry)),
+  )).sort((a, b) => a.localeCompare(b, "ja")), [entries]);
   const visibleEntries = useMemo(() => entries
     .filter((entry) => filter === "all" || entry.kind === filter)
-    .sort((a, b) => `${a.date}-${a.startTime}`.localeCompare(`${b.date}-${b.startTime}`)), [entries, filter]);
+    .filter((entry) => selectedTitles.length === 0 || selectedTitles.includes(entry.title))
+    .filter((entry) => selectedCharacterNames.length === 0
+      || getEntryCharacterNames(entry).some((name) => selectedCharacterNames.includes(name)))
+    .sort((a, b) => `${a.date}-${a.startTime}`.localeCompare(`${b.date}-${b.startTime}`)),
+  [entries, filter, selectedCharacterNames, selectedTitles]);
+  const replacementOptions = replacementField === "title" ? titleOptions : characterNameOptions;
+  const replacementMatchCount = useMemo(() => {
+    if (!replacementFrom) return 0;
+    return entries.filter((entry) => replacementField === "title"
+      ? entry.title === replacementFrom
+      : getEntryCharacterNames(entry).includes(replacementFrom)).length;
+  }, [entries, replacementField, replacementFrom]);
+  const activeDetailedFilterCount = selectedTitles.length + selectedCharacterNames.length;
 
   const defaultTypeOptions = kind === "greeting" ? greetingTypeOptions : eventTypeOptions;
   const typeOptions = scheduleType && !defaultTypeOptions.includes(scheduleType)
@@ -64,6 +127,12 @@ export function ScheduleManager() {
     if (value === "greeting") setEndDate("");
   };
   const toggleCharacter = (id: string) => setCharacterIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const toggleSelectedTitle = (value: string) => setSelectedTitles((current) => current.includes(value)
+    ? current.filter((item) => item !== value)
+    : [...current, value]);
+  const toggleSelectedCharacterName = (value: string) => setSelectedCharacterNames((current) => current.includes(value)
+    ? current.filter((item) => item !== value)
+    : [...current, value]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -170,6 +239,70 @@ export function ScheduleManager() {
     setFeedback("既定の予定へ戻しました。");
   };
 
+  const handleBulkReplace = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const from = replacementFrom.trim();
+    const to = replacementTo.trim();
+    if (!from || !to || from === to || replacementMatchCount === 0) return;
+    const targetLabel = replacementField === "title" ? "予定名" : "キャラクター名";
+    if (!window.confirm(`${replacementMatchCount}件の予定にある${targetLabel}「${from}」を「${to}」へ一括置換しますか？`)) return;
+
+    const matchingEntries = entries.filter((entry) => replacementField === "title"
+      ? entry.title === from
+      : getEntryCharacterNames(entry).includes(from));
+    const remoteCount = matchingEntries.filter((entry) => entry.id.startsWith("supabase:")).length;
+    const localTargetIds = matchingEntries
+      .filter((entry) => !entry.id.startsWith("supabase:"))
+      .map((entry) => entry.id);
+
+    setReplacing(true);
+    setManagementFeedback("");
+    try {
+      let updatedCount = 0;
+      if (remoteCount > 0) {
+        const response = await fetch("/api/admin/schedules/bulk-replace", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ field: replacementField, from, to }),
+        });
+        const result = await response.json() as { error?: string; updatedCount?: number };
+        if (!response.ok) throw new Error(result.error || "公開予定の一括置換に失敗しました。");
+        updatedCount += result.updatedCount ?? remoteCount;
+      }
+
+      if (localTargetIds.length > 0) {
+        const oldCharacterIds = replacementField === "character"
+          ? characters.filter((character) => character.name === from).map((character) => character.id)
+          : [];
+        const newCharacterId = replacementField === "character"
+          ? mergeCharactersWithNames(characters, [to]).find((character) => character.name === to)?.id
+          : undefined;
+        updatedCount += bulkReplaceLocalScheduleEntries({
+          field: replacementField,
+          from,
+          to,
+          targetIds: localTargetIds,
+          oldCharacterIds,
+          newCharacterId,
+        });
+      }
+
+      if (remoteCount > 0) refreshScheduleEntries();
+      if (replacementField === "title") {
+        setSelectedTitles((current) => Array.from(new Set(current.map((value) => value === from ? to : value))));
+      } else {
+        setSelectedCharacterNames((current) => Array.from(new Set(current.map((value) => value === from ? to : value))));
+      }
+      setReplacementFrom("");
+      setReplacementTo("");
+      setManagementFeedback(`${updatedCount}件の予定の${targetLabel}を一括置換しました。`);
+    } catch (error) {
+      setManagementFeedback(error instanceof Error ? error.message : "一括置換に失敗しました。");
+    } finally {
+      setReplacing(false);
+    }
+  };
+
   return (
     <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
       <section ref={formSectionRef} className="min-w-0 scroll-mt-20 rounded-[24px] border border-pink/10 bg-white p-4 shadow-soft sm:p-6">
@@ -235,6 +368,66 @@ export function ScheduleManager() {
 
         <div className="mt-4 flex gap-2">{([['all', 'すべて'], ['greeting', 'グリーティング'], ['event', 'イベント']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setFilter(value)} className={`min-h-9 rounded-full px-3 text-[10px] font-black ${filter === value ? "bg-ink text-white" : "bg-[#f5f2f4] text-ink/55"}`}>{label}</button>)}</div>
 
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <MultiSelectFilter
+            label="イベント・グリーティング名"
+            options={titleOptions}
+            selected={selectedTitles}
+            onToggle={toggleSelectedTitle}
+            onClear={() => setSelectedTitles([])}
+          />
+          <MultiSelectFilter
+            label="キャラクター名"
+            options={characterNameOptions}
+            selected={selectedCharacterNames}
+            onToggle={toggleSelectedCharacterName}
+            onClear={() => setSelectedCharacterNames([])}
+          />
+        </div>
+        <div className="mt-2 flex min-h-7 items-center justify-between gap-2 text-[10px] font-bold text-ink/45">
+          <span className="inline-flex items-center gap-1.5"><Filter size={12} aria-hidden="true" />{visibleEntries.length}件を表示</span>
+          {(filter !== "all" || activeDetailedFilterCount > 0) && (
+            <button type="button" onClick={() => { setFilter("all"); setSelectedTitles([]); setSelectedCharacterNames([]); }} className="font-black text-pink hover:underline">
+              フィルターをすべて解除
+            </button>
+          )}
+        </div>
+
+        <details className="group mt-3 rounded-2xl border border-lavender/15 bg-lavender/[0.04]">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 text-[11px] font-black text-lavender [&::-webkit-details-marker]:hidden">
+            <span className="inline-flex items-center gap-2"><Replace size={14} aria-hidden="true" />名前を一括置換</span>
+            <ChevronDown size={14} className="transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <form onSubmit={handleBulkReplace} className="grid gap-3 border-t border-lavender/10 p-3">
+            <p className="text-[10px] font-bold leading-5 text-ink/45">登録済み予定から完全一致する名前を置換します。公開予定にも反映されます。</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label>
+                <span className={labelClass}>置換対象</span>
+                <select value={replacementField} onChange={(event) => { setReplacementField(event.target.value as "title" | "character"); setReplacementFrom(""); setReplacementTo(""); }} className={inputClass}>
+                  <option value="title">イベント・グリーティング名</option>
+                  <option value="character">キャラクター名</option>
+                </select>
+              </label>
+              <label>
+                <span className={labelClass}>置換前</span>
+                <select required value={replacementFrom} onChange={(event) => setReplacementFrom(event.target.value)} className={inputClass}>
+                  <option value="">選択してください</option>
+                  {replacementOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+              </label>
+            </div>
+            <label>
+              <span className={labelClass}>置換後</span>
+              <input required value={replacementTo} onChange={(event) => setReplacementTo(event.target.value)} maxLength={replacementField === "title" ? 300 : 80} placeholder="新しい名前を入力" className={inputClass} />
+            </label>
+            <button type="submit" disabled={replacing || replacementMatchCount === 0 || !replacementTo.trim() || replacementFrom === replacementTo.trim()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-lavender px-4 text-[11px] font-black text-white hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40">
+              {replacing ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Replace size={15} aria-hidden="true" />}
+              {replacing ? "置換中…" : `${replacementMatchCount}件を一括置換`}
+            </button>
+          </form>
+        </details>
+        {managementFeedback && <p role="status" className="mt-3 rounded-xl bg-mint/10 px-3 py-2.5 text-[11px] font-bold text-[#35745f]"><Save size={13} className="mr-1.5 inline" aria-hidden="true" />{managementFeedback}</p>}
+
         <div className="mt-4 max-h-[680px] space-y-2 overflow-y-auto pr-1">
           {visibleEntries.map((entry) => {
             const names = getEntryCharacterNames(entry);
@@ -249,7 +442,7 @@ export function ScheduleManager() {
               </div>
             </article>;
           })}
-          {visibleEntries.length === 0 && <p className="rounded-xl border border-dashed border-pink/20 p-6 text-center text-[12px] font-bold text-ink/45">登録されている予定はありません。</p>}
+          {visibleEntries.length === 0 && <p className="rounded-xl border border-dashed border-pink/20 p-6 text-center text-[12px] font-bold text-ink/45">{entries.length > 0 ? "条件に一致する予定はありません。" : "登録されている予定はありません。"}</p>}
         </div>
       </section>
     </div>

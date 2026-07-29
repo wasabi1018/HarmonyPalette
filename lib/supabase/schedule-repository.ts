@@ -28,6 +28,12 @@ export type PublishedScheduleEdit = {
   characters: Array<{ id?: string; name: string }>;
 };
 
+export type PublishedScheduleBulkReplacement = {
+  field: "title" | "character";
+  from: string;
+  to: string;
+};
+
 export type OperationDraftEdit = {
   externalKey: string;
   attractionName: string;
@@ -412,6 +418,89 @@ export async function updatePublishedSchedule(id: string, edit: PublishedSchedul
   }
 
   return updated;
+}
+
+export async function bulkReplacePublishedSchedules(replacement: PublishedScheduleBulkReplacement) {
+  const client = getSupabaseAdminClient();
+  if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
+
+  if (replacement.field === "title") {
+    const { data, error } = await client
+      .from("schedule_items")
+      .update({
+        title: replacement.to,
+        verification_status: "verified",
+      })
+      .eq("publication_status", "published")
+      .eq("title", replacement.from)
+      .select("id");
+    if (error) throw new Error(`予定名を一括置換できませんでした: ${error.message}`);
+    return { updatedCount: data?.length ?? 0 };
+  }
+
+  const { data: matchingRows, error: matchingError } = await client
+    .from("schedule_characters")
+    .select("schedule_id")
+    .eq("character_name", replacement.from);
+  if (matchingError) throw new Error(`置換対象のキャラクターを確認できませんでした: ${matchingError.message}`);
+
+  const matchingScheduleIds = Array.from(new Set(
+    (matchingRows ?? []).map((row) => String(row.schedule_id)),
+  ));
+  if (matchingScheduleIds.length === 0) return { updatedCount: 0 };
+
+  const { data: publishedRows, error: publishedError } = await client
+    .from("schedule_items")
+    .select("id")
+    .eq("publication_status", "published")
+    .in("id", matchingScheduleIds);
+  if (publishedError) throw new Error(`公開予定を確認できませんでした: ${publishedError.message}`);
+
+  const publishedScheduleIds = (publishedRows ?? []).map((row) => String(row.id));
+  if (publishedScheduleIds.length === 0) return { updatedCount: 0 };
+
+  const characterIdByName = await ensureCharacterCatalog(client, [{ name: replacement.to }]);
+  const { data: destinationRows, error: destinationError } = await client
+    .from("schedule_characters")
+    .select("schedule_id")
+    .in("schedule_id", publishedScheduleIds)
+    .eq("character_name", replacement.to);
+  if (destinationError) throw new Error(`置換先のキャラクターを確認できませんでした: ${destinationError.message}`);
+
+  const duplicateScheduleIds = new Set(
+    (destinationRows ?? []).map((row) => String(row.schedule_id)),
+  );
+  const scheduleIdsToUpdate = publishedScheduleIds.filter((id) => !duplicateScheduleIds.has(id));
+  const scheduleIdsToDelete = publishedScheduleIds.filter((id) => duplicateScheduleIds.has(id));
+
+  if (scheduleIdsToUpdate.length > 0) {
+    const { error } = await client
+      .from("schedule_characters")
+      .update({
+        character_name: replacement.to,
+        character_id: characterIdByName.get(replacement.to) || null,
+      })
+      .in("schedule_id", scheduleIdsToUpdate)
+      .eq("character_name", replacement.from);
+    if (error) throw new Error(`キャラクター名を一括置換できませんでした: ${error.message}`);
+  }
+
+  if (scheduleIdsToDelete.length > 0) {
+    const { error } = await client
+      .from("schedule_characters")
+      .delete()
+      .in("schedule_id", scheduleIdsToDelete)
+      .eq("character_name", replacement.from);
+    if (error) throw new Error(`重複したキャラクター名を整理できませんでした: ${error.message}`);
+  }
+
+  const { error: verificationError } = await client
+    .from("schedule_items")
+    .update({ verification_status: "verified" })
+    .in("id", publishedScheduleIds);
+  if (verificationError) throw new Error(`置換した予定の確認状態を更新できませんでした: ${verificationError.message}`);
+
+  return { updatedCount: publishedScheduleIds.length };
 }
 
 export async function getPublishedSchedules(from: string, to: string) {
