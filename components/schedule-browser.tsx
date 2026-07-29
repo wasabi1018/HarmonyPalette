@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Check, ChevronDown, Clock3, Filter, LayoutList, LoaderCircle, MapPin, PartyPopper, RotateCcw, Search, Settings2, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Clock3, Filter, LayoutList, LoaderCircle, MapPin, PartyPopper, RotateCcw, Search, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
 import type { Character } from "@/data/types";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { ScheduleEntryCard } from "@/components/schedule-entry-card";
@@ -373,7 +372,7 @@ export function ScheduleBrowser({
       </section>
 
       {!isInitialLoading && !loadProblem && (
-        <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-mint/20 bg-mint/10 p-4 text-[12px] font-bold leading-6 text-ink/60 sm:flex-row sm:items-center sm:justify-between"><span>表示中の情報は、確認・公開されたデータです。最新情報は公式サイトもあわせてご確認ください。</span><Link href="/admin/schedule" className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-4 text-[11px] font-black text-white"><Settings2 size={14} aria-hidden="true" />予定を管理</Link></div>
+        <div className="mt-5 rounded-2xl border border-mint/20 bg-mint/10 p-4 text-[12px] font-bold leading-6 text-ink/60">表示中の情報は、確認・公開されたデータです。最新情報は公式サイトもあわせてご確認ください。</div>
       )}
     </div>
   );
