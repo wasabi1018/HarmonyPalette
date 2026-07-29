@@ -10,7 +10,7 @@ function absoluteUrl(value: string) {
 }
 
 export async function GET() {
-  const articles = (await listPublishedArticles()).slice(0, 50);
+  const articles = await listPublishedArticles({ destination: "articles", limit: 50 });
   const feed = {
     version: "https://jsonfeed.org/version/1.1",
     title: "Harmony Palette 記事",

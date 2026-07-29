@@ -52,6 +52,16 @@ const statusDot = {
   published: "bg-[#57b78e]",
 } as const;
 
+const destinationLabel = {
+  articles: "記事",
+  guide: "初めての方へ",
+} as const;
+
+const destinationClass = {
+  articles: "bg-pink/[0.08] text-pink",
+  guide: "bg-[#fff5d9] text-[#9a6c19]",
+} as const;
+
 export function ArticleListManager({
   initialArticles,
   availableTags,
@@ -60,6 +70,7 @@ export function ArticleListManager({
   const [articles, setArticles] = useState(initialArticles);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
+  const [destination, setDestination] = useState("all");
   const [tagId, setTagId] = useState("all");
   const [deletingId, setDeletingId] = useState("");
   const [duplicatingId, setDuplicatingId] = useState("");
@@ -69,13 +80,14 @@ export function ArticleListManager({
     const normalizedQuery = query.trim().toLocaleLowerCase("ja");
     return articles.filter((article) => {
       if (status !== "all" && article.status !== status) return false;
+      if (destination !== "all" && article.destination !== destination) return false;
       if (tagId !== "all" && !article.tags.some((tag) => tag.id === tagId)) return false;
       if (!normalizedQuery) return true;
       return `${article.title} ${article.slug} ${article.excerpt}`
         .toLocaleLowerCase("ja")
         .includes(normalizedQuery);
     });
-  }, [articles, query, status, tagId]);
+  }, [articles, destination, query, status, tagId]);
 
   const remove = async (article: ArticleSummary) => {
     if (!window.confirm(`「${article.title}」をゴミ箱へ移動しますか？後から復元できます。`)) return;
@@ -147,7 +159,7 @@ export function ArticleListManager({
         </p>
       )}
 
-      <div className="mt-5 grid gap-3 rounded-2xl border border-ink/[0.07] bg-white p-3 shadow-soft md:grid-cols-[minmax(220px,1fr)_170px_190px]">
+      <div className="mt-5 grid gap-3 rounded-2xl border border-ink/[0.07] bg-white p-3 shadow-soft md:grid-cols-[minmax(220px,1fr)_155px_155px_180px]">
         <label className="relative block">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/30" />
           <input
@@ -171,6 +183,16 @@ export function ArticleListManager({
             <option value="published">公開中</option>
           </select>
         </label>
+        <select
+          value={destination}
+          onChange={(event) => setDestination(event.target.value)}
+          aria-label="表示先で絞り込み"
+          className="min-h-11 rounded-xl border border-ink/10 bg-white px-3 text-[11px] font-black text-ink/60 outline-none focus:border-pink"
+        >
+          <option value="all">すべての表示先</option>
+          <option value="articles">記事</option>
+          <option value="guide">初めての方へ</option>
+        </select>
         <select
           value={tagId}
           onChange={(event) => setTagId(event.target.value)}
@@ -213,6 +235,9 @@ export function ArticleListManager({
                 </Link>
                 <p className="mt-1 line-clamp-1 text-[9px] font-bold text-ink/35">/articles/{article.slug}</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className={`rounded-full px-2 py-0.5 text-[8px] font-black ${destinationClass[article.destination]}`}>
+                    {destinationLabel[article.destination]}
+                  </span>
                   {article.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag.id}

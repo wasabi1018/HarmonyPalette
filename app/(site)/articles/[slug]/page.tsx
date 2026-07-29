@@ -82,6 +82,7 @@ export default async function ArticleDetailPage({
         article.id,
         article.tags.map((tag) => tag.id),
         3,
+        article.destination,
       ),
       getPublishedArticleSeriesContext(article.id).catch(() => null),
     ]);
@@ -221,9 +222,12 @@ export default async function ArticleDetailPage({
           </section>
         )}
         <OfficialNotice />
-        <Link href="/articles" className="mt-7 inline-flex items-center gap-2 text-[12px] font-black text-pink hover:underline">
+        <Link
+          href={article.destination === "guide" ? "/guide" : "/articles"}
+          className="mt-7 inline-flex items-center gap-2 text-[12px] font-black text-pink hover:underline"
+        >
           <ArrowLeft size={15} />
-          記事一覧へ戻る
+          {article.destination === "guide" ? "初めての方へ戻る" : "記事一覧へ戻る"}
         </Link>
       </div>
     </>

@@ -88,14 +88,20 @@ export default async function ArticlesPage({
   let publishedSeries: Awaited<ReturnType<typeof listPublishedArticleSeries>> = [];
   try {
     [allArticles, publishedSeries] = await Promise.all([
-      listPublishedArticles(),
+      listPublishedArticles({ destination: "articles" }),
       listPublishedArticleSeries().catch(() => []),
     ]);
   } catch {
     allArticles = [];
   }
   try {
-    searchResult = await searchPublishedArticles({ query, tagSlug: tag, page, pageSize: 9 });
+    searchResult = await searchPublishedArticles({
+      query,
+      tagSlug: tag,
+      destination: "articles",
+      page,
+      pageSize: 9,
+    });
   } catch {
     const normalizedQuery = query.toLocaleLowerCase("ja");
     const fallback = allArticles.filter((article) => (

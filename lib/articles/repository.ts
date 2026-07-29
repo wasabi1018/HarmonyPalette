@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
+  ArticleDestination,
   ArticleInput,
   ArticleRecord,
   ArticleRevision,
@@ -57,6 +58,7 @@ function mapSummary(row: Row): ArticleSummary {
     seoDescription: asText(row.seo_description),
     coverImageUrl: asText(row.cover_image_url),
     status,
+    destination: row.destination === "guide" ? "guide" : "articles",
     publishedAt: row.published_at ? asText(row.published_at) : null,
     deletedAt: row.deleted_at ? asText(row.deleted_at) : null,
     createdAt: asText(row.created_at),
@@ -88,6 +90,7 @@ const articleSelection = `
   content_html,
   cover_image_url,
   status,
+  destination,
   published_at,
   deleted_at,
   created_at,
@@ -168,6 +171,7 @@ async function createArticleRevision(
     contentHtml: record.contentHtml,
     coverImageUrl: record.coverImageUrl,
     status: record.status,
+    destination: record.destination,
     publishedAt: record.publishedAt,
     tagIds: (relations ?? []).map((relation) => asText((relation as Row).tag_id)).filter(Boolean),
     seriesId: assignment?.series_id ? asText((assignment as Row).series_id) : null,
@@ -254,6 +258,7 @@ export async function createArticle(input: ArticleInput, userId: string | null) 
       content_html: article.contentHtml,
       cover_image_url: article.coverImageUrl,
       status: article.status,
+      destination: article.destination,
       published_at: article.publishedAt,
       series_id: seriesId,
       series_order: seriesId ? seriesOrder : null,
@@ -288,6 +293,7 @@ export async function updateArticle(
       content_html: article.contentHtml,
       cover_image_url: article.coverImageUrl,
       status: article.status,
+      destination: article.destination,
       published_at: article.publishedAt,
       series_id: seriesId,
       series_order: seriesId ? seriesOrder : null,
@@ -482,6 +488,7 @@ export async function duplicateArticle(id: string, userId: string | null) {
     contentHtml: article.contentHtml,
     coverImageUrl: article.coverImageUrl,
     status: "draft",
+    destination: article.destination,
     publishedAt: null,
     tagIds: (relations ?? []).map((relation) => asText((relation as Row).tag_id)).filter(Boolean),
     seriesId: assignment?.series_id ? asText((assignment as Row).series_id) : null,
@@ -523,17 +530,27 @@ export async function deleteTag(id: string) {
   return Boolean(data);
 }
 
-export async function listPublishedArticles(tagSlug?: string) {
+export async function listPublishedArticles({
+  tagSlug = "",
+  destination,
+  limit,
+}: {
+  tagSlug?: string;
+  destination?: ArticleDestination;
+  limit?: number;
+} = {}) {
   const client = getSupabaseReadClient();
   if (!client) return [];
 
-  const query = client
+  let query = client
     .from("articles")
     .select(articleSelection)
     .eq("status", "published")
     .is("deleted_at", null)
     .lte("published_at", new Date().toISOString())
     .order("published_at", { ascending: false });
+  if (destination) query = query.eq("destination", destination);
+  if (limit) query = query.limit(Math.min(24, Math.max(1, Math.floor(limit))));
   const { data, error } = await query;
   if (error) {
     if (error.code === "42P01") return [];
@@ -548,11 +565,13 @@ export async function listPublishedArticles(tagSlug?: string) {
 export async function searchPublishedArticles({
   query = "",
   tagSlug = "",
+  destination = "articles",
   page = 1,
   pageSize = 9,
 }: {
   query?: string;
   tagSlug?: string;
+  destination?: ArticleDestination;
   page?: number;
   pageSize?: number;
 }) {
@@ -570,6 +589,7 @@ export async function searchPublishedArticles({
     {
       search_query: normalizedQuery,
       filter_tag_slug: normalizedTag,
+      filter_destination: destination,
       result_limit: safePageSize,
       result_offset: (safePage - 1) * safePageSize,
     },
@@ -592,6 +612,7 @@ export async function searchPublishedArticles({
     .select(articleSelection)
     .in("id", ids)
     .eq("status", "published")
+    .eq("destination", destination)
     .is("deleted_at", null)
     .lte("published_at", new Date().toISOString());
   if (error) throw new Error(error.message);
@@ -613,8 +634,9 @@ export async function listRelatedArticles(
   articleId: string,
   tagIds: string[],
   limit = 3,
+  destination: ArticleDestination = "articles",
 ) {
-  const articles = await listPublishedArticles();
+  const articles = await listPublishedArticles({ destination });
   const selectedTagIds = new Set(tagIds);
   return articles
     .filter((article) => article.id !== articleId)

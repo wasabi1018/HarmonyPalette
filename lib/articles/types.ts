@@ -1,4 +1,5 @@
 export type ArticleStatus = "draft" | "scheduled" | "published";
+export type ArticleDestination = "articles" | "guide";
 
 export type ArticleTag = {
   id: string;
@@ -68,6 +69,7 @@ export type ArticleSummary = {
   seoDescription: string;
   coverImageUrl: string;
   status: ArticleStatus;
+  destination: ArticleDestination;
   publishedAt: string | null;
   deletedAt: string | null;
   createdAt: string;
@@ -99,6 +101,7 @@ export type ArticleInput = {
   contentHtml: string;
   coverImageUrl: string;
   status: ArticleStatus;
+  destination: ArticleDestination;
   publishedAt: string | null;
   tagIds: string[];
   seriesId: string | null;

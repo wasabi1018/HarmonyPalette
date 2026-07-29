@@ -123,6 +123,7 @@ async function orderedPublishedSeriesArticles(seriesId: string) {
     .select("id,series_order,published_at")
     .eq("series_id", seriesId)
     .eq("status", "published")
+    .eq("destination", "articles")
     .is("deleted_at", null)
     .lte("published_at", new Date().toISOString())
     .order("series_order", { ascending: true, nullsFirst: false })
@@ -132,7 +133,7 @@ async function orderedPublishedSeriesArticles(seriesId: string) {
     id: asText((item as Row).id),
     seriesOrder: Number((item as Row).series_order || 0),
   }));
-  const articles = await listPublishedArticles();
+  const articles = await listPublishedArticles({ destination: "articles" });
   const articleMap = new Map(articles.map((article) => [article.id, article]));
   return order
     .map((item) => {
@@ -196,6 +197,7 @@ export async function listPublishedArticleSeries() {
     .from("articles")
     .select("series_id")
     .eq("status", "published")
+    .eq("destination", "articles")
     .is("deleted_at", null)
     .lte("published_at", new Date().toISOString())
     .not("series_id", "is", null);

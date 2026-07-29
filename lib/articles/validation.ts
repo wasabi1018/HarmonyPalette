@@ -1,7 +1,11 @@
 import "server-only";
 
 import sanitizeHtml from "sanitize-html";
-import type { ArticleInput, ArticleStatus } from "@/lib/articles/types";
+import type {
+  ArticleDestination,
+  ArticleInput,
+  ArticleStatus,
+} from "@/lib/articles/types";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -112,6 +116,9 @@ export function parseArticleInput(value: unknown): ArticleInput {
     : input.status === "scheduled"
       ? "scheduled"
       : "draft";
+  const destination: ArticleDestination = input.destination === "guide"
+    ? "guide"
+    : "articles";
   const rawContentJson = input.contentJson;
   if (!rawContentJson || typeof rawContentJson !== "object" || Array.isArray(rawContentJson)) {
     throw new Error("本文データの形式が正しくありません。");
@@ -164,6 +171,7 @@ export function parseArticleInput(value: unknown): ArticleInput {
     contentHtml,
     coverImageUrl,
     status: status as ArticleStatus,
+    destination,
     publishedAt,
     tagIds,
     seriesId,

@@ -12,6 +12,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
   Bold,
+  BookOpen,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -31,12 +32,14 @@ import {
   Save,
   Search,
   Trash2,
+  Ticket,
   Underline as UnderlineIcon,
   Undo2,
   Upload,
   X,
 } from "lucide-react";
 import type {
+  ArticleDestination,
   ArticleRecord,
   ArticleMedia,
   ArticleRevision,
@@ -170,6 +173,9 @@ export function ArticleEditor({
   const [seoDescription, setSeoDescription] = useState(initialArticle?.seoDescription || "");
   const [coverImageUrl, setCoverImageUrl] = useState(initialArticle?.coverImageUrl || "");
   const [status, setStatus] = useState<ArticleStatus>(initialArticle?.status || "draft");
+  const [destination, setDestination] = useState<ArticleDestination>(
+    initialArticle?.destination || "articles",
+  );
   const [publishedAt, setPublishedAt] = useState(localDateTime(initialArticle?.publishedAt || null));
   const [selectedTagIds, setSelectedTagIds] = useState(
     initialArticle?.tags.map((tag) => tag.id) || [],
@@ -481,6 +487,7 @@ export function ArticleEditor({
       contentHtml: editor.getHTML(),
       coverImageUrl,
       status: nextStatus,
+      destination,
       publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
       tagIds: selectedTagIds,
       seriesId: seriesId || null,
@@ -521,6 +528,7 @@ export function ArticleEditor({
       setArticleId(data.article.id);
       if (changeVersionRef.current === saveVersion) {
         setStatus(data.article.status);
+        setDestination(data.article.destination);
         setPublishedAt(localDateTime(data.article.publishedAt));
         setSaveState("saved");
         setMessage(isAutoSave ? "下書きを自動保存しました。" : savedMessage(data.article.status));
@@ -950,6 +958,69 @@ export function ArticleEditor({
 
             <h2 className="mt-7 text-[14px] font-black text-ink">公開設定</h2>
 
+            <fieldset className="mt-5">
+              <legend className="flex items-center gap-2 text-[10px] font-black text-ink/50">
+                表示先
+                <span className="rounded-full bg-pink/10 px-2 py-0.5 text-[8px] text-pink">必須</span>
+              </legend>
+              <div className="mt-2 grid gap-2">
+                {([
+                  {
+                    value: "articles",
+                    label: "記事",
+                    description: "記事一覧とTOPの最新記事に表示",
+                    icon: BookOpen,
+                  },
+                  {
+                    value: "guide",
+                    label: "初めての方へ",
+                    description: "初めての方向けガイドに表示",
+                    icon: Ticket,
+                  },
+                ] as const).map((item) => {
+                  const Icon = item.icon;
+                  const active = destination === item.value;
+                  return (
+                    <label
+                      key={item.value}
+                      className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${
+                        active
+                          ? "border-pink/35 bg-pink/[0.05]"
+                          : "border-ink/10 bg-white hover:border-pink/25"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="article-destination"
+                        value={item.value}
+                        checked={active}
+                        onChange={() => {
+                          setDestination(item.value);
+                          if (item.value === "guide") {
+                            setSeriesId("");
+                            setSeriesOrder(1);
+                          }
+                          markDirty();
+                        }}
+                        className="sr-only"
+                      />
+                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
+                        active ? "bg-pink text-white" : "bg-pink/[0.06] text-pink"
+                      }`}>
+                        <Icon size={16} aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0">
+                        <strong className="block text-[10px] font-black text-ink">{item.label}</strong>
+                        <span className="mt-1 block text-[8px] font-bold leading-4 text-ink/35">
+                          {item.description}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+
             <label className="mt-5 block">
               <span className="text-[10px] font-black text-ink/50">ステータス</span>
               <span className="relative mt-2 block">
@@ -1092,6 +1163,7 @@ export function ArticleEditor({
               </div>
             </div>
 
+            {destination === "articles" && (
             <div className="mt-6 border-t border-pink/10 pt-5">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-[10px] font-black text-ink/50">記事シリーズ</h3>
@@ -1136,6 +1208,7 @@ export function ArticleEditor({
                 </p>
               )}
             </div>
+            )}
 
             <label id="quality-excerpt" className="mt-6 block scroll-mt-28 border-t border-pink/10 pt-5">
               <span className="text-[10px] font-black text-ink/50">抜粋</span>
