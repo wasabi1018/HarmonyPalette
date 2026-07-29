@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ChevronRight, Menu, Search, X } from "lucide-react";
+import { CalendarDays, ChevronRight, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { mainNavigation } from "@/lib/navigation";
 
@@ -45,24 +45,17 @@ export function Header() {
         <div className="flex shrink-0 items-center gap-2">
           <Link
             href="/schedule"
-            className="hidden min-h-10 items-center gap-2 rounded-full bg-ink px-4 text-[12px] font-bold text-white shadow-soft transition-transform hover:-translate-y-0.5 sm:flex"
+            className="hidden min-h-10 items-center gap-2 rounded-full bg-ink px-4 text-[12px] font-bold text-white shadow-soft transition-transform hover:-translate-y-0.5 lg:flex"
           >
             <CalendarDays size={15} aria-hidden="true" />
             今日の予定
-          </Link>
-          <Link
-            href="/schedule"
-            aria-label="スケジュールを検索"
-            className="grid h-10 w-10 place-items-center rounded-full border border-ink/10 text-ink transition-colors hover:border-pink/30 hover:text-pink"
-          >
-            <Search size={17} aria-hidden="true" />
           </Link>
           <button
             type="button"
             aria-label={isOpen ? "メニューを閉じる" : "メニューを開く"}
             aria-expanded={isOpen}
             onClick={() => setIsOpen((value) => !value)}
-            className="grid h-10 w-10 place-items-center rounded-full border border-ink/10 text-ink transition-colors hover:border-pink/30 hover:text-pink xl:hidden"
+            className="hidden h-10 w-10 place-items-center rounded-full border border-ink/10 text-ink transition-colors hover:border-pink/30 hover:text-pink lg:grid xl:hidden"
           >
             {isOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
           </button>
@@ -70,8 +63,8 @@ export function Header() {
       </div>
 
       {isOpen && (
-        <div className="border-t border-pink/10 bg-white px-4 py-3 xl:hidden">
-          <nav className="mx-auto grid max-w-[1200px] gap-1 sm:grid-cols-2" aria-label="モバイルナビゲーション">
+        <div className="hidden border-t border-pink/10 bg-white px-4 py-3 lg:block xl:hidden">
+          <nav className="mx-auto grid max-w-[1200px] grid-cols-2 gap-1" aria-label="タブレットナビゲーション">
             {mainNavigation.map((item) => (
               <Link
                 key={item.href}
