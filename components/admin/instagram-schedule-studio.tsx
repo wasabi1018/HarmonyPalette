@@ -421,6 +421,7 @@ function ScheduleInstagramCard({
   period,
   entries,
   eventNames,
+  characters,
   theme,
   targetMonth,
   pageIndex,
@@ -429,6 +430,7 @@ function ScheduleInstagramCard({
   period: WeekPeriod;
   entries: ScheduleEntry[];
   eventNames: string[];
+  characters: Character[];
   theme: Theme;
   targetMonth?: string;
   pageIndex: number;
@@ -436,6 +438,11 @@ function ScheduleInstagramCard({
 }) {
   const dates = datesInPeriod(period);
   const columns = eventNames.length > 0 ? eventNames : ["イベント未選択"];
+  const fanStudioRegularNames = new Set(
+    characters
+      .filter((character) => character.isFanStudioRegular)
+      .map((character) => character.name),
+  );
   const columnFontSize = columns.length >= 7 ? 15 : columns.length >= 5 ? 17 : 20;
   const cellFontSize = columns.length >= 7 ? 14 : columns.length >= 5 ? 16 : 19;
   const tableColumns = `122px repeat(${columns.length}, minmax(0, 1fr))`;
@@ -635,7 +642,11 @@ function ScheduleInstagramCard({
               </div>
 
               {columns.map((eventName) => {
-                const names = characterNamesForCell(entries, date, eventName);
+                const names = characterNamesForCell(entries, date, eventName).filter(
+                  (name) =>
+                    eventName !== FAN_STUDIO_EVENT
+                    || !fanStudioRegularNames.has(name),
+                );
                 return (
                   <div
                     key={`${date}-${eventName}`}
@@ -1935,6 +1946,7 @@ export function InstagramScheduleStudio() {
                     period={activePeriod}
                     entries={filteredEntries}
                     eventNames={selectedEvents}
+                    characters={characterState.characters}
                     theme={theme}
                     targetMonth={mode === "month" ? selectedMonth : undefined}
                     pageIndex={previewIndex}
@@ -2039,6 +2051,7 @@ export function InstagramScheduleStudio() {
                 period={period}
                 entries={filteredEntries}
                 eventNames={selectedEvents}
+                characters={characterState.characters}
                 theme={theme}
                 targetMonth={mode === "month" ? selectedMonth : undefined}
                 pageIndex={index}
