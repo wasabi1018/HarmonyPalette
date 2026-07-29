@@ -5,7 +5,7 @@ import { InstagramScheduleStudio } from "@/components/admin/instagram-schedule-s
 
 export const metadata: Metadata = {
   title: "Instagram画像作成",
-  description: "週次・月次のスケジュールをInstagram投稿画像にまとめます。",
+  description: "週次・月次の全体予定とファンスタジオ予定をInstagram投稿画像にまとめます。",
 };
 
 export default function AdminInstagramPage() {
@@ -33,7 +33,7 @@ export default function AdminInstagramPage() {
               Instagram画像作成
             </h1>
             <p className="mt-2 max-w-[720px] text-[13px] font-bold leading-6 text-ink/55">
-              管理中の予定から、月曜始まりの投稿画像を自動作成します。1か月分も週ごとにまとめて保存できます。
+              管理中の予定から、全体スケジュールとファンスタジオ専用の投稿画像を自動作成します。1か月分も週ごとにまとめて保存できます。
             </p>
           </div>
           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-[10px] font-black text-lavender shadow-sm">
