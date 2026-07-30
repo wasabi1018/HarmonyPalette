@@ -1,9 +1,10 @@
 import type { ImportPreview, ImportedScheduleCandidate, SourceDocument } from "@/lib/official-import/types";
 import { canonicalCharacters } from "@/lib/official-import/character-name-normalizer";
 import { buildExternalKey, normalizeSpace, normalizeTime, sha256 } from "@/lib/official-import/utils";
+import { SITE_URL } from "@/lib/site-config";
 
 const FUN_STUDIO_URL = "https://www.harmonyland.jp/sp/funstudio/c_schedule.html";
-const USER_AGENT = "HarmonyPaletteImporter/0.1 (+https://harmony-palette.example)";
+const USER_AGENT = `HarmonyPaletteImporter/0.1 (+${SITE_URL})`;
 const TIME_RANGE = /(\d{1,2}\s*[:：]\s*\d{2})\s*[〜～~－-]\s*(\d{1,2}\s*[:：]\s*\d{2})/;
 
 const ROOMS: Record<string, string> = {

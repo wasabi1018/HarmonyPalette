@@ -2,9 +2,10 @@ import { parseHarmonylandDailyPdf } from "@/lib/official-import/daily-pdf-parser
 import { importFanStudioSchedules } from "@/lib/official-import/funstudio";
 import type { ImportPreview, SourceDocument } from "@/lib/official-import/types";
 import { createRunId, sha256 } from "@/lib/official-import/utils";
+import { SITE_URL } from "@/lib/site-config";
 
 const CALENDAR_API = "https://www.harmonyland.jp/wp/?mc-api=json";
-const USER_AGENT = "HarmonyPaletteImporter/0.1 (+https://harmony-palette.example)";
+const USER_AGENT = `HarmonyPaletteImporter/0.1 (+${SITE_URL})`;
 
 type CalendarRecord = {
   category_name?: string;

@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink, Heart } from "lucide-react";
-import { mainNavigation } from "@/lib/navigation";
+import { informationNavigation, mainNavigation } from "@/lib/navigation";
+import { HARMONYLAND_OFFICIAL_URL } from "@/lib/site-config";
 
 export function Footer() {
   return (
     <footer className="mt-12 border-t border-pink/10 bg-white">
-      <div className="mx-auto grid max-w-[1200px] gap-7 px-4 py-8 sm:px-6 lg:grid-cols-[1.2fr_.8fr_1fr] lg:px-8">
+      <div className="mx-auto grid max-w-[1200px] gap-7 px-4 py-8 sm:grid-cols-2 sm:px-6 lg:grid-cols-[1.15fr_.7fr_.9fr_1fr] lg:px-8">
         <div>
           <div className="relative h-14 w-[220px] overflow-hidden" aria-label="Harmony Palette ロゴ">
             <Image
@@ -36,12 +37,22 @@ export function Footer() {
           </nav>
         </div>
         <div>
+          <p className="text-[10px] font-black tracking-[0.18em] text-ink/35">INFORMATION</p>
+          <nav className="mt-3 grid gap-y-2" aria-label="サイト情報">
+            {informationNavigation.map((item) => (
+              <Link key={item.href} href={item.href} className="text-[13px] font-bold text-ink/65 hover:text-pink">
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <div>
           <p className="text-[10px] font-black tracking-[0.18em] text-ink/35">OFFICIAL SOURCE</p>
           <p className="mt-3 text-[13px] leading-6 text-ink/55">
             最新かつ正確な情報は、必ず公式サイトでご確認ください。
           </p>
           <a
-            href="https://www.harmonyland.jp/"
+            href={HARMONYLAND_OFFICIAL_URL}
             target="_blank"
             rel="noreferrer"
             className="mt-3 inline-flex items-center gap-2 text-[13px] font-black text-pink hover:underline"

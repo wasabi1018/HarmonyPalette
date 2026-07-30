@@ -1,17 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, CalendarDays, Ticket } from "lucide-react";
+import { cache } from "react";
 import { OfficialNotice } from "@/components/official-notice";
 import { PageIntro } from "@/components/page-intro";
 import { listPublishedArticles } from "@/lib/articles/repository";
 
-export const metadata: Metadata = {
-  title: "初めての方へガイド",
-  description: "チケット、アクセス、駐車場、子ども連れの回り方など、初めてのハーモニーランドに役立つ情報です。",
-  alternates: { canonical: "/guide" },
-};
-
 export const dynamic = "force-dynamic";
+
+const loadPublishedGuides = cache(async () => {
+  try {
+    return await listPublishedArticles({ destination: "guide" });
+  } catch {
+    return [];
+  }
+});
+
+export async function generateMetadata(): Promise<Metadata> {
+  const guides = await loadPublishedGuides();
+  return {
+    title: "初めての方へガイド",
+    description: "チケット、アクセス、駐車場、子ども連れの回り方など、初めてのハーモニーランドに役立つ情報です。",
+    alternates: { canonical: "/guide" },
+    robots: guides.length > 0 ? undefined : { index: false, follow: true },
+  };
+}
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -25,12 +38,7 @@ function formatDate(value: string | null) {
 }
 
 export default async function GuidePage() {
-  let guides: Awaited<ReturnType<typeof listPublishedArticles>> = [];
-  try {
-    guides = await listPublishedArticles({ destination: "guide" });
-  } catch {
-    guides = [];
-  }
+  const guides = await loadPublishedGuides();
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 pt-8 sm:px-6 lg:px-8 lg:pt-12">

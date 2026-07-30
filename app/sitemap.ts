@@ -1,28 +1,41 @@
 import type { MetadataRoute } from "next";
 import { listPublishedArticles } from "@/lib/articles/repository";
 import { listPublishedArticleSeries } from "@/lib/articles/series-repository";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://harmony-palette.example";
+import { SITE_URL } from "@/lib/site-config";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const routes = ["", "/schedule", "/plan", "/characters", "/guide", "/articles"];
-  const staticRoutes = routes.map((route) => ({
-    url: `${siteUrl}${route}`,
-    lastModified: new Date("2026-07-21"),
+  const alwaysPublishedRoutes = [
+    "",
+    "/schedule",
+    "/characters",
+    "/about",
+    "/privacy",
+    "/contact",
+    "/terms",
+  ];
+  const staticRoutes = alwaysPublishedRoutes.map((route) => ({
+    url: `${SITE_URL}${route}`,
   }));
   try {
     const [articles, series] = await Promise.all([
       listPublishedArticles(),
       listPublishedArticleSeries().catch(() => []),
     ]);
+    const contentRoutes = [
+      articles.some((article) => article.destination === "guide") ? "/guide" : null,
+      articles.some((article) => article.destination === "articles") ? "/articles" : null,
+    ]
+      .filter((route): route is string => Boolean(route))
+      .map((route) => ({ url: `${SITE_URL}${route}` }));
     return [
       ...staticRoutes,
+      ...contentRoutes,
       ...articles.map((article) => ({
-        url: `${siteUrl}/articles/${article.slug}`,
+        url: `${SITE_URL}/articles/${article.slug}`,
         lastModified: new Date(article.updatedAt),
       })),
       ...series.map((item) => ({
-        url: `${siteUrl}/articles/series/${item.slug}`,
+        url: `${SITE_URL}/articles/series/${item.slug}`,
         lastModified: new Date(item.updatedAt),
       })),
     ];

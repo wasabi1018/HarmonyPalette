@@ -1,12 +1,10 @@
 import { listPublishedArticles } from "@/lib/articles/repository";
+import { SITE_URL } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
 
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://harmony-palette.example")
-  .replace(/\/+$/, "");
-
 function absoluteUrl(value: string) {
-  return value ? new URL(value, `${siteUrl}/`).toString() : undefined;
+  return value ? new URL(value, `${SITE_URL}/`).toString() : undefined;
 }
 
 export async function GET() {
@@ -14,12 +12,12 @@ export async function GET() {
   const feed = {
     version: "https://jsonfeed.org/version/1.1",
     title: "Harmony Palette 記事",
-    home_page_url: `${siteUrl}/articles`,
-    feed_url: `${siteUrl}/articles/feed.json`,
+    home_page_url: `${SITE_URL}/articles`,
+    feed_url: `${SITE_URL}/articles/feed.json`,
     description: "ハーモニーランドのおでかけ準備や楽しみ方を紹介する記事です。",
     language: "ja",
     items: articles.map((article) => {
-      const url = `${siteUrl}/articles/${encodeURIComponent(article.slug)}`;
+      const url = `${SITE_URL}/articles/${encodeURIComponent(article.slug)}`;
       return {
         id: url,
         url,

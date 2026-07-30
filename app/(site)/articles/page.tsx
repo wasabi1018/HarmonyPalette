@@ -10,6 +10,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { cache } from "react";
 import { OfficialNotice } from "@/components/official-notice";
 import { PageIntro } from "@/components/page-intro";
 import {
@@ -18,6 +19,14 @@ import {
 } from "@/lib/articles/repository";
 import { listPublishedArticleSeries } from "@/lib/articles/series-repository";
 
+const loadPublishedJournalArticles = cache(async () => {
+  try {
+    return await listPublishedArticles({ destination: "articles" });
+  } catch {
+    return [];
+  }
+});
+
 export async function generateMetadata({
   searchParams,
 }: {
@@ -25,6 +34,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { tag, q, page } = await searchParams;
   const filtered = Boolean(tag || q || (page && page !== "1"));
+  const hasPublishedArticles = (await loadPublishedJournalArticles()).length > 0;
   return {
     title: q ? `「${q.slice(0, 40)}」の記事検索` : "最新記事",
     description: "ハーモニーランドのおでかけ準備や楽しみ方を紹介する記事ページです。",
@@ -35,7 +45,7 @@ export async function generateMetadata({
         "application/feed+json": "/articles/feed.json",
       },
     },
-    robots: filtered ? { index: false, follow: true } : undefined,
+    robots: filtered || !hasPublishedArticles ? { index: false, follow: true } : undefined,
   };
 }
 
@@ -88,7 +98,7 @@ export default async function ArticlesPage({
   let publishedSeries: Awaited<ReturnType<typeof listPublishedArticleSeries>> = [];
   try {
     [allArticles, publishedSeries] = await Promise.all([
-      listPublishedArticles({ destination: "articles" }),
+      loadPublishedJournalArticles(),
       listPublishedArticleSeries().catch(() => []),
     ]);
   } catch {

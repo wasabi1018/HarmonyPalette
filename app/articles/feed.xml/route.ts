@@ -1,9 +1,7 @@
 import { listPublishedArticles } from "@/lib/articles/repository";
+import { SITE_URL } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
-
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://harmony-palette.example")
-  .replace(/\/+$/, "");
 
 function escapeXml(value: string) {
   return value.replace(/[<>&'"]/g, (character) => ({
@@ -18,7 +16,7 @@ function escapeXml(value: string) {
 export async function GET() {
   const articles = await listPublishedArticles({ destination: "articles", limit: 50 });
   const items = articles.map((article) => {
-    const url = `${siteUrl}/articles/${encodeURIComponent(article.slug)}`;
+    const url = `${SITE_URL}/articles/${encodeURIComponent(article.slug)}`;
     const publishedAt = article.publishedAt || article.updatedAt;
     return `    <item>
       <title>${escapeXml(article.title)}</title>
@@ -36,11 +34,11 @@ ${article.tags.map((tag) => `      <category>${escapeXml(tag.name)}</category>`)
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Harmony Palette 記事</title>
-    <link>${escapeXml(`${siteUrl}/articles`)}</link>
+    <link>${escapeXml(`${SITE_URL}/articles`)}</link>
     <description>ハーモニーランドのおでかけ準備や楽しみ方を紹介する記事です。</description>
     <language>ja</language>
     <lastBuildDate>${latestDate}</lastBuildDate>
-    <atom:link href="${escapeXml(`${siteUrl}/articles/feed.xml`)}" rel="self" type="application/rss+xml" />
+    <atom:link href="${escapeXml(`${SITE_URL}/articles/feed.xml`)}" rel="self" type="application/rss+xml" />
 ${items}
   </channel>
 </rss>`;

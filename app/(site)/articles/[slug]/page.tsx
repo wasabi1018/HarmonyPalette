@@ -11,11 +11,9 @@ import {
 } from "@/lib/articles/repository";
 import { prepareArticleContent } from "@/lib/articles/publishing";
 import { getPublishedArticleSeriesContext } from "@/lib/articles/series-repository";
+import { SITE_NAME, SITE_URL } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
-
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://harmony-palette.example")
-  .replace(/\/+$/, "");
 
 export async function generateMetadata({
   params,
@@ -90,7 +88,7 @@ export default async function ArticleDetailPage({
     relatedArticles = [];
     seriesContext = null;
   }
-  const articleUrl = `${siteUrl}/articles/${article.slug}`;
+  const articleUrl = `${SITE_URL}/articles/${article.slug}`;
   const preparedContent = prepareArticleContent(article.contentHtml);
   const structuredData = {
     "@context": "https://schema.org",
@@ -104,13 +102,13 @@ export default async function ArticleDetailPage({
     url: articleUrl,
     publisher: {
       "@type": "Organization",
-      name: "Harmony Palette",
-      url: siteUrl,
+      name: SITE_NAME,
+      url: SITE_URL,
     },
     isPartOf: seriesContext ? {
       "@type": "CreativeWorkSeries",
       name: seriesContext.series.title,
-      url: `${siteUrl}/articles/series/${seriesContext.series.slug}`,
+      url: `${SITE_URL}/articles/series/${seriesContext.series.slug}`,
     } : undefined,
     keywords: article.tags.map((tag) => tag.name).join(", "),
   };

@@ -3,6 +3,7 @@ import { HomeSections } from "@/components/home-sections";
 import { defaultInstagramPostUrls } from "@/data/instagram-posts";
 import { listPublishedArticles } from "@/lib/articles/repository";
 import { getInstagramEmbedSettings } from "@/lib/instagram-settings";
+import { INSTAGRAM_URL, SITE_NAME, SITE_URL } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "ハーモニーランドの「楽しい！」がそろう場所",
@@ -15,10 +16,10 @@ export default async function HomePage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Harmony Palette",
+    name: SITE_NAME,
     description: "ハーモニーランドを応援する非公式ファンサイト",
-    url: "https://harmony-palette.example",
-    sameAs: ["https://www.instagram.com/harmony__palette/"],
+    url: SITE_URL,
+    sameAs: [INSTAGRAM_URL],
   };
   let latestArticles: Awaited<ReturnType<typeof listPublishedArticles>> = [];
   let instagramPostUrls = [...defaultInstagramPostUrls] as [string, string];
