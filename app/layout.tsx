@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
-import { SITE_NAME, SITE_URL } from "@/lib/site-config";
+import {
+  SITE_NAME,
+  SITE_ORGANIZATION_ID,
+  SITE_URL,
+  SITE_WEBSITE_ID,
+  siteUrl,
+} from "@/lib/site-config";
 import "./globals.css";
+
+const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -26,8 +34,49 @@ export const metadata: Metadata = {
     images: [{ url: "/logo.png", width: 1536, height: 1024, alt: "Harmony Palette ロゴ" }],
   },
   robots: { index: true, follow: true },
+  verification: googleSiteVerification
+    ? { google: googleSiteVerification }
+    : undefined,
+};
+
+const websiteStructuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": SITE_ORGANIZATION_ID,
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: siteUrl("/logo.png"),
+        width: 1536,
+        height: 1024,
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": SITE_WEBSITE_ID,
+      name: SITE_NAME,
+      url: SITE_URL,
+      inLanguage: "ja-JP",
+      publisher: { "@id": SITE_ORGANIZATION_ID },
+    },
+  ],
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="ja" data-scroll-behavior="smooth"><body>{children}</body></html>;
+  return (
+    <html lang="ja" data-scroll-behavior="smooth">
+      <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteStructuredData).replace(/</g, "\\u003c"),
+          }}
+        />
+        {children}
+      </body>
+    </html>
+  );
 }

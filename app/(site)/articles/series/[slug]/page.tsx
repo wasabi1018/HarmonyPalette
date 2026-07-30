@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, BookCopy, BookOpen, CalendarDays } from "lucide-react";
 import { OfficialNotice } from "@/components/official-notice";
 import { getPublishedArticleSeries } from "@/lib/articles/series-repository";
+import { siteUrl } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
 
@@ -50,10 +51,28 @@ export default async function ArticleSeriesPage({
     context = null;
   }
   if (!context) notFound();
+  const seriesUrl = siteUrl(`/articles/series/${context.series.slug}`);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "@id": `${seriesUrl}#breadcrumb`,
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "ホーム", item: siteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "記事", item: siteUrl("/articles") },
+      { "@type": "ListItem", position: 3, name: context.series.title, item: seriesUrl },
+    ],
+  };
 
   return (
-    <div className="mx-auto max-w-[1040px] px-4 py-9 sm:px-6 lg:px-8 lg:py-12">
-      <div className="rounded-[28px] border border-pink/10 bg-white px-5 py-8 text-center shadow-soft sm:px-8 sm:py-10">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
+      />
+      <div className="mx-auto max-w-[1040px] px-4 py-9 sm:px-6 lg:px-8 lg:py-12">
+        <div className="rounded-[28px] border border-pink/10 bg-white px-5 py-8 text-center shadow-soft sm:px-8 sm:py-10">
         <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-pink/[0.08] text-pink">
           <BookCopy size={22} aria-hidden="true" />
         </span>
@@ -67,11 +86,11 @@ export default async function ArticleSeriesPage({
           </p>
         )}
         <p className="mt-4 text-[9px] font-black text-ink/30">{context.articles.length}記事</p>
-      </div>
+        </div>
 
-      <ol className="mt-7 space-y-4">
-        {context.articles.map(({ article, seriesOrder }, index) => (
-          <li key={article.id}>
+        <ol className="mt-7 space-y-4">
+          {context.articles.map(({ article, seriesOrder }, index) => (
+            <li key={article.id}>
             <Link
               href={`/articles/${article.slug}`}
               className="group grid overflow-hidden rounded-[22px] border border-pink/10 bg-white shadow-soft transition hover:-translate-y-0.5 hover:border-pink/25 sm:grid-cols-[220px_minmax(0,1fr)]"
@@ -111,15 +130,16 @@ export default async function ArticleSeriesPage({
                 <ArrowRight size={17} className="shrink-0 text-pink transition group-hover:translate-x-1" />
               </span>
             </Link>
-          </li>
-        ))}
-      </ol>
+            </li>
+          ))}
+        </ol>
 
-      <div className="mt-9"><OfficialNotice /></div>
-      <Link href="/articles" className="mt-7 inline-flex items-center gap-2 text-[11px] font-black text-pink hover:underline">
-        <ArrowLeft size={14} />
-        記事一覧へ戻る
-      </Link>
-    </div>
+        <div className="mt-9"><OfficialNotice /></div>
+        <Link href="/articles" className="mt-7 inline-flex items-center gap-2 text-[11px] font-black text-pink hover:underline">
+          <ArrowLeft size={14} />
+          記事一覧へ戻る
+        </Link>
+      </div>
+    </>
   );
 }

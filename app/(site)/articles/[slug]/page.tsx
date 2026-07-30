@@ -11,7 +11,13 @@ import {
 } from "@/lib/articles/repository";
 import { prepareArticleContent } from "@/lib/articles/publishing";
 import { getPublishedArticleSeriesContext } from "@/lib/articles/series-repository";
-import { SITE_NAME, SITE_URL } from "@/lib/site-config";
+import {
+  SITE_NAME,
+  SITE_ORGANIZATION_ID,
+  SITE_URL,
+  SITE_WEBSITE_ID,
+  siteUrl,
+} from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
 
@@ -88,29 +94,72 @@ export default async function ArticleDetailPage({
     relatedArticles = [];
     seriesContext = null;
   }
-  const articleUrl = `${SITE_URL}/articles/${article.slug}`;
+  const articleUrl = siteUrl(`/articles/${article.slug}`);
   const preparedContent = prepareArticleContent(article.contentHtml);
+  const listingUrl = siteUrl(article.destination === "guide" ? "/guide" : "/articles");
+  const listingName = article.destination === "guide" ? "初めての方へ" : "記事";
+  const breadcrumbItems = [
+    { name: "ホーム", url: siteUrl("/") },
+    { name: listingName, url: listingUrl },
+    ...(seriesContext ? [{
+      name: seriesContext.series.title,
+      url: siteUrl(`/articles/series/${seriesContext.series.slug}`),
+    }] : []),
+    { name: article.title, url: articleUrl },
+  ];
   const structuredData = {
     "@context": "https://schema.org",
-    "@type": "Article",
-    headline: article.seoTitle || article.title,
-    description: article.seoDescription || article.excerpt,
-    image: article.coverImageUrl ? [article.coverImageUrl] : undefined,
-    datePublished: article.publishedAt,
-    dateModified: article.updatedAt,
-    mainEntityOfPage: articleUrl,
-    url: articleUrl,
-    publisher: {
-      "@type": "Organization",
-      name: SITE_NAME,
-      url: SITE_URL,
-    },
-    isPartOf: seriesContext ? {
-      "@type": "CreativeWorkSeries",
-      name: seriesContext.series.title,
-      url: `${SITE_URL}/articles/series/${seriesContext.series.slug}`,
-    } : undefined,
-    keywords: article.tags.map((tag) => tag.name).join(", "),
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": `${articleUrl}#article`,
+        headline: article.seoTitle || article.title,
+        description: article.seoDescription || article.excerpt,
+        image: article.coverImageUrl ? [article.coverImageUrl] : undefined,
+        datePublished: article.publishedAt,
+        dateModified: article.updatedAt,
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": articleUrl,
+        },
+        url: articleUrl,
+        inLanguage: "ja-JP",
+        author: {
+          "@type": "Organization",
+          "@id": SITE_ORGANIZATION_ID,
+          name: SITE_NAME,
+          url: SITE_URL,
+        },
+        publisher: {
+          "@type": "Organization",
+          "@id": SITE_ORGANIZATION_ID,
+          name: SITE_NAME,
+          url: SITE_URL,
+          logo: {
+            "@type": "ImageObject",
+            url: siteUrl("/logo.png"),
+            width: 1536,
+            height: 1024,
+          },
+        },
+        isPartOf: seriesContext ? {
+          "@type": "CreativeWorkSeries",
+          name: seriesContext.series.title,
+          url: siteUrl(`/articles/series/${seriesContext.series.slug}`),
+        } : { "@id": SITE_WEBSITE_ID },
+        keywords: article.tags.map((tag) => tag.name).join(", "),
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${articleUrl}#breadcrumb`,
+        itemListElement: breadcrumbItems.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.name,
+          item: item.url,
+        })),
+      },
+    ],
   };
 
   return (
