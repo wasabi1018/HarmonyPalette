@@ -35,7 +35,7 @@ function Hero() {
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Link
-              href="/schedule"
+              href="#today-schedule"
               className="inline-flex min-h-11 items-center gap-2 rounded-full bg-pink px-4 text-[13px] font-black text-white shadow-[0_8px_20px_rgba(235,110,152,0.22)] transition-transform hover:-translate-y-0.5 sm:px-5 sm:text-sm"
             >
               今日の予定
