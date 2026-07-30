@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getCharacterThemeColor } from "@/lib/character-theme-colors";
 import { assertImportAuthorization, getSupabaseAdminClient } from "@/lib/supabase/server";
 
 type OrderUpdate = {
@@ -48,7 +49,7 @@ export async function PATCH(request: Request) {
           image_url: "/character-placeholder.svg",
           official_url: "https://www.harmonyland.jp/",
           is_fan_studio_regular: false,
-          theme_color: "#ef8099",
+          theme_color: getCharacterThemeColor(item.name),
           display_order: item.displayOrder,
         });
       const { error } = await operation;

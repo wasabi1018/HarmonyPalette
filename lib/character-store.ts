@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/data/types";
+import { getCharacterThemeColor } from "@/lib/character-theme-colors";
 import type { DataLoadStatus } from "@/lib/schedule-store";
 
 const REFRESH_EVENT = "harmony-palette:characters-refresh";
@@ -49,7 +50,7 @@ export function mergeCharactersWithNames(catalog: Character[], names: string[]) 
       description: "取り込んだスケジュールに登場するキャラクターです。",
       officialUrl: "https://www.harmonyland.jp/",
       isFanStudioRegular: false,
-      themeColor: "#ef8099",
+      themeColor: getCharacterThemeColor(name),
       displayOrder: 999,
       birthdayMonth: null,
       birthdayDay: null,

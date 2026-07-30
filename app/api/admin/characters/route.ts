@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isValidBirthday } from "@/lib/character-birthday";
+import { getCharacterThemeColor } from "@/lib/character-theme-colors";
 import { assertImportAuthorization, getSupabaseAdminClient } from "@/lib/supabase/server";
 
 type CharacterInput = {
@@ -74,7 +75,9 @@ function parseCharacterInput(input: CharacterInput, requireId: boolean) {
     ? input.image.trim()
     : "/character-placeholder.svg";
   const officialUrl = typeof input.officialUrl === "string" ? input.officialUrl.trim() : "";
-  const themeColor = typeof input.themeColor === "string" ? input.themeColor.trim() : "#ef8099";
+  const themeColor = typeof input.themeColor === "string"
+    ? input.themeColor.trim()
+    : getCharacterThemeColor(name);
   const displayOrder = input.displayOrder === undefined ? 999 : Number(input.displayOrder);
 
   if ((requireId && !id) || !name) throw new Error("キャラクター名を入力してください。");
