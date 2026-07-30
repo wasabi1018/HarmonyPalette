@@ -1,5 +1,5 @@
 export const mainNavigation = [
-  { label: "今日の予定", href: "/schedule" },
+  { label: "予定を探す", href: "/schedule" },
   { label: "マイプラン", href: "/plan" },
   { label: "キャラクター", href: "/characters" },
   { label: "初めての方へ", href: "/guide" },

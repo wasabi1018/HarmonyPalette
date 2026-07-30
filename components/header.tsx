@@ -48,7 +48,7 @@ export function Header() {
             className="hidden min-h-10 items-center gap-2 rounded-full bg-ink px-4 text-[12px] font-bold text-white shadow-soft transition-transform hover:-translate-y-0.5 lg:flex"
           >
             <CalendarDays size={15} aria-hidden="true" />
-            今日の予定
+            予定を探す
           </Link>
           <button
             type="button"
