@@ -15,6 +15,7 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/202607280004_article_analytics.sql`
 - `supabase/migrations/202607280005_article_search.sql`
 - `supabase/migrations/202607280006_article_series.sql`
+- `supabase/migrations/202607300001_plan_options.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read

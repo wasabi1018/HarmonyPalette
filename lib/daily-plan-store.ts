@@ -1,6 +1,11 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from "react";
+import {
+  DEFAULT_CUSTOM_PLAN_COLOR,
+  isCustomPlanColor,
+  type CustomPlanColor,
+} from "@/lib/plan-options";
 import { getEntryCharacterNames, type ScheduleEntry } from "@/lib/schedule-store";
 
 export type PlanItemKind = "official" | "custom";
@@ -16,6 +21,7 @@ export type DailyPlanItem = {
   endTime: string;
   location: string;
   note: string;
+  accentColor?: CustomPlanColor;
   timeLocked: boolean;
   createdAt: string;
 };
@@ -37,6 +43,7 @@ export type CustomPlanItemInput = {
   endTime: string;
   location?: string;
   note?: string;
+  accentColor: CustomPlanColor;
 };
 
 const STORAGE_KEY = "harmony-palette:my-plans:v1";
@@ -88,6 +95,11 @@ function normalizedItem(value: unknown): DailyPlanItem | null {
     endTime: item.endTime,
     location: typeof item.location === "string" ? item.location : "",
     note: typeof item.note === "string" ? item.note : "",
+    accentColor: item.kind === "custom" && isCustomPlanColor(item.accentColor)
+      ? item.accentColor
+      : item.kind === "custom"
+        ? DEFAULT_CUSTOM_PLAN_COLOR
+        : undefined,
     timeLocked: item.kind === "official" || item.timeLocked === true,
     createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date(0).toISOString(),
   };
@@ -249,6 +261,9 @@ export function addCustomPlanItem(date: string, input: CustomPlanItemInput) {
     endTime: input.endTime,
     location: input.location?.trim() ?? "",
     note: input.note?.trim() ?? "",
+    accentColor: isCustomPlanColor(input.accentColor)
+      ? input.accentColor
+      : DEFAULT_CUSTOM_PLAN_COLOR,
     timeLocked: false,
     createdAt: new Date().toISOString(),
   };
@@ -272,6 +287,9 @@ export function updateCustomPlanItem(date: string, id: string, input: CustomPlan
       endTime: input.endTime,
       location: input.location?.trim() ?? "",
       note: input.note?.trim() ?? "",
+      accentColor: isCustomPlanColor(input.accentColor)
+        ? input.accentColor
+        : DEFAULT_CUSTOM_PLAN_COLOR,
     };
   }));
   return plan?.items.find((item) => item.id === id) ?? null;

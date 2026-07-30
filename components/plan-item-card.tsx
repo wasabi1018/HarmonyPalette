@@ -3,6 +3,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { GripVertical, LockKeyhole, MapPin, Pencil, Trash2, TriangleAlert, Users } from "lucide-react";
 import type { DailyPlanItem } from "@/lib/daily-plan-store";
+import { getCustomPlanColorValue } from "@/lib/plan-options";
 
 export function PlanItemCard({
   item,
@@ -23,16 +24,19 @@ export function PlanItemCard({
   });
   const transform = draggable.transform;
   const shownTime = previewTime ?? item;
-  const style = transform
-    ? { transform: `translate3d(0, ${transform.y}px, 0)` }
-    : undefined;
+  const style = {
+    ...(transform ? { transform: `translate3d(0, ${transform.y}px, 0)` } : {}),
+    ...(item.kind === "custom"
+      ? { borderLeftColor: getCustomPlanColorValue(item.accentColor) }
+      : {}),
+  };
 
   return (
     <article
       ref={draggable.setNodeRef}
       style={style}
       className={`relative rounded-2xl border border-l-[3px] bg-white p-3 shadow-soft transition-shadow ${
-        item.kind === "official" ? "border-pink/15 border-l-pink/45" : "border-mint/25 border-l-mint"
+        item.kind === "official" ? "border-pink/15 border-l-pink/45" : "border-ink/10"
       } ${draggable.isDragging ? "z-30 shadow-[0_20px_50px_rgba(75,45,55,0.2)]" : ""}`}
     >
       <div className="flex items-start gap-2.5">

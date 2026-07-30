@@ -18,20 +18,18 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Clock3,
   Download,
   ImageDown,
   ListPlus,
   LoaderCircle,
   LockKeyhole,
   MapPin,
+  Palette,
   Plus,
   Share2,
   Sparkles,
   Trash2,
   TriangleAlert,
-  Utensils,
-  Footprints,
   Users,
   X,
 } from "lucide-react";
@@ -52,6 +50,12 @@ import {
   updateCustomPlanItem,
   useDailyPlans,
 } from "@/lib/daily-plan-store";
+import {
+  CUSTOM_PLAN_COLORS,
+  DEFAULT_CUSTOM_PLAN_COLOR,
+  getCustomPlanColorValue,
+  type PlanOptions,
+} from "@/lib/plan-options";
 import { useScheduleEntries } from "@/lib/schedule-store";
 
 const DRAG_MINUTES_PER_PIXEL = 0.5;
@@ -61,6 +65,7 @@ const DEFAULT_CUSTOM_FORM: CustomPlanItemInput = {
   endTime: "12:45",
   location: "",
   note: "",
+  accentColor: DEFAULT_CUSTOM_PLAN_COLOR,
 };
 
 function todayInJapan() {
@@ -164,7 +169,11 @@ function PrintablePlan({ date, items }: { date: string; items: DailyPlanItem[] }
 
         <div className="mt-6 grid gap-2.5">
           {items.length > 0 ? items.map((item) => (
-            <div key={item.id} className={`rounded-[18px] border border-l-[5px] bg-white px-4 py-3.5 ${item.kind === "official" ? "border-pink/15 border-l-pink/45" : "border-mint/25 border-l-mint"}`}>
+            <div
+              key={item.id}
+              className={`rounded-[18px] border border-l-[5px] bg-white px-4 py-3.5 ${item.kind === "official" ? "border-pink/15 border-l-pink/45" : "border-ink/10"}`}
+              style={item.kind === "custom" ? { borderLeftColor: getCustomPlanColorValue(item.accentColor) } : undefined}
+            >
               <div className="flex items-start gap-4">
                 <div className="w-[72px] shrink-0 pt-0.5">
                   <p className="flex items-center gap-1.5 text-[17px] font-black tabular-nums leading-5">
@@ -224,6 +233,10 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
   const [addOpen, setAddOpen] = useState(false);
   const [addTab, setAddTab] = useState<"official" | "custom">("official");
   const [customForm, setCustomForm] = useState<CustomPlanItemInput>(DEFAULT_CUSTOM_FORM);
+  const [planOptions, setPlanOptions] = useState<PlanOptions>({ attractions: [], facilities: [] });
+  const [optionsError, setOptionsError] = useState("");
+  const [selectedAttractionId, setSelectedAttractionId] = useState("");
+  const [selectedFacilityId, setSelectedFacilityId] = useState("");
   const [editingItem, setEditingItem] = useState<DailyPlanItem | null>(null);
   const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState("");
@@ -251,6 +264,30 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
     const timer = window.setTimeout(() => setNotice(""), 3500);
     return () => window.clearTimeout(timer);
   }, [notice]);
+
+  useEffect(() => {
+    let active = true;
+    const loadPlanOptions = async () => {
+      try {
+        const response = await fetch("/api/plan-options", { cache: "no-store" });
+        const result = await response.json() as PlanOptions & { error?: string };
+        if (!response.ok) throw new Error(result.error || "候補を読み込めませんでした。");
+        if (active) {
+          setPlanOptions({
+            attractions: result.attractions ?? [],
+            facilities: result.facilities ?? [],
+          });
+          setOptionsError("");
+        }
+      } catch {
+        if (active) setOptionsError("登録候補を読み込めませんでした。自由入力は利用できます。");
+      }
+    };
+    void loadPlanOptions();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -322,7 +359,14 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
       endTime: item.endTime,
       location: item.location,
       note: item.note,
+      accentColor: item.accentColor ?? DEFAULT_CUSTOM_PLAN_COLOR,
     });
+    setSelectedAttractionId(
+      planOptions.attractions.find((attraction) => attraction.name === item.title)?.id ?? "",
+    );
+    setSelectedFacilityId(
+      planOptions.facilities.find((facility) => facility.name === item.location)?.id ?? "",
+    );
     setFormError("");
     setAddTab("custom");
     setAddOpen(true);
@@ -331,6 +375,14 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
   const closeAdd = () => {
     setAddOpen(false);
     setEditingItem(null);
+    setFormError("");
+  };
+
+  const openCustomTab = () => {
+    setAddTab("custom");
+    setCustomForm(nextSuggestedForm(items));
+    setSelectedAttractionId("");
+    setSelectedFacilityId("");
     setFormError("");
   };
 
@@ -349,13 +401,33 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
     }
   };
 
-  const applyTemplate = (title: string, duration: number) => {
-    const suggested = nextSuggestedForm(items);
-    setCustomForm({
-      ...suggested,
-      title,
-      endTime: minutesToTime(timeToMinutes(suggested.startTime) + duration),
-    });
+  const selectAttraction = (id: string) => {
+    setSelectedAttractionId(id);
+    if (!id) {
+      setCustomForm((current) => ({ ...current, title: "" }));
+      return;
+    }
+    const attraction = planOptions.attractions.find((item) => item.id === id);
+    if (!attraction) return;
+    const facility = attraction.facilityId
+      ? planOptions.facilities.find((item) => item.id === attraction.facilityId)
+      : undefined;
+    setCustomForm((current) => ({
+      ...current,
+      title: attraction.name,
+      ...(facility ? { location: facility.name } : {}),
+    }));
+    if (facility) setSelectedFacilityId(facility.id);
+  };
+
+  const selectFacility = (id: string) => {
+    setSelectedFacilityId(id);
+    if (!id) {
+      setCustomForm((current) => ({ ...current, location: "" }));
+      return;
+    }
+    const facility = planOptions.facilities.find((item) => item.id === id);
+    if (facility) setCustomForm((current) => ({ ...current, location: facility.name }));
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -430,7 +502,7 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
           <div className="relative">
             <p className="flex items-center gap-2 text-[11px] font-black tracking-[0.18em] text-pink"><Sparkles size={14} aria-hidden="true" />MY DAY PLAN</p>
             <h1 className="mt-2 font-display text-[28px] font-semibold leading-tight text-ink sm:text-[38px]">今日を、わたしらしく組み立てよう。</h1>
-            <p className="mt-3 max-w-2xl text-[13px] font-bold leading-6 text-ink/60 sm:text-[14px]">公式予定と休憩・移動をひとつにまとめて、このブラウザにのみ保存します。</p>
+            <p className="mt-3 max-w-2xl text-[13px] font-bold leading-6 text-ink/60 sm:text-[14px]">公式予定と自由予定をひとつにまとめて、このブラウザにのみ保存します。</p>
           </div>
         </section>
 
@@ -507,7 +579,7 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
             <div className="rounded-[24px] border border-dashed border-pink/20 bg-white px-5 py-12 text-center shadow-soft">
               <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-pink/10 text-pink"><CalendarDays size={25} aria-hidden="true" /></span>
               <h3 className="mt-4 text-[16px] font-black text-ink">この日のプランはまだ空です</h3>
-              <p className="mx-auto mt-2 max-w-md text-[12px] font-bold leading-6 text-ink/50">公式スケジュールを選ぶか、お昼休憩などの自由予定を追加してみましょう。</p>
+              <p className="mx-auto mt-2 max-w-md text-[12px] font-bold leading-6 text-ink/50">公式スケジュールを選ぶか、自由予定を追加してみましょう。</p>
               <button type="button" onClick={() => { setAddTab("official"); setAddOpen(true); }} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-pink px-5 text-[12px] font-black text-white">
                 <Plus size={16} aria-hidden="true" />
                 最初の予定を追加
@@ -547,7 +619,7 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
             {!editingItem && (
               <div className="grid grid-cols-2 border-b border-pink/10 p-2">
                 <button type="button" onClick={() => setAddTab("official")} className={`min-h-11 rounded-xl text-[12px] font-black ${addTab === "official" ? "bg-pink text-white" : "text-ink/50"}`}>公式スケジュール</button>
-                <button type="button" onClick={() => { setAddTab("custom"); setCustomForm(nextSuggestedForm(items)); }} className={`min-h-11 rounded-xl text-[12px] font-black ${addTab === "custom" ? "bg-mint text-white" : "text-ink/50"}`}>自由予定</button>
+                <button type="button" onClick={openCustomTab} className={`min-h-11 rounded-xl text-[12px] font-black ${addTab === "custom" ? "bg-mint text-white" : "text-ink/50"}`}>自由予定</button>
               </div>
             )}
 
@@ -562,22 +634,72 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
                 )
               ) : (
                 <div>
-                  {!editingItem && (
-                    <div className="mb-4 grid grid-cols-3 gap-2">
-                      <button type="button" onClick={() => applyTemplate("お昼休憩", 45)} className="flex min-h-16 flex-col items-center justify-center rounded-2xl bg-[#fff5d9] text-[10px] font-black text-[#9a6512]"><Utensils size={17} aria-hidden="true" />お昼休憩</button>
-                      <button type="button" onClick={() => applyTemplate("移動", 15)} className="flex min-h-16 flex-col items-center justify-center rounded-2xl bg-[#eef9f4] text-[10px] font-black text-[#35745f]"><Footprints size={17} aria-hidden="true" />移動</button>
-                      <button type="button" onClick={() => applyTemplate("自由時間", 30)} className="flex min-h-16 flex-col items-center justify-center rounded-2xl bg-[#f3effa] text-[10px] font-black text-lavender"><Clock3 size={17} aria-hidden="true" />自由時間</button>
-                    </div>
-                  )}
                   <div className="grid gap-4">
-                    <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/55">予定名</span><input value={customForm.title} onChange={(event) => setCustomForm((current) => ({ ...current, title: event.target.value }))} placeholder="例：お昼休憩" className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink" /></label>
+                    <div>
+                      <label className="block">
+                        <span className="mb-1.5 block text-[11px] font-black text-ink/55">予定</span>
+                        <select value={selectedAttractionId} onChange={(event) => selectAttraction(event.target.value)} className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink">
+                          <option value="">自由入力</option>
+                          {planOptions.attractions.map((attraction) => <option key={attraction.id} value={attraction.id}>{attraction.name}</option>)}
+                        </select>
+                      </label>
+                      {!selectedAttractionId && (
+                        <input
+                          value={customForm.title}
+                          onChange={(event) => setCustomForm((current) => ({ ...current, title: event.target.value }))}
+                          placeholder="予定名を入力"
+                          aria-label="自由入力の予定名"
+                          className="mt-2 min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink"
+                        />
+                      )}
+                    </div>
+                    <fieldset>
+                      <legend className="mb-2 flex items-center gap-1.5 text-[11px] font-black text-ink/55"><Palette size={14} aria-hidden="true" />予定の色</legend>
+                      <div className="grid grid-cols-5 gap-2">
+                        {CUSTOM_PLAN_COLORS.map((color) => {
+                          const selected = customForm.accentColor === color.id;
+                          return (
+                            <button
+                              key={color.id}
+                              type="button"
+                              onClick={() => setCustomForm((current) => ({ ...current, accentColor: color.id }))}
+                              className={`flex min-h-11 items-center justify-center rounded-xl border transition ${selected ? "border-ink/30 bg-ink/5 ring-2 ring-ink/10" : "border-ink/10 bg-white"}`}
+                              aria-label={`${color.label}${selected ? "（選択中）" : ""}`}
+                              aria-pressed={selected}
+                              title={color.label}
+                            >
+                              <span className="h-5 w-5 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: color.value }} aria-hidden="true" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="mt-1.5 text-[10px] font-bold text-ink/35">公式予定はピンクで固定されます。</p>
+                    </fieldset>
                     <div className="grid grid-cols-2 gap-3">
                       <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/55">開始時刻</span><input type="time" step={300} value={customForm.startTime} onChange={(event) => setCustomForm((current) => ({ ...current, startTime: event.target.value }))} className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink" /></label>
                       <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/55">終了時刻</span><input type="time" step={300} value={customForm.endTime} onChange={(event) => setCustomForm((current) => ({ ...current, endTime: event.target.value }))} className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink" /></label>
                     </div>
-                    <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/55">場所（任意）</span><input value={customForm.location} onChange={(event) => setCustomForm((current) => ({ ...current, location: event.target.value }))} placeholder="例：レストラン" className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink" /></label>
+                    <div>
+                      <label className="block">
+                        <span className="mb-1.5 block text-[11px] font-black text-ink/55">場所（任意）</span>
+                        <select value={selectedFacilityId} onChange={(event) => selectFacility(event.target.value)} className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink">
+                          <option value="">自由入力</option>
+                          {planOptions.facilities.map((facility) => <option key={facility.id} value={facility.id}>{facility.name}</option>)}
+                        </select>
+                      </label>
+                      {!selectedFacilityId && (
+                        <input
+                          value={customForm.location}
+                          onChange={(event) => setCustomForm((current) => ({ ...current, location: event.target.value }))}
+                          placeholder="場所を入力"
+                          aria-label="自由入力の場所"
+                          className="mt-2 min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none focus:border-pink"
+                        />
+                      )}
+                    </div>
                     <label className="block"><span className="mb-1.5 block text-[11px] font-black text-ink/55">メモ（任意）</span><textarea value={customForm.note} onChange={(event) => setCustomForm((current) => ({ ...current, note: event.target.value }))} rows={3} className="w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 py-2.5 text-[13px] font-bold text-ink outline-none focus:border-pink" /></label>
                   </div>
+                  {optionsError && <p className="mt-3 rounded-xl bg-[#fff8e8] px-3 py-2 text-[11px] font-bold text-[#8c6529]">{optionsError}</p>}
                   {formError && <p className="mt-3 rounded-xl bg-[#fff1f1] px-3 py-2 text-[11px] font-bold text-[#a64c4c]" role="alert">{formError}</p>}
                   <button type="button" onClick={saveCustom} className="mt-5 min-h-12 w-full rounded-xl bg-ink text-[12px] font-black text-white">{editingItem ? "変更を保存" : "マイプランに追加"}</button>
                 </div>

@@ -12,6 +12,7 @@ import {
   Home,
   Images,
   Instagram,
+  ListTree,
   Menu,
   Settings,
   Tag,
@@ -37,6 +38,7 @@ const navigation = [
   { href: "/admin/schedule", label: "スケジュール", icon: CalendarDays, exact: false },
   { href: "/admin/instagram", label: "Instagram画像", icon: Instagram, exact: false },
   { href: "/admin/characters", label: "キャラクター", icon: UsersRound, exact: false },
+  { href: "/admin/plan-options", label: "マイプラン候補", icon: ListTree, exact: false },
 ] as const;
 
 function BrandLogo() {
