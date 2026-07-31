@@ -47,6 +47,13 @@ textarea:focus-visible {
   outline: none;
 }
 
+.article-editor-scroll {
+  height: clamp(420px, 60dvh, 720px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 .article-editor-content p.is-editor-empty:first-child::before {
   float: left;
   height: 0;
@@ -150,6 +157,10 @@ textarea:focus-visible {
 }
 
 @media (max-width: 640px) {
+  .article-editor-scroll {
+    height: clamp(320px, 56dvh, 520px);
+  }
+
   .article-editor-content {
     min-height: 360px;
     padding: 18px 15px 28px;

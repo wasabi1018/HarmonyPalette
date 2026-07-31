@@ -763,7 +763,11 @@ export function ArticleEditor({
                 <span className="rounded-full bg-pink/10 px-2 py-0.5 text-[8px] text-pink">必須</span>
               </p>
               <div className="mt-2 overflow-visible rounded-2xl border border-ink/10 bg-white shadow-[0_1px_0_rgba(62,53,64,0.02)] focus-within:border-pink/40 focus-within:ring-4 focus-within:ring-pink/[0.06]">
-                <div className="relative flex min-h-12 items-center gap-0.5 overflow-x-auto border-b border-ink/10 px-2 py-1.5">
+                <div
+                  role="toolbar"
+                  aria-label="本文の書式設定"
+                  className="relative z-10 flex min-h-12 shrink-0 items-center gap-0.5 overflow-x-auto border-b border-ink/10 bg-white px-2 py-1.5"
+                >
                   <select
                     aria-label="段落スタイル"
                     value={
@@ -937,7 +941,7 @@ export function ArticleEditor({
                     <Redo2 size={16} />
                   </ToolbarButton>
                 </div>
-                <EditorContent editor={editor} />
+                <EditorContent editor={editor} className="article-editor-scroll" />
               </div>
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[9px] font-bold text-ink/30">
                 <span>文字数: {characterCount.toLocaleString("ja-JP")}</span>
