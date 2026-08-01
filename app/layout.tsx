@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import {
+  GOOGLE_ADSENSE_ACCOUNT,
   SITE_NAME,
   SITE_ORGANIZATION_ID,
   SITE_URL,
@@ -34,6 +35,9 @@ export const metadata: Metadata = {
     images: [{ url: "/logo.png", width: 1536, height: 1024, alt: "Harmony Palette ロゴ" }],
   },
   robots: { index: true, follow: true },
+  other: {
+    "google-adsense-account": GOOGLE_ADSENSE_ACCOUNT,
+  },
   verification: googleSiteVerification
     ? { google: googleSiteVerification }
     : undefined,
