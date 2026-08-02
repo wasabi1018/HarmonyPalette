@@ -15,8 +15,10 @@ export default async function SchedulePage({
 }: {
   searchParams: Promise<{
     character?: string | string[];
+    event?: string | string[];
     from?: string | string[];
     to?: string | string[];
+    view?: string | string[];
   }>;
 }) {
   const params = await searchParams;
@@ -26,15 +28,23 @@ export default async function SchedulePage({
       ? [params.character]
       : [];
   const initialCharacters = Array.from(new Set(requestedCharacters.map((name) => name.trim()).filter(Boolean)));
+  const requestedEvents = Array.isArray(params.event)
+    ? params.event
+    : params.event
+      ? [params.event]
+      : [];
+  const initialEvents = Array.from(new Set(requestedEvents.map((name) => name.trim()).filter(Boolean)));
   const dateParam = (value?: string | string[]) => {
     const candidate = Array.isArray(value) ? value[0] : value;
     return candidate && /^\d{4}-\d{2}-\d{2}$/.test(candidate) ? candidate : undefined;
   };
   const initialFromDate = dateParam(params.from);
   const initialToDate = dateParam(params.to);
+  const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
+  const initialView = requestedView === "calendar" ? "calendar" : "list";
 
   return (
-    <div className="mx-auto max-w-[1180px] px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
+    <div className="mx-auto max-w-[1360px] px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
       <nav aria-label="パンくずリスト" className="mb-3 flex items-center gap-1 text-[11px] font-bold text-ink/40"><Link href="/" className="hover:text-pink">ホーム</Link><ChevronRight size={12} aria-hidden="true" /><span aria-current="page">スケジュール</span></nav>
       <section className="relative overflow-hidden rounded-[26px] border border-pink/10 bg-gradient-to-br from-[#fff0f5] via-white to-[#eefaf4] px-5 py-6 sm:px-8 sm:py-8">
         <div className="absolute -right-12 -top-14 h-40 w-40 rounded-full bg-white/70" aria-hidden="true" />
@@ -45,8 +55,10 @@ export default async function SchedulePage({
       </section>
       <ScheduleBrowser
         initialCharacters={initialCharacters}
+        initialEvents={initialEvents}
         initialFromDate={initialFromDate}
         initialToDate={initialToDate}
+        initialView={initialView}
       />
       <div className="mt-7"><OfficialNotice /></div>
     </div>
