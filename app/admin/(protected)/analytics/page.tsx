@@ -4,8 +4,8 @@ import { getArticleAnalytics } from "@/lib/articles/analytics-repository";
 import type { ArticleAnalyticsData } from "@/lib/articles/types";
 
 export const metadata: Metadata = {
-  title: "記事アクセス分析",
-  description: "記事の閲覧推移と人気記事を確認します。",
+  title: "サイト分析",
+  description: "TOPページ訪問、マイプラン作成、画像保存・共有、記事閲覧の推移を確認します。",
 };
 
 export const dynamic = "force-dynamic";
@@ -16,6 +16,14 @@ function emptyAnalytics(rangeDays: number): ArticleAnalyticsData {
     totalViews: 0,
     todayViews: 0,
     averageViews: 0,
+    homeVisits: 0,
+    todayHomeVisits: 0,
+    planCreations: 0,
+    todayPlanCreations: 0,
+    planImageSaves: 0,
+    todayPlanImageSaves: 0,
+    planShares: 0,
+    todayPlanShares: 0,
     daily: [],
     topArticles: [],
   };

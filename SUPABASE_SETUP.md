@@ -17,6 +17,8 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/202607280006_article_series.sql`
 - `supabase/migrations/202607300001_plan_options.sql`
 - `supabase/migrations/202607300002_plan_options_seed.sql`
+- `supabase/migrations/202608030001_site_analytics.sql`
+- `supabase/migrations/202608030002_site_analytics_plan_exports.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read
@@ -29,6 +31,8 @@ The media migration records uploaded image metadata and alternative text for
 reuse in the article editor.
 The analytics migration stores privacy-friendly daily article view totals
 without IP addresses, cookies, or user-agent data.
+The site analytics migration adds the same privacy-friendly daily totals for
+TOP page visits, newly created My Plans, plan image saves, and plan shares.
 The search migration adds Japanese-friendly partial matching indexes and a
 published-article search function.
 The series migration groups ordered articles into public reading collections.
@@ -94,7 +98,8 @@ After applying the articles migration, sign in and open `/admin/articles`.
   restore it later. Permanent deletion is only available inside the trash.
 - Open `/admin/media` to upload reusable images and maintain alternative text.
   Images referenced by a current article or revision cannot be deleted.
-- Open `/admin/analytics` to compare 7, 30, or 90 days of article traffic,
+- Open `/admin/analytics` to compare 7, 30, or 90 days of TOP page visits,
+  newly created My Plans, plan image saves, plan shares, and article traffic,
   review popular articles, and export the aggregate data as CSV.
 - Readers can combine text search and tag filters on `/articles`, move through
   paginated results, and discover related articles on each detail page.

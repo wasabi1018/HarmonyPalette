@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { HomeSections } from "@/components/home-sections";
+import { SiteEventTracker } from "@/components/site-event-tracker";
 import { defaultInstagramPostUrls } from "@/data/instagram-posts";
 import { listPublishedArticles } from "@/lib/articles/repository";
 import { getInstagramEmbedSettings } from "@/lib/instagram-settings";
@@ -39,5 +40,5 @@ export default async function HomePage() {
   } catch {
     latestArticles = [];
   }
-  return <><HomeSections latestArticles={latestArticles} instagramPostUrls={instagramPostUrls} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /></>;
+  return <><SiteEventTracker eventName="home_view" sessionKey="home-view" /><HomeSections latestArticles={latestArticles} instagramPostUrls={instagramPostUrls} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /></>;
 }

@@ -159,10 +159,10 @@ export default function AdminPage() {
           </span>
           <span className="min-w-0 flex-1">
             <strong className="block text-[15px] font-black text-ink">
-              記事アクセス分析
+              サイト分析
             </strong>
             <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
-              閲覧推移、人気記事、期間別CSVを確認
+              TOP訪問、プラン作成、画像保存・共有を確認
             </span>
           </span>
           <ChevronRight

@@ -41,7 +41,17 @@ export type ArticleMedia = {
 export type ArticleAnalyticsPoint = {
   date: string;
   views: number;
+  homeVisits: number;
+  planCreations: number;
+  planImageSaves: number;
+  planShares: number;
 };
+
+export type SiteAnalyticsEvent =
+  | "home_view"
+  | "plan_created"
+  | "plan_image_saved"
+  | "plan_shared";
 
 export type ArticleAnalyticsItem = {
   id: string;
@@ -56,6 +66,14 @@ export type ArticleAnalyticsData = {
   totalViews: number;
   todayViews: number;
   averageViews: number;
+  homeVisits: number;
+  todayHomeVisits: number;
+  planCreations: number;
+  todayPlanCreations: number;
+  planImageSaves: number;
+  todayPlanImageSaves: number;
+  planShares: number;
+  todayPlanShares: number;
   daily: ArticleAnalyticsPoint[];
   topArticles: ArticleAnalyticsItem[];
 };

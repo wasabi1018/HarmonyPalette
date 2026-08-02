@@ -57,6 +57,7 @@ import {
   type PlanOptions,
 } from "@/lib/plan-options";
 import { useScheduleEntries } from "@/lib/schedule-store";
+import { recordSiteAnalyticsEvent } from "@/lib/site-analytics";
 
 const DRAG_MINUTES_PER_PIXEL = 0.5;
 const DEFAULT_CUSTOM_FORM: CustomPlanItemInput = {
@@ -466,6 +467,7 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
     link.href = url;
     link.download = exportFile.name;
     link.click();
+    void recordSiteAnalyticsEvent("plan_image_saved").catch(() => undefined);
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
@@ -478,6 +480,7 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
           text: "Harmony Paletteで作ったマイプランです。",
           files: [exportFile],
         });
+        void recordSiteAnalyticsEvent("plan_shared").catch(() => undefined);
         return;
       }
       downloadImage();

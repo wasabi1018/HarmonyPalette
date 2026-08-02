@@ -7,6 +7,7 @@ import {
   type CustomPlanColor,
 } from "@/lib/plan-options";
 import { getEntryCharacterNames, type ScheduleEntry } from "@/lib/schedule-store";
+import { recordSiteAnalyticsEvent } from "@/lib/site-analytics";
 
 export type PlanItemKind = "official" | "custom";
 
@@ -215,6 +216,7 @@ export function addScheduleToPlan(entry: ScheduleEntry, targetDate: string) {
   const state = readState();
   const existing = state.plans[targetDate]?.items.find((item) => item.sourceScheduleId === entry.id);
   if (existing) return { status: "exists" as const, item: existing };
+  const createsNewPlan = (state.plans[targetDate]?.items.length ?? 0) === 0;
 
   const createdAt = new Date().toISOString();
   const item: DailyPlanItem = {
@@ -232,6 +234,7 @@ export function addScheduleToPlan(entry: ScheduleEntry, targetDate: string) {
     createdAt,
   };
   updatePlan(targetDate, (items) => [...items, item]);
+  if (createsNewPlan) void recordSiteAnalyticsEvent("plan_created").catch(() => undefined);
   return { status: "added" as const, item };
 }
 
@@ -251,6 +254,8 @@ export function addCustomPlanItem(date: string, input: CustomPlanItemInput) {
   if (timeToMinutes(input.endTime) <= timeToMinutes(input.startTime)) {
     throw new Error("終了時刻は開始時刻より後にしてください。");
   }
+  const state = readState();
+  const createsNewPlan = (state.plans[date]?.items.length ?? 0) === 0;
 
   const item: DailyPlanItem = {
     id: createId("custom"),
@@ -268,6 +273,7 @@ export function addCustomPlanItem(date: string, input: CustomPlanItemInput) {
     createdAt: new Date().toISOString(),
   };
   updatePlan(date, (items) => [...items, item]);
+  if (createsNewPlan) void recordSiteAnalyticsEvent("plan_created").catch(() => undefined);
   return item;
 }
 
