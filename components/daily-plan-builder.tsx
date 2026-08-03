@@ -162,7 +162,7 @@ function PrintablePlan({ date, items }: { date: string; items: DailyPlanItem[] }
         <div className="flex items-center justify-between gap-6 border-b border-pink/10 pb-6">
           <div>
             <p className="text-[13px] font-black tracking-[0.18em] text-pink">HARMONY PALETTE</p>
-            <h1 className="mt-2 text-[34px] font-black leading-tight">わたしのマイプラン</h1>
+            <h1 className="mt-2 text-[34px] font-black leading-tight">マイプラン</h1>
             <p className="mt-2 text-[18px] font-bold text-ink/55">{formatDate(date)}</p>
           </div>
           <Image src="/logo-hero.png" alt="" width={180} height={60} loading="eager" unoptimized className="h-[60px] w-[180px] object-contain" />
