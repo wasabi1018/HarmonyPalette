@@ -60,16 +60,14 @@ export default async function AdminLoginPage({
 
       <section className="w-full max-w-[460px] rounded-[28px] border border-pink/10 bg-white px-6 py-8 shadow-card sm:px-9 sm:py-10">
         <div className="mx-auto flex justify-center">
-          <div className="relative h-[76px] w-[250px] overflow-hidden" aria-label="Harmony Palette">
-            <Image
-              src="/logo.png"
-              alt="Harmony Palette"
-              width={300}
-              height={200}
-              priority
-              className="absolute left-1/2 top-[-56px] h-auto w-[270px] max-w-none -translate-x-1/2"
-            />
-          </div>
+          <Image
+            src="/logo-hero.png"
+            alt="Harmony Palette"
+            width={250}
+            height={83}
+            priority
+            className="h-auto w-[250px]"
+          />
         </div>
 
         <div className="mt-4 text-center">

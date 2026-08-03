@@ -165,7 +165,7 @@ function PrintablePlan({ date, items }: { date: string; items: DailyPlanItem[] }
             <h1 className="mt-2 text-[34px] font-black leading-tight">わたしのマイプラン</h1>
             <p className="mt-2 text-[18px] font-bold text-ink/55">{formatDate(date)}</p>
           </div>
-          <Image src="/logo.png" alt="" width={135} height={90} loading="eager" unoptimized className="h-[90px] w-[135px] rounded-2xl object-cover" />
+          <Image src="/logo-hero.png" alt="" width={180} height={60} loading="eager" unoptimized className="h-[60px] w-[180px] object-contain" />
         </div>
 
         <div className="mt-6 grid gap-2.5">
