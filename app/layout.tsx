@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     locale: "ja_JP",
     type: "website",
-    images: [{ url: "/logo.png", width: 1536, height: 1024, alt: "Harmony Palette ロゴ" }],
+    images: [{ url: "/logo-hero.png", width: 2172, height: 724, alt: "Harmony Palette ロゴ" }],
   },
   robots: { index: true, follow: true },
   other: {
@@ -53,9 +53,9 @@ const websiteStructuredData = {
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",
-        url: siteUrl("/logo.png"),
-        width: 1536,
-        height: 1024,
+        url: siteUrl("/logo-hero.png"),
+        width: 2172,
+        height: 724,
       },
     },
     {

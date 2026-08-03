@@ -137,9 +137,9 @@ export default async function ArticleDetailPage({
           url: SITE_URL,
           logo: {
             "@type": "ImageObject",
-            url: siteUrl("/logo.png"),
-            width: 1536,
-            height: 1024,
+            url: siteUrl("/logo-hero.png"),
+            width: 2172,
+            height: 724,
           },
         },
         isPartOf: seriesContext ? {
