@@ -5,6 +5,7 @@ import {
   daysUntilBirthday,
   formatCharacterBirthday,
   getCharacterBirthday,
+  getCharacterBirthdaysInRange,
   getNextBirthdayDate,
   getNextCharacterBirthdayGroup,
   getUpcomingCharacterBirthdays,
@@ -100,4 +101,30 @@ test("誕生日カウントダウンは30日前から当日まで表示する", 
   assert.equal(isBirthdayCountdownVisible(1), true);
   assert.equal(isBirthdayCountdownVisible(0), true);
   assert.equal(isBirthdayCountdownVisible(-1), false);
+});
+
+test("指定した検索期間に含まれる誕生日を列挙する", () => {
+  const birthdays = getCharacterBirthdaysInRange([
+    character("august", 8, 10, 2),
+    character("september", 9, 1, 1),
+    character("outside", 10, 1),
+    character("missing", null, null),
+  ], "2026-08-07", "2026-09-05");
+
+  assert.deepEqual(
+    birthdays.map(({ character: item, date, daysUntil }) => [item.id, date, daysUntil]),
+    [["august", "2026-08-10", 3], ["september", "2026-09-01", 25]],
+  );
+});
+
+test("誕生日の期間検索は年またぎに対応する", () => {
+  const birthdays = getCharacterBirthdaysInRange([
+    character("new-year", 1, 1),
+    character("year-end", 12, 31),
+  ], "2026-12-30", "2027-01-02");
+
+  assert.deepEqual(
+    birthdays.map(({ character: item, date }) => [item.id, date]),
+    [["year-end", "2026-12-31"], ["new-year", "2027-01-01"]],
+  );
 });

@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Check, ChevronDown, Clock3, Filter, LayoutList, LoaderCircle, MapPin, PartyPopper, RotateCcw, Search, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CakeSlice, CalendarDays, Check, ChevronDown, Clock3, Filter, LayoutList, LoaderCircle, MapPin, RotateCcw, Search, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
 import type { Character } from "@/data/types";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { ScheduleEntryCard } from "@/components/schedule-entry-card";
+import { ScheduleMonthCalendar } from "@/components/schedule-month-calendar";
 import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
+import { getCharacterBirthdaysInRange, type CharacterBirthdayOccurrence } from "@/lib/character-birthday";
 import { sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
 import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
@@ -14,6 +16,7 @@ type MatchMode = "any" | "all";
 type Period = "all" | "7" | "14" | "30";
 type ViewMode = "list" | "calendar";
 const FAN_STUDIO_EVENT = "ファンスタジオ";
+const BIRTHDAY_EVENT = "キャラクターの誕生日";
 
 function todayInJapan() {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
@@ -32,17 +35,6 @@ function formatGroupDate(date: string) {
 
 function getDisplayDate(entry: ScheduleEntry, fromDate: string) {
   return entry.kind === "event" && entry.date < fromDate ? fromDate : entry.date;
-}
-
-function datesBetween(fromDate: string, toDate: string) {
-  if (!fromDate || !toDate || fromDate > toDate) return [];
-  const dates: string[] = [];
-  let current = fromDate;
-  while (current <= toDate) {
-    dates.push(current);
-    current = addDays(current, 1);
-  }
-  return dates;
 }
 
 export function ScheduleBrowser({
@@ -73,9 +65,10 @@ export function ScheduleBrowser({
   const [query, setQuery] = useState("");
   const [sortAscending, setSortAscending] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>(initialView);
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState(initialFromDate ?? today);
+  const [calendarDialogDate, setCalendarDialogDate] = useState<string | null>(null);
   const [activePeriod, setActivePeriod] = useState<Period | "custom">(hasInitialDateRange ? "custom" : "14");
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
+  const closeCalendarDialog = useCallback(() => setCalendarDialogDate(null), []);
 
   const bounds = useMemo(() => {
     const dates = entries.flatMap((entry) => [entry.date, entry.endDate ?? entry.date]).sort();
@@ -87,6 +80,7 @@ export function ScheduleBrowser({
     ...entries.flatMap((entry) => getEntryCharacterNames(entry)),
   ], characters), [characters, entries]);
   const eventOptions = useMemo(() => [
+    BIRTHDAY_EVENT,
     FAN_STUDIO_EVENT,
     ...Array.from(new Set(
       entries
@@ -110,10 +104,10 @@ export function ScheduleBrowser({
   }, [fromDate, selectedCharacters, selectedEvents, toDate, viewMode]);
 
   useEffect(() => {
-    if (selectedCalendarDate < fromDate || selectedCalendarDate > toDate) {
-      setSelectedCalendarDate(fromDate);
+    if (calendarDialogDate && (calendarDialogDate < fromDate || calendarDialogDate > toDate)) {
+      setCalendarDialogDate(null);
     }
-  }, [fromDate, selectedCalendarDate, toDate]);
+  }, [calendarDialogDate, fromDate, toDate]);
 
   const filteredEntries = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("ja");
@@ -162,6 +156,26 @@ export function ScheduleBrowser({
     });
   }, [entries, fromDate, location, matchMode, query, selectedCharacters, selectedEvents, sortAscending, toDate]);
 
+  const birthdayOccurrences = useMemo(() => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fromDate) || !/^\d{4}-\d{2}-\d{2}$/.test(toDate) || fromDate > toDate) return [];
+    if (selectedEvents.length > 0 && !selectedEvents.includes(BIRTHDAY_EVENT)) return [];
+
+    const keyword = query.trim().toLocaleLowerCase("ja");
+    return getCharacterBirthdaysInRange(characters, fromDate, toDate).filter(({ character }) => {
+      const matchesCharacter = selectedCharacters.length === 0 || selectedCharacters.includes(character.name);
+      const matchesQuery = keyword === "" || `${character.name}誕生日`.toLocaleLowerCase("ja").includes(keyword);
+      return matchesCharacter && matchesQuery;
+    });
+  }, [characters, fromDate, query, selectedCharacters, selectedEvents, toDate]);
+
+  const birthdaysByDate = useMemo(() => {
+    const grouped = new Map<string, CharacterBirthdayOccurrence[]>();
+    birthdayOccurrences.forEach((birthday) => {
+      grouped.set(birthday.date, [...(grouped.get(birthday.date) ?? []), birthday]);
+    });
+    return grouped;
+  }, [birthdayOccurrences]);
+
   const groups = useMemo(() => {
     const grouped = new Map<string, typeof filteredEntries>();
     filteredEntries.forEach((entry) => {
@@ -171,7 +185,12 @@ export function ScheduleBrowser({
     return Array.from(grouped.entries()).sort(([a], [b]) => sortAscending ? a.localeCompare(b) : b.localeCompare(a));
   }, [filteredEntries, fromDate, sortAscending]);
 
-  const calendarDates = useMemo(() => datesBetween(fromDate, toDate), [fromDate, toDate]);
+  const entriesByDate = useMemo(() => new Map(groups), [groups]);
+  const listDates = useMemo(() => Array.from(new Set([
+    ...groups.map(([date]) => date),
+    ...birthdayOccurrences.map(({ date }) => date),
+  ])).sort((left, right) => sortAscending ? left.localeCompare(right) : right.localeCompare(left)), [birthdayOccurrences, groups, sortAscending]);
+
   const reset = () => {
     setFromDate(today);
     setToDate(addDays(today, 13));
@@ -181,7 +200,7 @@ export function ScheduleBrowser({
     setLocation("all");
     setQuery("");
     setSortAscending(true);
-    setSelectedCalendarDate(today);
+    setCalendarDialogDate(null);
     setActivePeriod("14");
     setAdvancedFiltersOpen(false);
   };
@@ -210,6 +229,15 @@ export function ScheduleBrowser({
     activePeriod !== "14" && activePeriod !== "custom",
     query.trim() !== "",
   ].filter(Boolean).length;
+  const resultSummary = birthdayOccurrences.length > 0
+    ? `予定${filteredEntries.length}件・誕生日${birthdayOccurrences.length}件`
+    : `${filteredEntries.length}件`;
+  const calendarDialogEntries = calendarDialogDate
+    ? filteredEntries.filter((entry) => entry.date <= calendarDialogDate && (entry.endDate ?? entry.date) >= calendarDialogDate)
+    : [];
+  const calendarDialogBirthdays = calendarDialogDate
+    ? birthdaysByDate.get(calendarDialogDate) ?? []
+    : [];
 
   return (
     <div className="mt-5">
@@ -285,7 +313,7 @@ export function ScheduleBrowser({
         </div>
 
         <a href="#schedule-results" className="mt-4 flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 text-[12px] font-black text-white md:hidden">
-          結果を見る{!isInitialLoading && !loadProblem ? `（${filteredEntries.length}件）` : ""}
+          結果を見る{!isInitialLoading && !loadProblem ? `（${resultSummary}）` : ""}
         </a>
       </section>
 
@@ -302,7 +330,7 @@ export function ScheduleBrowser({
             {(isInitialLoading || scheduleState.isRefreshing || characterState.isRefreshing) && (
               <LoaderCircle size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
             )}
-            {isInitialLoading ? "読込中" : scheduleState.isRefreshing || characterState.isRefreshing ? "更新中" : `${filteredEntries.length}件`}
+            {isInitialLoading ? "読込中" : scheduleState.isRefreshing || characterState.isRefreshing ? "更新中" : resultSummary}
           </span>
           {viewMode === "list" && <button type="button" onClick={() => setSortAscending((value) => !value)} className="min-h-10 rounded-full border border-ink/10 px-3 text-[11px] font-black text-ink/60">時間の{sortAscending ? "早い順" : "遅い順"}</button>}
         </div>
@@ -332,7 +360,7 @@ export function ScheduleBrowser({
               className="hidden md:block"
             />
           </div>
-          <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fff6f9] px-3 py-2.5 text-[11px] font-bold leading-5 text-ink/55"><Filter size={14} className="shrink-0 text-pink" aria-hidden="true" />イベント名と検索対象のキャラクターだけを表示します。ファンスタジオは1日分を1枠にまとめています。</div>
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fff6f9] px-3 py-2.5 text-[11px] font-bold leading-5 text-ink/55"><Filter size={14} className="shrink-0 text-pink" aria-hidden="true" />対象月を表示します。検索範囲外の日付は選択できません。日付を選ぶと、その日の全予定を確認できます。</div>
         </>
       ) : (
         <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fff6f9] px-3 py-2.5 text-[11px] font-bold leading-5 text-ink/55"><Filter size={14} className="shrink-0 text-pink" aria-hidden="true" />ファンスタジオは、同じ日の同じキャラクターを1枚にまとめています。各時間の行をタップしてマイプランに追加できます。</div>
@@ -353,23 +381,41 @@ export function ScheduleBrowser({
             }}
           />
         ) : viewMode === "calendar" ? (
-          <CalendarResultGrid
-            dates={calendarDates}
+          <ScheduleMonthCalendar
+            fromDate={fromDate}
+            toDate={toDate}
             entries={filteredEntries}
-            selectedCharacters={selectedCharacters}
-            selectedDate={selectedCalendarDate}
-            onSelectDate={setSelectedCalendarDate}
+            birthdays={birthdayOccurrences}
+            onSelectDate={setCalendarDialogDate}
             today={today}
           />
-        ) : groups.length > 0 ? groups.map(([date, dayEntries]) => (
+        ) : listDates.length > 0 ? listDates.map((date) => {
+          const dayEntries = entriesByDate.get(date) ?? [];
+          const dayBirthdays = birthdaysByDate.get(date) ?? [];
+          return (
           <div key={date} className="rounded-[22px] border border-pink/10 bg-[#fffdfd] p-3 sm:p-4">
-            <div className="mb-3 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="grid h-11 w-11 place-items-center rounded-[14px] bg-pink text-[12px] font-black text-white shadow-[0_6px_14px_rgba(239,102,143,0.22)]"><CalendarDays size={18} aria-hidden="true" /></span><div><h3 className="text-[15px] font-black text-ink">{formatGroupDate(date)}</h3><p className="text-[10px] font-bold text-ink/40">{date.replaceAll("-", "/")}</p></div></div><span className="text-[11px] font-black text-ink/40">{dayEntries.length}件</span></div>
-            <ScheduleDayGrid date={date} entries={dayEntries} characters={characters} selectedCharacters={selectedCharacters} />
+            <div className="mb-3 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="grid h-11 w-11 place-items-center rounded-[14px] bg-pink text-[12px] font-black text-white shadow-[0_6px_14px_rgba(239,102,143,0.22)]"><CalendarDays size={18} aria-hidden="true" /></span><div><h3 className="text-[15px] font-black text-ink">{formatGroupDate(date)}</h3><p className="text-[10px] font-bold text-ink/40">{date.replaceAll("-", "/")}</p></div></div><span className="text-[11px] font-black text-ink/40">予定{dayEntries.length}件{dayBirthdays.length > 0 ? `・誕生日${dayBirthdays.length}件` : ""}</span></div>
+            <div className="grid gap-3">
+              {dayBirthdays.length > 0 && <BirthdayCard birthdays={dayBirthdays} />}
+              {dayEntries.length > 0 && <ScheduleDayGrid date={date} entries={dayEntries} characters={characters} selectedCharacters={selectedCharacters} />}
+            </div>
           </div>
-        )) : (
+          );
+        }) : (
           <div className="rounded-[24px] border border-dashed border-pink/25 bg-white p-10 text-center"><ListEmptyIcon /><p className="mt-3 font-black text-ink">条件に一致する予定がありません</p><button type="button" onClick={reset} className="mt-4 min-h-11 rounded-full bg-pink px-5 text-[12px] font-black text-white">条件をリセット</button></div>
         )}
       </section>
+
+      {calendarDialogDate && (
+        <CalendarDayDialog
+          date={calendarDialogDate}
+          entries={calendarDialogEntries}
+          birthdays={calendarDialogBirthdays}
+          characters={characters}
+          selectedCharacters={selectedCharacters}
+          onClose={closeCalendarDialog}
+        />
+      )}
 
       {!isInitialLoading && !loadProblem && (
         <div className="mt-5 rounded-2xl border border-mint/20 bg-mint/10 p-4 text-[12px] font-bold leading-6 text-ink/60">表示中の情報は、確認・公開されたデータです。最新情報は公式サイトもあわせてご確認ください。</div>
@@ -454,82 +500,116 @@ function MultiSelectField({
   );
 }
 
-function CalendarResultGrid({
-  dates,
+function BirthdayCard({ birthdays }: { birthdays: CharacterBirthdayOccurrence[] }) {
+  const names = birthdays.map(({ character }) => character.name);
+  return (
+    <article className="rounded-2xl border border-pink/20 bg-gradient-to-r from-[#fff4f8] to-white p-4 shadow-[0_8px_24px_rgba(118,73,86,0.05)] sm:p-5">
+      <div className="flex items-start gap-3">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-pink text-white shadow-[0_6px_16px_rgba(235,110,152,0.2)]"><CakeSlice size={20} aria-hidden="true" /></span>
+        <div className="min-w-0">
+          <span className="text-[10px] font-black tracking-[0.14em] text-pink">CHARACTER BIRTHDAY</span>
+          <h4 className="mt-0.5 text-[15px] font-black leading-6 text-ink sm:text-[17px]">{names.join("・")}の誕生日</h4>
+          <p className="mt-1 text-[11px] font-bold text-ink/45">お誕生日おめでとう！</p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function CalendarDayDialog({
+  date,
   entries,
+  birthdays,
+  characters,
   selectedCharacters,
-  selectedDate,
-  onSelectDate,
-  today,
+  onClose,
 }: {
-  dates: string[];
+  date: string;
   entries: ScheduleEntry[];
+  birthdays: CharacterBirthdayOccurrence[];
+  characters: Character[];
   selectedCharacters: string[];
-  selectedDate: string;
-  onSelectDate: (date: string) => void;
-  today: string;
+  onClose: () => void;
 }) {
-  if (dates.length === 0) {
-    return <div className="rounded-[24px] border border-dashed border-pink/25 bg-white p-10 text-center"><ListEmptyIcon /><p className="mt-3 font-black text-ink">表示期間を確認してください</p></div>;
-  }
+  const dialogRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])',
+      ));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
+  }, [onClose]);
 
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-7" aria-label="カレンダー形式の検索結果">
-      {dates.map((date) => {
-        const dateEntries = entries.filter((entry) => entry.date <= date && (entry.endDate ?? entry.date) >= date);
-        const fanStudioEntries = dateEntries.filter(isFanStudioGreeting);
-        const eventEntries = dateEntries.filter((entry) => !isFanStudioGreeting(entry));
-        const eventMap = new Map<string, { title: string; names: Set<string>; sortTime: string }>();
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/35 p-0 backdrop-blur-[2px] sm:items-center sm:p-5" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="calendar-day-dialog-title"
+        tabIndex={-1}
+        className="flex max-h-[92dvh] w-full max-w-[1120px] flex-col overflow-hidden rounded-t-[26px] border border-pink/15 bg-[#fffafd] shadow-[0_28px_80px_rgba(62,53,64,0.28)] outline-none sm:max-h-[88dvh] sm:rounded-[26px]"
+      >
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-pink/10 bg-white px-4 py-3.5 sm:px-6 sm:py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-pink text-white"><CalendarDays size={19} aria-hidden="true" /></span>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black tracking-[0.14em] text-pink">DAILY SCHEDULE</p>
+              <h3 id="calendar-day-dialog-title" className="truncate text-[17px] font-black text-ink sm:text-[20px]">{formatGroupDate(date)}</h3>
+              <p className="text-[10px] font-bold text-ink/40">予定{entries.length}件{birthdays.length > 0 ? `・誕生日${birthdays.length}件` : ""}</p>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} aria-label="日付の予定を閉じる" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-pink/5 text-pink transition-colors hover:bg-pink/10"><X size={19} aria-hidden="true" /></button>
+        </header>
 
-        eventEntries.forEach((entry) => {
-          const current = eventMap.get(entry.title) ?? { title: entry.title, names: new Set<string>(), sortTime: entry.startTime };
-          current.sortTime = current.sortTime.localeCompare(entry.startTime) <= 0 ? current.sortTime : entry.startTime;
-          const entryNames = getEntryCharacterNames(entry);
-          selectedCharacters.filter((name) => entryNames.includes(name)).forEach((name) => current.names.add(name));
-          eventMap.set(entry.title, current);
-        });
-
-        const eventItems = Array.from(eventMap.values()).sort((left, right) => `${left.sortTime}-${left.title}`.localeCompare(`${right.sortTime}-${right.title}`, "ja"));
-        const visibleItems = eventItems.slice(0, 3);
-        const fanStudioNames = selectedCharacters.filter((name) => fanStudioEntries.some((entry) => getEntryCharacterNames(entry).includes(name)));
-        const weekday = new Intl.DateTimeFormat("ja-JP", { weekday: "short" }).format(new Date(`${date}T12:00:00`));
-        const [year, month, day] = date.split("-").map(Number);
-        const dayOfWeek = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
-        const isSelected = date === selectedDate;
-        const isToday = date === today;
-
-        return (
-          <article key={date} className={`min-h-[238px] overflow-hidden rounded-[20px] border bg-white transition-[border-color,background-color,box-shadow,transform] sm:min-h-[300px] ${isSelected ? "border-pink bg-[#fff9fb] shadow-[0_10px_28px_rgba(235,110,152,0.12)]" : "border-pink/10 hover:-translate-y-0.5 hover:border-pink/25 hover:shadow-soft"}`}>
-            <button type="button" aria-pressed={isSelected} onClick={() => onSelectDate(date)} className="flex h-full min-h-[238px] w-full flex-col p-3 text-left sm:min-h-[300px]">
-              <span className={`flex items-baseline gap-1 border-b border-pink/10 pb-2 text-[16px] font-black ${dayOfWeek === 0 ? "text-pink" : dayOfWeek === 6 ? "text-sky" : "text-ink"}`}>
-                {month}/{day}<span className="text-[12px]">({weekday})</span>
-                {isToday && <span className="ml-auto rounded-full bg-pink px-2 py-0.5 text-[9px] text-white">今日</span>}
-              </span>
-
-              <span className="mt-3 grid gap-3">
-                {visibleItems.map((item) => (
-                  <span key={item.title} className="block border-b border-ink/[0.06] pb-2 last:border-0">
-                    <span className="flex items-start gap-1.5 text-[11px] font-black leading-4 text-ink">
-                      <PartyPopper size={12} className="mt-0.5 shrink-0 text-[#e7ad35]" aria-hidden="true" />
-                      <span className="line-clamp-2">{item.title}</span>
-                    </span>
-                    {item.names.size > 0 && <span className="mt-1 block pl-[18px] text-[10px] font-bold leading-4 text-ink/55">{Array.from(item.names).join("・")}</span>}
-                  </span>
-                ))}
-                {eventItems.length > visibleItems.length && <span className="pl-[18px] text-[10px] font-black text-ink/40">ほか{eventItems.length - visibleItems.length}件</span>}
-                {eventItems.length === 0 && fanStudioEntries.length === 0 && <span className="py-5 text-center text-[11px] font-bold text-ink/30">予定なし</span>}
-              </span>
-
-              {fanStudioEntries.length > 0 && (
-                <span className="mt-auto block rounded-xl bg-lavender/[0.08] px-2.5 py-2 text-lavender">
-                  <span className="flex items-center gap-1.5 text-[11px] font-black"><Sparkles size={12} aria-hidden="true" />ファンスタジオ<span className="ml-auto text-[9px] text-lavender/70">{fanStudioEntries.length}枠</span></span>
-                  {fanStudioNames.length > 0 && <span className="mt-1 block pl-[18px] text-[10px] font-bold text-ink/55">{fanStudioNames.join("・")}</span>}
-                </span>
-              )}
-            </button>
-          </article>
-        );
-      })}
+        <div className="overflow-y-auto overscroll-contain p-3 pb-[max(20px,env(safe-area-inset-bottom))] sm:p-5">
+          {birthdays.length > 0 && <BirthdayCard birthdays={birthdays} />}
+          {entries.length > 0 && (
+            <div className={birthdays.length > 0 ? "mt-3" : ""}>
+              <ScheduleDayGrid date={date} entries={entries} characters={characters} selectedCharacters={selectedCharacters} />
+            </div>
+          )}
+          {birthdays.length === 0 && entries.length === 0 && (
+            <div className="rounded-[22px] border border-dashed border-pink/20 bg-white px-5 py-12 text-center">
+              <CalendarDays size={24} className="mx-auto text-pink/45" aria-hidden="true" />
+              <p className="mt-3 text-[14px] font-black text-ink">この日の予定はありません</p>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

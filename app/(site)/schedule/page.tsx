@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, ClipboardList, Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { OfficialNotice } from "@/components/official-notice";
 import { ScheduleBrowser } from "@/components/schedule-browser";
 
@@ -48,9 +48,8 @@ export default async function SchedulePage({
       <nav aria-label="パンくずリスト" className="mb-3 flex items-center gap-1 text-[11px] font-bold text-ink/40"><Link href="/" className="hover:text-pink">ホーム</Link><ChevronRight size={12} aria-hidden="true" /><span aria-current="page">スケジュール</span></nav>
       <section className="relative overflow-hidden rounded-[26px] border border-pink/10 bg-gradient-to-br from-[#fff0f5] via-white to-[#eefaf4] px-5 py-6 sm:px-8 sm:py-8">
         <div className="absolute -right-12 -top-14 h-40 w-40 rounded-full bg-white/70" aria-hidden="true" />
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="relative">
           <div className="max-w-2xl"><p className="flex items-center gap-2 text-[11px] font-black tracking-[0.18em] text-pink"><Sparkles size={14} aria-hidden="true" />GREETING &amp; EVENT SCHEDULE</p><h1 className="mt-2 font-display text-[28px] font-semibold leading-tight text-ink sm:text-[38px]">会いたい予定を、すぐ見つけよう。</h1><p className="mt-3 text-[13px] font-bold leading-6 text-ink/60 sm:text-[14px]">日付・イベント・複数のキャラクターから、グリーティングとイベントをまとめて検索できます。</p></div>
-          <Link href={initialFromDate ? `/plan?date=${initialFromDate}` : "/plan"} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-[12px] font-black text-white shadow-soft"><ClipboardList size={15} aria-hidden="true" />マイプランを開く</Link>
         </div>
       </section>
       <ScheduleBrowser

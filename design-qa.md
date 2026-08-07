@@ -61,6 +61,73 @@ passed
 
 ---
 
+# Schedule Monthly Calendar & Day Dialog — Design QA
+
+## Scope
+
+- `/schedule` のカレンダー表示を、検索期間に含まれる対象月単位へ変更。
+- 検索範囲外および隣接月の補完日を非活性表示。
+- スマホは1か月、PCは最大2か月を同じ月グリッドデザインで表示。
+- 対象日の全予定を確認する日付ダイアログと、キャラクター誕生日表示を追加。
+
+## Visual truth and evidence
+
+- Source visual truth: `C:/Users/mkcs1/AppData/Local/Temp/codex-clipboard-fefa3388-79fc-489a-8601-12e263998034.png`
+- Desktop implementation: `C:/Harmony Palette/audit/62-schedule-month-calendar-desktop-focused.png`
+- Desktop dialog: `C:/Harmony Palette/audit/61-schedule-day-dialog-desktop.png`
+- Mobile implementation: `C:/Harmony Palette/audit/64-schedule-month-calendar-mobile.png`
+- Mobile dialog: `C:/Harmony Palette/audit/63-schedule-day-dialog-mobile.png`
+- Full-view comparison: `C:/Harmony Palette/audit/65-schedule-month-calendar-full-comparison.png`
+- Focused calendar comparison: `C:/Harmony Palette/audit/66-schedule-month-calendar-focused-comparison.png`
+
+## Capture details
+
+| Item | CSS viewport | Pixel dimensions | Density | State |
+| --- | --- | --- | --- | --- |
+| Source | supplied raster | 455 × 561 | 120 dpi metadata | populated monthly calendar reference |
+| Desktop implementation | 1440 × 1024 | 1425 × 1013 browser content | 1× | August and September, empty local dataset |
+| Mobile implementation | 390 × 844 | 375 × 811 browser content | 1× | August, empty local dataset |
+| Desktop dialog | 1440 × 1024 | 1425 × 1013 browser content | 1× | August 7 empty day |
+| Mobile dialog | 390 × 844 | 375 × 811 browser content | 1× | August 7 empty day |
+
+The full comparison contains the supplied TimeTree-style reference and the browser-rendered mobile route in one image. The focused comparison crops the implementation to the monthly calendar because the source does not include Harmony Palette's surrounding filters, header, or fixed navigation.
+
+## Findings
+
+- P0: none.
+- P1: none.
+- P2: none.
+- P3: the local Supabase dataset returned zero schedules and zero birthdays for the captured range. Calendar label density with populated data is covered by deterministic preview aggregation and domain tests, but a populated browser capture remains useful follow-up evidence when local approved data is available.
+
+## Required fidelity surfaces
+
+- Fonts and typography: the existing Japanese font stack and Harmony Palette weight hierarchy are preserved. Month titles, weekday labels, day numbers, and compact preview labels retain clear hierarchy without clipping at 390px.
+- Spacing and layout rhythm: the reference's seven-column month rhythm is reproduced with a fixed six-week grid. Mobile presents one month without horizontal overflow; desktop uses the same component in a two-column layout.
+- Colors and visual tokens: existing pink, sky, lavender, ink, and warm event colors map to Sundays, Saturdays, birthdays, Fan Studio, and events. Disabled dates use reduced contrast and cannot be activated.
+- Image quality and asset fidelity: no new raster assets were required. The existing Harmony Palette logo remains unchanged; all calendar and dialog icons use the project's existing Lucide icon library.
+- Copy and content: the UI explains target-month behavior, disabled search-range dates, and the day-detail interaction. Birthday copy uses a distinct all-day card without time, location, or My Plan controls.
+
+## Interaction and accessibility checks
+
+- Mobile next/previous month controls switch between August and September.
+- PC renders August and September side by side with the same month component.
+- August 6 is disabled for an August 7 search start; August 7 opens the day dialog.
+- Adjacent-month dates remain disabled even when that date is active in its own month panel.
+- The dialog opens as a centered PC dialog and a mobile bottom sheet, closes from its button and Escape, restores focus, traps Tab focus, and locks background scrolling.
+- Active date cells have full-date accessible names; disabled cells announce that they are outside the search target.
+- Mobile document width does not exceed the viewport, and the browser console reports no errors or warnings.
+- Focused birthday and monthly-calendar tests, ESLint, and the production build pass.
+
+## Comparison history
+
+1. The first rendered comparison confirmed the intended responsive structure: Sunday-first seven-column grid, six stable week rows, inactive out-of-range dates, a single mobile month, two desktop months, and a day dialog. No actionable P0, P1, or P2 mismatch was found, so no visual correction pass was required.
+
+## Final result
+
+passed
+
+---
+
 # Article Editor Fixed Toolbar — Design QA
 
 ## Scope

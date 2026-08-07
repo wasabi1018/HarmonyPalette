@@ -153,3 +153,44 @@ export function getNextCharacterBirthdayGroup(
   if (upcoming.length === 0) return [];
   return upcoming.filter(({ daysUntil }) => daysUntil === upcoming[0].daysUntil);
 }
+
+export function getCharacterBirthdaysInRange(
+  characters: Character[],
+  fromDate: string,
+  toDate: string,
+): CharacterBirthdayOccurrence[] {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fromDate) || !/^\d{4}-\d{2}-\d{2}$/.test(toDate)) return [];
+  const from = parseCalendarDate(fromDate);
+  const to = parseCalendarDate(toDate);
+  if (fromDate > toDate) return [];
+
+  const currentTime = Date.UTC(from.year, from.month - 1, from.day);
+  return characters.flatMap((character) => {
+    const birthday = getCharacterBirthday(character);
+    if (!birthday) return [];
+
+    const occurrences: CharacterBirthdayOccurrence[] = [];
+    for (let year = from.year; year <= to.year; year += 1) {
+      if (birthday.day > daysInMonth(year, birthday.month)) continue;
+      const date = formatCalendarDate(year, birthday.month, birthday.day);
+      if (date < fromDate || date > toDate) continue;
+      const occurrenceTime = Date.UTC(year, birthday.month - 1, birthday.day);
+      occurrences.push({
+        character,
+        birthday,
+        date,
+        daysUntil: Math.round((occurrenceTime - currentTime) / DAY_IN_MILLISECONDS),
+      });
+    }
+    return occurrences;
+  }).sort((left, right) => (
+    left.date.localeCompare(right.date)
+    || (left.character.displayOrder ?? 999) - (right.character.displayOrder ?? 999)
+    || (left.character.nameKana || left.character.name).localeCompare(
+      right.character.nameKana || right.character.name,
+      "ja",
+    )
+    || left.character.name.localeCompare(right.character.name, "ja")
+    || left.character.id.localeCompare(right.character.id)
+  ));
+}
