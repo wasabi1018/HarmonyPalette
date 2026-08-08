@@ -361,9 +361,20 @@ export function ScheduleManager({
 
           <label><span className={labelClass}>予定名 <span className="text-pink">必須</span></span><input required value={title} onChange={(event) => setTitle(event.target.value)} placeholder={kind === "greeting" ? "例：朝のお出迎えグリーティング" : "例：サマーステージイベント"} className={inputClass} /></label>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          {kind === "event" ? (
+            <fieldset>
+              <legend className={labelClass}>イベントの有効期間</legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label><span className={labelClass}>開始日 <span className="text-pink">必須</span></span><input required type="date" value={date} onChange={(event) => setDate(event.target.value)} className={inputClass} /></label>
+                <label><span className={labelClass}>終了日 <span className="font-bold text-ink/35">（未入力は開始日まで）</span></span><input type="date" min={date} value={endDate} onChange={(event) => setEndDate(event.target.value)} className={inputClass} /></label>
+              </div>
+              <p className="mt-2 text-[10px] font-bold leading-5 text-ink/40">終了日が本日より前になると、公開画面のイベント選択では選べなくなります。</p>
+            </fieldset>
+          ) : (
             <label><span className={labelClass}>開催日 <span className="text-pink">必須</span></span><input required type="date" value={date} onChange={(event) => setDate(event.target.value)} className={inputClass} /></label>
-            {kind === "event" && <label><span className={labelClass}>終了日</span><input type="date" min={date} value={endDate} onChange={(event) => setEndDate(event.target.value)} className={inputClass} /></label>}
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2">
             <label><span className={labelClass}>開始時間 <span className="text-pink">必須</span></span><input required type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} className={inputClass} /></label>
             <label><span className={labelClass}>終了時間</span><input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} className={inputClass} /></label>
           </div>
