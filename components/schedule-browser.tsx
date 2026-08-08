@@ -91,21 +91,21 @@ export function ScheduleBrowser({
   ), [entries, today]);
   const eventOptions = useMemo(() => [
     BIRTHDAY_EVENT,
-    FAN_STUDIO_EVENT,
+    ...(eventOptionStates.find((option) => option.name === FAN_STUDIO_EVENT)?.isEnded ? [] : [FAN_STUDIO_EVENT]),
     ...eventOptionStates
-      .map((option) => option.name)
-      .filter((name) => name !== FAN_STUDIO_EVENT),
+      .filter((option) => !option.isEnded && option.name !== FAN_STUDIO_EVENT)
+      .map((option) => option.name),
   ], [eventOptionStates]);
-  const disabledEventOptions = useMemo(() => new Set(
+  const endedEventOptions = useMemo(() => new Set(
     eventOptionStates.filter((option) => option.isEnded).map((option) => option.name),
   ), [eventOptionStates]);
 
   useEffect(() => {
     setSelectedEvents((current) => {
-      const available = current.filter((name) => !disabledEventOptions.has(name));
+      const available = current.filter((name) => !endedEventOptions.has(name));
       return available.length === current.length ? current : available;
     });
-  }, [disabledEventOptions]);
+  }, [endedEventOptions]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -279,7 +279,6 @@ export function ScheduleBrowser({
             dialogLabel="表示するイベントを選択"
             allLabel="すべてのイベント"
             options={eventOptions}
-            disabledOptions={disabledEventOptions}
             selected={selectedEvents}
             onChange={setSelectedEvents}
             className="md:col-span-2 xl:col-span-2"
@@ -372,7 +371,6 @@ export function ScheduleBrowser({
               dialogLabel="表示するイベントを選択"
               allLabel="すべてのイベント"
               options={eventOptions}
-              disabledOptions={disabledEventOptions}
               selected={selectedEvents}
               onChange={setSelectedEvents}
               summaryMode="chips"
@@ -448,7 +446,6 @@ function MultiSelectField({
   dialogLabel,
   allLabel,
   options,
-  disabledOptions = new Set<string>(),
   selected,
   onChange,
   className = "",
@@ -458,19 +455,15 @@ function MultiSelectField({
   dialogLabel: string;
   allLabel: string;
   options: string[];
-  disabledOptions?: ReadonlySet<string>;
   selected: string[];
   onChange: (items: string[]) => void;
   className?: string;
   summaryMode?: "text" | "chips";
 }) {
   const [open, setOpen] = useState(false);
-  const toggle = (item: string) => {
-    if (disabledOptions.has(item)) return;
-    onChange(selected.includes(item)
-      ? selected.filter((value) => value !== item)
-      : [...selected, item]);
-  };
+  const toggle = (item: string) => onChange(selected.includes(item)
+    ? selected.filter((value) => value !== item)
+    : [...selected, item]);
   const isEventField = dialogLabel.includes("イベント");
 
   return (
@@ -508,22 +501,13 @@ function MultiSelectField({
             </div>
             <button type="button" onClick={() => onChange([])} className="mt-2 min-h-9 w-full rounded-lg bg-pink/5 text-[11px] font-black text-pink">すべて表示</button>
             <div className={`mt-3 grid max-h-80 gap-2 overflow-y-auto pr-1 ${isEventField ? "grid-cols-1" : "grid-cols-2"}`}>
-              {options.map((item) => {
-                const disabled = disabledOptions.has(item);
-                const checked = selected.includes(item);
-                return (
-                  <label
-                    key={item}
-                    aria-disabled={disabled || undefined}
-                    className={`flex min-h-11 min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-2.5 text-[12px] font-bold ${disabled ? "cursor-not-allowed border-ink/5 bg-ink/[0.025] text-ink/30" : checked ? "cursor-pointer border-pink bg-pink/5 text-pink" : "cursor-pointer border-ink/10 text-ink/70"}`}
-                  >
-                    <input type="checkbox" checked={checked} disabled={disabled} onChange={() => toggle(item)} className="sr-only" />
-                    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${disabled ? "border-ink/10 bg-ink/[0.03]" : checked ? "border-pink bg-pink text-white" : "border-ink/15"}`}>{checked && !disabled && <Check size={13} aria-hidden="true" />}</span>
-                    <span className="min-w-0 flex-1 break-words">{item}</span>
-                    {disabled && <span className="shrink-0 rounded-full bg-ink/5 px-2 py-1 text-[9px] font-black text-ink/35">終了</span>}
-                  </label>
-                );
-              })}
+              {options.map((item) => (
+                <label key={item} className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-xl border px-2.5 text-[12px] font-bold ${selected.includes(item) ? "border-pink bg-pink/5 text-pink" : "border-ink/10 text-ink/70"}`}>
+                  <input type="checkbox" checked={selected.includes(item)} onChange={() => toggle(item)} className="sr-only" />
+                  <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${selected.includes(item) ? "border-pink bg-pink text-white" : "border-ink/15"}`}>{selected.includes(item) && <Check size={13} aria-hidden="true" />}</span>
+                  <span className="min-w-0 break-words">{item}</span>
+                </label>
+              ))}
             </div>
             <button type="button" onClick={() => setOpen(false)} className="mt-3 min-h-11 w-full rounded-xl bg-pink text-[12px] font-black text-white">選択を反映して閉じる</button>
           </div>

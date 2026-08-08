@@ -368,7 +368,7 @@ export function ScheduleManager({
                 <label><span className={labelClass}>開始日 <span className="text-pink">必須</span></span><input required type="date" value={date} onChange={(event) => setDate(event.target.value)} className={inputClass} /></label>
                 <label><span className={labelClass}>終了日 <span className="font-bold text-ink/35">（未入力は開始日まで）</span></span><input type="date" min={date} value={endDate} onChange={(event) => setEndDate(event.target.value)} className={inputClass} /></label>
               </div>
-              <p className="mt-2 text-[10px] font-bold leading-5 text-ink/40">終了日が本日より前になると、公開画面のイベント選択では選べなくなります。</p>
+              <p className="mt-2 text-[10px] font-bold leading-5 text-ink/40">終了日が本日より前になると、公開画面のイベント選択には表示されなくなります。</p>
             </fieldset>
           ) : (
             <label><span className={labelClass}>開催日 <span className="text-pink">必須</span></span><input required type="date" value={date} onChange={(event) => setDate(event.target.value)} className={inputClass} /></label>
