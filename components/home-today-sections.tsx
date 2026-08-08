@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, LoaderCircle, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
 import type { Character } from "@/data/types";
-import { compareCharacters, mergeCharactersWithNames, sortCharacterNames, useCharacters } from "@/lib/character-store";
+import { compareCharacters, type InitialCharacterData, mergeCharactersWithNames, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
-import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
+import { getEntryCharacterNames, type InitialScheduleData, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 import { CharacterAvatar } from "@/components/character-avatar";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { SectionHeading } from "@/components/section-heading";
@@ -94,9 +94,15 @@ function displayUpdatedAt(value?: string) {
   return value.replace("T", " ").replace(/\.\d{3}Z$/, "").slice(0, 16).replaceAll("-", "/");
 }
 
-export function HomeTodaySections() {
-  const scheduleState = useScheduleEntries();
-  const characterState = useCharacters();
+export function HomeTodaySections({
+  initialScheduleData,
+  initialCharacterData,
+}: {
+  initialScheduleData: InitialScheduleData;
+  initialCharacterData: InitialCharacterData;
+}) {
+  const scheduleState = useScheduleEntries({ initialData: initialScheduleData });
+  const characterState = useCharacters({ initialData: initialCharacterData });
   const { entries } = scheduleState;
   const { characters: catalogCharacters } = characterState;
   const [now, setNow] = useState(() => new Date());

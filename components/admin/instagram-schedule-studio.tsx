@@ -18,9 +18,10 @@ import { toBlob } from "html-to-image";
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/data/types";
-import { sortCharacterNames, useCharacters } from "@/lib/character-store";
+import { type InitialCharacterData, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import {
   getEntryCharacterNames,
+  type InitialScheduleData,
   type ScheduleEntry,
   useScheduleEntries,
 } from "@/lib/schedule-store";
@@ -1301,9 +1302,15 @@ async function captureCard(node: HTMLElement) {
   return blob;
 }
 
-export function InstagramScheduleStudio() {
-  const scheduleState = useScheduleEntries({ fallbackToBundled: true });
-  const characterState = useCharacters();
+export function InstagramScheduleStudio({
+  initialScheduleData,
+  initialCharacterData,
+}: {
+  initialScheduleData: InitialScheduleData;
+  initialCharacterData: InitialCharacterData;
+}) {
+  const scheduleState = useScheduleEntries({ fallbackToBundled: true, initialData: initialScheduleData });
+  const characterState = useCharacters({ initialData: initialCharacterData });
   const today = useMemo(todayInJapan, []);
   const [template, setTemplate] = useState<ImageTemplate>("overview");
   const [mode, setMode] = useState<GenerationMode>("week");

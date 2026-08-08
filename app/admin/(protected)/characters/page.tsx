@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CakeSlice, ChevronRight, UsersRound } from "lucide-react";
 import { CharacterOrderManager } from "@/components/character-order-manager";
+import { getInitialCharacterData } from "@/lib/supabase/initial-data";
 
 export const metadata: Metadata = {
   title: "キャラクター管理",
   description: "キャラクターの基本情報、誕生日、表示順を管理する画面です。",
 };
 
-export default function AdminCharactersPage() {
+export default async function AdminCharactersPage() {
+  const initialCharacterData = await getInitialCharacterData();
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <nav aria-label="パンくずリスト" className="mb-3 flex items-center gap-1 text-[11px] font-bold text-ink/40">
@@ -31,7 +33,7 @@ export default function AdminCharactersPage() {
         </p>
       </div>
 
-      <CharacterOrderManager />
+      <CharacterOrderManager initialCharacterData={initialCharacterData} />
     </div>
   );
 }

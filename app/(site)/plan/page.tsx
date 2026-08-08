@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { DailyPlanBuilder } from "@/components/daily-plan-builder";
+import type { PlanOptions } from "@/lib/plan-options";
+import { getInitialScheduleData } from "@/lib/supabase/initial-data";
+import { getPublicPlanOptions } from "@/lib/supabase/plan-options-repository";
 
 export const metadata: Metadata = {
   title: "マイプラン",
@@ -22,5 +25,23 @@ export default async function PlanPage({
     ? candidate
     : todayInJapan();
 
-  return <DailyPlanBuilder initialDate={initialDate} />;
+  const [initialScheduleData, planOptionsResult] = await Promise.all([
+    getInitialScheduleData(),
+    getPublicPlanOptions()
+      .then((options) => ({ options, error: "" }))
+      .catch(() => ({ options: null, error: "登録候補を読み込めませんでした。自由入力は利用できます。" })),
+  ]);
+  const initialPlanOptions: PlanOptions = planOptionsResult.options ?? {
+    attractions: [],
+    facilities: [],
+  };
+
+  return (
+    <DailyPlanBuilder
+      initialDate={initialDate}
+      initialScheduleData={initialScheduleData}
+      initialPlanOptions={initialPlanOptions}
+      initialPlanOptionsError={planOptionsResult.error}
+    />
+  );
 }

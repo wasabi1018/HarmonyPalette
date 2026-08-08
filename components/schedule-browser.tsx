@@ -8,9 +8,9 @@ import { ScheduleEntryCard } from "@/components/schedule-entry-card";
 import { ScheduleMonthCalendar } from "@/components/schedule-month-calendar";
 import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
 import { getCharacterBirthdaysInRange, type CharacterBirthdayOccurrence } from "@/lib/character-birthday";
-import { sortCharacterNames, useCharacters } from "@/lib/character-store";
+import { type InitialCharacterData, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
-import { getEntryCharacterNames, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
+import { getEntryCharacterNames, type InitialScheduleData, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 
 type MatchMode = "any" | "all";
 type Period = "all" | "7" | "14" | "30";
@@ -43,15 +43,19 @@ export function ScheduleBrowser({
   initialFromDate,
   initialToDate,
   initialView = "calendar",
+  initialScheduleData,
+  initialCharacterData,
 }: {
   initialCharacters?: string[];
   initialEvents?: string[];
   initialFromDate?: string;
   initialToDate?: string;
   initialView?: ViewMode;
+  initialScheduleData: InitialScheduleData;
+  initialCharacterData: InitialCharacterData;
 }) {
-  const scheduleState = useScheduleEntries();
-  const characterState = useCharacters();
+  const scheduleState = useScheduleEntries({ initialData: initialScheduleData });
+  const characterState = useCharacters({ initialData: initialCharacterData });
   const { entries } = scheduleState;
   const { characters } = characterState;
   const today = useMemo(todayInJapan, []);

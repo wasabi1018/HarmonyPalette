@@ -66,6 +66,13 @@ export function refreshCharacters() {
 type UseCharactersOptions = {
   initialCharacters?: Character[];
   initialStatus?: DataLoadStatus;
+  initialData?: InitialCharacterData;
+};
+
+export type InitialCharacterData = {
+  characters: Character[];
+  status: DataLoadStatus;
+  error: string;
 };
 
 type RegisteredCharacterResult = {
@@ -100,13 +107,17 @@ function loadRegisteredCharacters(force = false) {
 export function useCharacters({
   initialCharacters,
   initialStatus,
+  initialData,
 }: UseCharactersOptions = {}) {
-  const [remoteCharacters, setRemoteCharacters] = useState<Character[] | null>(initialCharacters ?? null);
-  const remoteCharactersRef = useRef<Character[] | null>(initialCharacters ?? null);
+  const resolvedInitialCharacters = initialCharacters
+    ?? (initialData?.status === "success" ? initialData.characters : undefined);
+  const resolvedInitialStatus = initialStatus ?? initialData?.status;
+  const [remoteCharacters, setRemoteCharacters] = useState<Character[] | null>(resolvedInitialCharacters ?? null);
+  const remoteCharactersRef = useRef<Character[] | null>(resolvedInitialCharacters ?? null);
   const [status, setStatus] = useState<DataLoadStatus>(
-    initialStatus ?? (initialCharacters ? "success" : "loading"),
+    resolvedInitialStatus ?? (resolvedInitialCharacters ? "success" : "loading"),
   );
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialData?.error ?? "");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [revision, setRevision] = useState(0);
 
@@ -117,6 +128,8 @@ export function useCharacters({
   }, []);
 
   useEffect(() => {
+    if (revision === 0 && (initialData || initialCharacters || initialStatus)) return;
+
     let active = true;
     const hasPreviousData = remoteCharactersRef.current !== null;
     if (hasPreviousData) {
@@ -146,7 +159,7 @@ export function useCharacters({
         if (active) setIsRefreshing(false);
       });
     return () => { active = false; };
-  }, [revision]);
+  }, [initialCharacters, initialData, initialStatus, revision]);
 
   const characters = useMemo(
     () => [...(remoteCharacters ?? [])].sort(compareCharacters),

@@ -12,8 +12,8 @@ import {
   isBirthdayCountdownVisible,
   todayInJapan,
 } from "@/lib/character-birthday";
-import { useCharacters } from "@/lib/character-store";
-import { getEntryCharacterNames, type DataLoadStatus, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
+import { type InitialCharacterData, useCharacters } from "@/lib/character-store";
+import { getEntryCharacterNames, type InitialScheduleData, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 import { CharacterAvatar } from "./character-avatar";
 
 function currentTimeInJapan() {
@@ -47,14 +47,14 @@ function birthdayTimingLabel(daysUntil: number) {
 }
 
 export function CharacterBrowser({
-  initialCharacters,
-  initialStatus,
+  initialCharacterData,
+  initialScheduleData,
 }: {
-  initialCharacters?: Character[];
-  initialStatus?: DataLoadStatus;
+  initialCharacterData: InitialCharacterData;
+  initialScheduleData: InitialScheduleData;
 }) {
-  const characterState = useCharacters({ initialCharacters, initialStatus });
-  const scheduleState = useScheduleEntries();
+  const characterState = useCharacters({ initialData: initialCharacterData });
+  const scheduleState = useScheduleEntries({ initialData: initialScheduleData });
   const { characters } = characterState;
   const { entries } = scheduleState;
   const today = useMemo(todayInJapan, []);

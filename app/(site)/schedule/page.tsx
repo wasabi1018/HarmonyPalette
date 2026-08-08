@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { OfficialNotice } from "@/components/official-notice";
 import { ScheduleBrowser } from "@/components/schedule-browser";
+import { getInitialCharacterData, getInitialScheduleData } from "@/lib/supabase/initial-data";
 
 export const metadata: Metadata = {
   title: "グリーティング・イベントスケジュール",
@@ -42,6 +43,10 @@ export default async function SchedulePage({
   const initialToDate = dateParam(params.to);
   const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
   const initialView = requestedView === "list" ? "list" : "calendar";
+  const [initialScheduleData, initialCharacterData] = await Promise.all([
+    getInitialScheduleData(),
+    getInitialCharacterData(),
+  ]);
 
   return (
     <div className="mx-auto max-w-[1360px] px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
@@ -58,6 +63,8 @@ export default async function SchedulePage({
         initialFromDate={initialFromDate}
         initialToDate={initialToDate}
         initialView={initialView}
+        initialScheduleData={initialScheduleData}
+        initialCharacterData={initialCharacterData}
       />
       <div className="mt-7"><OfficialNotice /></div>
     </div>

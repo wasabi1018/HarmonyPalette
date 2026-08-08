@@ -9,13 +9,21 @@ import {
 } from "lucide-react";
 import type { ArticleSummary } from "@/lib/articles/types";
 import type { InstagramPostUrls } from "@/data/instagram-posts";
+import type { InitialCharacterData } from "@/lib/character-store";
+import type { InitialScheduleData } from "@/lib/schedule-store";
 import { HomeBirthdayRibbon } from "./home-birthday-ribbon";
 import { HomeHeroStats } from "./home-hero-stats";
 import { HomeTodaySections } from "./home-today-sections";
 import { InstagramEmbedSection } from "./instagram-embed-section";
 import { SectionHeading } from "./section-heading";
 
-function Hero() {
+function Hero({
+  initialScheduleData,
+  initialCharacterData,
+}: {
+  initialScheduleData: InitialScheduleData;
+  initialCharacterData: InitialCharacterData;
+}) {
   return (
     <section className="border-b border-pink/10 bg-[#fff8fb]">
       <div className="mx-auto grid max-w-[1200px] items-center gap-7 px-4 py-7 sm:px-6 sm:py-9 lg:grid-cols-[1.02fr_.98fr] lg:gap-10 lg:px-8">
@@ -67,7 +75,10 @@ function Hero() {
               sizes="(max-width: 1024px) 100vw, 520px"
             />
           </div>
-          <HomeHeroStats />
+          <HomeHeroStats
+            initialScheduleData={initialScheduleData}
+            initialCharacterData={initialCharacterData}
+          />
         </aside>
       </div>
     </section>
@@ -189,15 +200,25 @@ function JournalSection({
 export function HomeSections({
   latestArticles,
   instagramPostUrls,
+  initialScheduleData,
+  initialCharacterData,
 }: {
   latestArticles: ArticleSummary[];
   instagramPostUrls: InstagramPostUrls;
+  initialScheduleData: InitialScheduleData;
+  initialCharacterData: InitialCharacterData;
 }) {
   return (
     <>
-      <Hero />
-      <HomeBirthdayRibbon />
-      <HomeTodaySections />
+      <Hero
+        initialScheduleData={initialScheduleData}
+        initialCharacterData={initialCharacterData}
+      />
+      <HomeBirthdayRibbon initialCharacterData={initialCharacterData} />
+      <HomeTodaySections
+        initialScheduleData={initialScheduleData}
+        initialCharacterData={initialCharacterData}
+      />
       <JournalSection
         latestArticles={latestArticles}
         instagramPostUrls={instagramPostUrls}

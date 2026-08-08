@@ -5,6 +5,7 @@ import { InstagramEmbedSettingsForm } from "@/components/admin/instagram-embed-s
 import { InstagramScheduleStudio } from "@/components/admin/instagram-schedule-studio";
 import { defaultInstagramPostUrls } from "@/data/instagram-posts";
 import { getInstagramEmbedSettings } from "@/lib/instagram-settings";
+import { getInitialCharacterData, getInitialScheduleData } from "@/lib/supabase/initial-data";
 
 export const metadata: Metadata = {
   title: "Instagram画像作成",
@@ -21,6 +22,10 @@ export default async function AdminInstagramPage() {
       ? error.message
       : "Instagram表示設定の取得に失敗しました。";
   }
+  const [initialScheduleData, initialCharacterData] = await Promise.all([
+    getInitialScheduleData(),
+    getInitialCharacterData(),
+  ]);
 
   return (
     <div className="mx-auto max-w-[1420px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -60,7 +65,10 @@ export default async function AdminInstagramPage() {
         initialPostUrls={postUrls}
         setupError={setupError}
       />
-      <InstagramScheduleStudio />
+      <InstagramScheduleStudio
+        initialScheduleData={initialScheduleData}
+        initialCharacterData={initialCharacterData}
+      />
     </div>
   );
 }

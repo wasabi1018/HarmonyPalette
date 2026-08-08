@@ -40,6 +40,13 @@ export type DataLoadStatus = "loading" | "success" | "error" | "unavailable";
 
 type UseScheduleEntriesOptions = {
   fallbackToBundled?: boolean;
+  initialData?: InitialScheduleData;
+};
+
+export type InitialScheduleData = {
+  entries: ScheduleEntry[];
+  status: DataLoadStatus;
+  error: string;
 };
 
 type PublishedScheduleResult = {
@@ -144,12 +151,16 @@ function writeState(state: StoredScheduleState) {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-export function useScheduleEntries({ fallbackToBundled = false }: UseScheduleEntriesOptions = {}) {
+export function useScheduleEntries({
+  fallbackToBundled = false,
+  initialData,
+}: UseScheduleEntriesOptions = {}) {
   const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const [remoteEntries, setRemoteEntries] = useState<ScheduleEntry[] | null>(null);
-  const remoteEntriesRef = useRef<ScheduleEntry[] | null>(null);
-  const [status, setStatus] = useState<DataLoadStatus>("loading");
-  const [error, setError] = useState("");
+  const initialEntries = initialData?.status === "success" ? initialData.entries : null;
+  const [remoteEntries, setRemoteEntries] = useState<ScheduleEntry[] | null>(initialEntries);
+  const remoteEntriesRef = useRef<ScheduleEntry[] | null>(initialEntries);
+  const [status, setStatus] = useState<DataLoadStatus>(initialData?.status ?? "loading");
+  const [error, setError] = useState(initialData?.error ?? "");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [revision, setRevision] = useState(0);
 
@@ -160,6 +171,8 @@ export function useScheduleEntries({ fallbackToBundled = false }: UseScheduleEnt
   }, []);
 
   useEffect(() => {
+    if (revision === 0 && initialData) return;
+
     let active = true;
     const hasPreviousData = remoteEntriesRef.current !== null;
     if (hasPreviousData) {
@@ -189,7 +202,7 @@ export function useScheduleEntries({ fallbackToBundled = false }: UseScheduleEnt
         if (active) setIsRefreshing(false);
       });
     return () => { active = false; };
-  }, [revision]);
+  }, [initialData, revision]);
 
   const entries = useMemo(() => {
     const state = parseState(raw);

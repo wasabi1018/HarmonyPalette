@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useMemo, useState } from "react";
 import { Eye, EyeOff, MapPinned, Pencil, Plus, Save, Search, Ticket, X } from "lucide-react";
 import type { PlanAttraction, PlanFacility, PlanOptions } from "@/lib/plan-options";
 
@@ -30,13 +30,19 @@ function optionLabel(type: OptionType) {
   return type === "attraction" ? "アトラクション" : "施設";
 }
 
-export function PlanOptionsManager() {
-  const [options, setOptions] = useState<PlanOptions>({ attractions: [], facilities: [] });
+export function PlanOptionsManager({
+  initialOptions,
+  initialError,
+}: {
+  initialOptions: PlanOptions;
+  initialError: string;
+}) {
+  const [options, setOptions] = useState<PlanOptions>(initialOptions);
   const [form, setForm] = useState<OptionForm>(emptyForm("attraction"));
   const [editorOpen, setEditorOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState(initialError);
   const [query, setQuery] = useState("");
 
   const loadOptions = useCallback(async () => {
@@ -52,10 +58,6 @@ export function PlanOptionsManager() {
       setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    void loadOptions();
-  }, [loadOptions]);
 
   const normalizedQuery = query.trim().toLocaleLowerCase("ja");
   const attractions = useMemo(

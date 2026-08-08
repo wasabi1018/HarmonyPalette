@@ -4,7 +4,7 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownAZ, CakeSlice, Pencil, Plus, Save, Search, Trash2, UserRound, X } from "lucide-react";
 import type { Character } from "@/data/types";
 import { formatCharacterBirthday, getCharacterBirthday } from "@/lib/character-birthday";
-import { compareCharacters, refreshCharacters, useCharacters } from "@/lib/character-store";
+import { compareCharacters, type InitialCharacterData, refreshCharacters, useCharacters } from "@/lib/character-store";
 
 const inputClass = "min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none transition-colors placeholder:text-ink/30 focus:border-pink focus:ring-4 focus:ring-pink/10";
 const labelClass = "mb-1.5 block text-[11px] font-black text-ink/55";
@@ -42,8 +42,12 @@ function birthdayDaysInMonth(month: number) {
   return new Date(Date.UTC(2000, month, 0)).getUTCDate();
 }
 
-export function CharacterOrderManager() {
-  const { characters } = useCharacters();
+export function CharacterOrderManager({
+  initialCharacterData,
+}: {
+  initialCharacterData: InitialCharacterData;
+}) {
+  const { characters } = useCharacters({ initialData: initialCharacterData });
   const [orders, setOrders] = useState<Record<string, number>>({});
   const dirtyOrderIds = useRef(new Set<string>());
   const [query, setQuery] = useState("");

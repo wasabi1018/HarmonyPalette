@@ -8,7 +8,7 @@ import {
   isBirthdayCountdownVisible,
   todayInJapan,
 } from "@/lib/character-birthday";
-import { useCharacters } from "@/lib/character-store";
+import { type InitialCharacterData, useCharacters } from "@/lib/character-store";
 import { CharacterAvatar } from "./character-avatar";
 
 function characterNames(names: string[]) {
@@ -16,8 +16,12 @@ function characterNames(names: string[]) {
   return `${names.slice(0, 2).join("・")}ほか${names.length - 2}キャラクター`;
 }
 
-export function HomeBirthdayRibbon() {
-  const { characters } = useCharacters();
+export function HomeBirthdayRibbon({
+  initialCharacterData,
+}: {
+  initialCharacterData: InitialCharacterData;
+}) {
+  const { characters } = useCharacters({ initialData: initialCharacterData });
   const birthdays = getNextCharacterBirthdayGroup(characters, todayInJapan());
 
   if (

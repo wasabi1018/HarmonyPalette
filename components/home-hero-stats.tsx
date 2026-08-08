@@ -1,12 +1,18 @@
 "use client";
 
 import { CalendarDays, Clock3, Users } from "lucide-react";
-import { useCharacters } from "@/lib/character-store";
-import { getEntryCharacterNames, useScheduleEntries } from "@/lib/schedule-store";
+import { type InitialCharacterData, useCharacters } from "@/lib/character-store";
+import { getEntryCharacterNames, type InitialScheduleData, useScheduleEntries } from "@/lib/schedule-store";
 
-export function HomeHeroStats() {
-  const scheduleState = useScheduleEntries();
-  const characterState = useCharacters();
+export function HomeHeroStats({
+  initialScheduleData,
+  initialCharacterData,
+}: {
+  initialScheduleData: InitialScheduleData;
+  initialCharacterData: InitialCharacterData;
+}) {
+  const scheduleState = useScheduleEntries({ initialData: initialScheduleData });
+  const characterState = useCharacters({ initialData: initialCharacterData });
   const { entries } = scheduleState;
   const { characters } = characterState;
   const isLoading = scheduleState.status === "loading" || characterState.status === "loading";

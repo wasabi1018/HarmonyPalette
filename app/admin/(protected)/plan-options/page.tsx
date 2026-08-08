@@ -2,13 +2,22 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, ListTree } from "lucide-react";
 import { PlanOptionsManager } from "@/components/admin/plan-options-manager";
+import type { PlanOptions } from "@/lib/plan-options";
+import { getAdminPlanOptions } from "@/lib/supabase/plan-options-repository";
 
 export const metadata: Metadata = {
   title: "マイプラン候補管理",
   description: "自由予定で選択できるアトラクションと施設を管理する画面です。",
 };
 
-export default function AdminPlanOptionsPage() {
+export default async function AdminPlanOptionsPage() {
+  let initialOptions: PlanOptions = { attractions: [], facilities: [] };
+  let initialError = "";
+  try {
+    initialOptions = (await getAdminPlanOptions()) ?? initialOptions;
+  } catch (error) {
+    initialError = error instanceof Error ? error.message : "候補を読み込めませんでした。";
+  }
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <nav aria-label="パンくずリスト" className="mb-3 flex items-center gap-1 text-[11px] font-bold text-ink/40">
@@ -25,7 +34,7 @@ export default function AdminPlanOptionsPage() {
           自由予定で選べるアトラクションと施設を登録します。アトラクションに既定の施設を設定すると、選択時に場所も自動入力されます。
         </p>
       </div>
-      <PlanOptionsManager />
+      <PlanOptionsManager initialOptions={initialOptions} initialError={initialError} />
     </div>
   );
 }

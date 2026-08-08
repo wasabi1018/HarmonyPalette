@@ -56,7 +56,7 @@ import {
   getCustomPlanColorValue,
   type PlanOptions,
 } from "@/lib/plan-options";
-import { useScheduleEntries } from "@/lib/schedule-store";
+import { type InitialScheduleData, useScheduleEntries } from "@/lib/schedule-store";
 import { recordSiteAnalyticsEvent } from "@/lib/site-analytics";
 
 const DRAG_MINUTES_PER_PIXEL = 0.5;
@@ -224,18 +224,28 @@ function PrintablePlan({ date, items }: { date: string; items: DailyPlanItem[] }
   );
 }
 
-export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
+export function DailyPlanBuilder({
+  initialDate,
+  initialScheduleData,
+  initialPlanOptions,
+  initialPlanOptionsError,
+}: {
+  initialDate: string;
+  initialScheduleData: InitialScheduleData;
+  initialPlanOptions: PlanOptions;
+  initialPlanOptionsError: string;
+}) {
   const today = useMemo(todayInJapan, []);
   const [selectedDate, setSelectedDate] = useState(/^\d{4}-\d{2}-\d{2}$/.test(initialDate) ? initialDate : today);
   const plans = useDailyPlans();
   const plan = plans[selectedDate];
   const items = useMemo(() => plan?.items ?? [], [plan]);
-  const scheduleState = useScheduleEntries();
+  const scheduleState = useScheduleEntries({ initialData: initialScheduleData });
   const [addOpen, setAddOpen] = useState(false);
   const [addTab, setAddTab] = useState<"official" | "custom">("official");
   const [customForm, setCustomForm] = useState<CustomPlanItemInput>(DEFAULT_CUSTOM_FORM);
-  const [planOptions, setPlanOptions] = useState<PlanOptions>({ attractions: [], facilities: [] });
-  const [optionsError, setOptionsError] = useState("");
+  const [planOptions] = useState<PlanOptions>(initialPlanOptions);
+  const [optionsError] = useState(initialPlanOptionsError);
   const [selectedAttractionId, setSelectedAttractionId] = useState("");
   const [selectedFacilityId, setSelectedFacilityId] = useState("");
   const [editingItem, setEditingItem] = useState<DailyPlanItem | null>(null);
@@ -265,30 +275,6 @@ export function DailyPlanBuilder({ initialDate }: { initialDate: string }) {
     const timer = window.setTimeout(() => setNotice(""), 3500);
     return () => window.clearTimeout(timer);
   }, [notice]);
-
-  useEffect(() => {
-    let active = true;
-    const loadPlanOptions = async () => {
-      try {
-        const response = await fetch("/api/plan-options", { cache: "no-store" });
-        const result = await response.json() as PlanOptions & { error?: string };
-        if (!response.ok) throw new Error(result.error || "候補を読み込めませんでした。");
-        if (active) {
-          setPlanOptions({
-            attractions: result.attractions ?? [],
-            facilities: result.facilities ?? [],
-          });
-          setOptionsError("");
-        }
-      } catch {
-        if (active) setOptionsError("登録候補を読み込めませんでした。自由入力は利用できます。");
-      }
-    };
-    void loadPlanOptions();
-    return () => {
-      active = false;
-    };
-  }, []);
 
   useEffect(() => {
     const url = new URL(window.location.href);

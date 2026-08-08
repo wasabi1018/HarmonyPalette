@@ -5,14 +5,19 @@ import { ScheduleJsonImporter } from "@/components/schedule-json-importer";
 import { OfficialBatchImporter } from "@/components/official-batch-importer";
 import { ScheduleManager, ScheduleManagerNotice } from "@/components/schedule-manager";
 import { getSupabaseConfigStatus } from "@/lib/supabase/server";
+import { getInitialCharacterData, getInitialScheduleData } from "@/lib/supabase/initial-data";
 
 export const metadata: Metadata = {
   title: "スケジュール管理",
   description: "イベントとグリーティングを管理する画面です。",
 };
 
-export default function AdminSchedulePage() {
+export default async function AdminSchedulePage() {
   const config = getSupabaseConfigStatus();
+  const [initialScheduleData, initialCharacterData] = await Promise.all([
+    getInitialScheduleData(),
+    getInitialCharacterData(),
+  ]);
   return (
     <div className="mx-auto max-w-[1240px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <nav aria-label="パンくずリスト" className="mb-3 flex items-center gap-1 text-[11px] font-bold text-ink/40"><Link href="/admin" className="hover:text-pink">管理トップ</Link><ChevronRight size={12} aria-hidden="true" /><span aria-current="page">スケジュール</span></nav>
@@ -24,7 +29,10 @@ export default function AdminSchedulePage() {
       <ScheduleManagerNotice />
       <OfficialBatchImporter config={{ canWrite: config.canWrite, hasPublicKey: config.hasPublicKey, hasSecretKey: config.hasSecretKey }} />
       <ScheduleJsonImporter />
-      <ScheduleManager />
+      <ScheduleManager
+        initialScheduleData={initialScheduleData}
+        initialCharacterData={initialCharacterData}
+      />
     </div>
   );
 }

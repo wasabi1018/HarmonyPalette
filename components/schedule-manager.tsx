@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, CalendarDays, Check, ChevronDown, CircleAlert, Filter, LoaderCircle, Pencil, Plus, Replace, RotateCcw, Save, Trash2, X } from "lucide-react";
-import { mergeCharactersWithNames, useCharacters } from "@/lib/character-store";
+import { type InitialCharacterData, mergeCharactersWithNames, useCharacters } from "@/lib/character-store";
 import {
   addScheduleEntry,
   bulkReplaceLocalScheduleEntries,
@@ -16,6 +16,7 @@ import {
   updateScheduleEntry,
   type ScheduleEntry,
   type ScheduleEntryKind,
+  type InitialScheduleData,
   useScheduleEntries,
 } from "@/lib/schedule-store";
 
@@ -92,9 +93,15 @@ function todayInJapan() {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
 }
 
-export function ScheduleManager() {
-  const { entries } = useScheduleEntries({ fallbackToBundled: true });
-  const { characters: catalogCharacters } = useCharacters();
+export function ScheduleManager({
+  initialScheduleData,
+  initialCharacterData,
+}: {
+  initialScheduleData: InitialScheduleData;
+  initialCharacterData: InitialCharacterData;
+}) {
+  const { entries } = useScheduleEntries({ fallbackToBundled: true, initialData: initialScheduleData });
+  const { characters: catalogCharacters } = useCharacters({ initialData: initialCharacterData });
   const characters = useMemo(() => mergeCharactersWithNames(
     catalogCharacters,
     entries.flatMap((entry) => getEntryCharacterNames(entry)),
