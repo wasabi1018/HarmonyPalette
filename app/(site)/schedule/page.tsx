@@ -41,7 +41,7 @@ export default async function SchedulePage({
   const initialFromDate = dateParam(params.from);
   const initialToDate = dateParam(params.to);
   const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
-  const initialView = requestedView === "calendar" ? "calendar" : "list";
+  const initialView = requestedView === "list" ? "list" : "calendar";
 
   return (
     <div className="mx-auto max-w-[1360px] px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">

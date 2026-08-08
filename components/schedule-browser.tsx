@@ -42,7 +42,7 @@ export function ScheduleBrowser({
   initialEvents = [],
   initialFromDate,
   initialToDate,
-  initialView = "list",
+  initialView = "calendar",
 }: {
   initialCharacters?: string[];
   initialEvents?: string[];
@@ -98,7 +98,7 @@ export function ScheduleBrowser({
     selectedEvents.forEach((name) => url.searchParams.append("event", name));
     url.searchParams.set("from", fromDate);
     url.searchParams.set("to", toDate);
-    if (viewMode === "calendar") url.searchParams.set("view", "calendar");
+    if (viewMode === "list") url.searchParams.set("view", "list");
     else url.searchParams.delete("view");
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
   }, [fromDate, selectedCharacters, selectedEvents, toDate, viewMode]);
@@ -321,8 +321,8 @@ export function ScheduleBrowser({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-6">
           <div><p className="text-[11px] font-black tracking-[0.16em] text-pink">SCHEDULE RESULTS</p><h2 className="mt-1 text-[22px] font-black text-ink">スケジュール検索結果</h2><p className="mt-1 text-[12px] font-bold text-ink/45">{fromDate.replaceAll("-", "/")}〜{toDate.replaceAll("-", "/")}</p></div>
           <div className="inline-flex rounded-xl border border-pink/15 bg-white p-1 shadow-[0_4px_14px_rgba(98,66,88,0.04)]" role="group" aria-label="表示形式">
-            <button type="button" aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")} className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-[11px] font-black transition-colors ${viewMode === "list" ? "bg-pink text-white shadow-sm" : "text-ink/55 hover:bg-pink/5"}`}><LayoutList size={14} aria-hidden="true" />一覧</button>
             <button type="button" aria-pressed={viewMode === "calendar"} onClick={() => setViewMode("calendar")} className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-[11px] font-black transition-colors ${viewMode === "calendar" ? "bg-pink text-white shadow-sm" : "text-ink/55 hover:bg-pink/5"}`}><CalendarDays size={14} aria-hidden="true" />カレンダー</button>
+            <button type="button" aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")} className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-[11px] font-black transition-colors ${viewMode === "list" ? "bg-pink text-white shadow-sm" : "text-ink/55 hover:bg-pink/5"}`}><LayoutList size={14} aria-hidden="true" />一覧</button>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
