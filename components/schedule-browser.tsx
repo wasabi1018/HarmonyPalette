@@ -450,23 +450,23 @@ function MultiSelectField({
   const isEventField = dialogLabel.includes("イベント");
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative min-w-0 ${className}`}>
       <span className="mb-1.5 block text-[11px] font-black text-ink/50">{label}</span>
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-left text-[13px] font-bold text-ink outline-none transition-colors hover:border-pink/35 focus:border-pink ${summaryMode === "chips" ? "py-2" : ""}`}
+        className={`flex min-h-11 w-full min-w-0 max-w-full items-center justify-between gap-2 rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-left text-[13px] font-bold text-ink outline-none transition-colors hover:border-pink/35 focus:border-pink ${summaryMode === "chips" ? "py-2" : ""}`}
       >
         {selected.length === 0 ? (
-          <span className="truncate">{allLabel}</span>
+          <span className="min-w-0 flex-1 truncate">{allLabel}</span>
         ) : summaryMode === "chips" ? (
           <span className="flex min-w-0 flex-1 flex-wrap gap-1.5">
             {selected.slice(0, 2).map((item) => <span key={item} className="max-w-[240px] truncate rounded-full bg-pink/[0.08] px-2.5 py-1 text-[11px] font-black text-ink/75">{item}</span>)}
             {selected.length > 2 && <span className="rounded-full bg-pink/10 px-2.5 py-1 text-[11px] font-black text-pink">+{selected.length - 2}</span>}
           </span>
         ) : (
-          <span className="truncate">{selected.slice(0, 2).join("、")}{selected.length > 2 ? ` ほか${selected.length - 2}件` : ""}</span>
+          <span className="min-w-0 flex-1 truncate">{selected.slice(0, 2).join("、")}{selected.length > 2 ? ` ほか${selected.length - 2}件` : ""}</span>
         )}
         <span className="flex shrink-0 items-center gap-1.5 text-[10px] font-black text-pink">
           {selected.length > 0 && `${selected.length}件`}
@@ -477,7 +477,7 @@ function MultiSelectField({
       {open && (
         <>
           <button type="button" aria-label={`${dialogLabel}を閉じる`} onClick={() => setOpen(false)} className="fixed inset-0 z-[60] bg-ink/30 lg:hidden" />
-          <div role="dialog" aria-label={dialogLabel} className="absolute left-0 top-[72px] z-[70] w-full min-w-[300px] rounded-2xl border border-pink/15 bg-white p-3 shadow-[0_20px_50px_rgba(75,45,55,0.2)] max-lg:fixed max-lg:inset-x-4 max-lg:top-20 max-lg:w-auto lg:min-w-[440px]">
+          <div role="dialog" aria-label={dialogLabel} className="absolute left-0 top-[72px] z-[70] w-full min-w-[300px] rounded-2xl border border-pink/15 bg-white p-3 shadow-[0_20px_50px_rgba(75,45,55,0.2)] max-lg:fixed max-lg:inset-x-4 max-lg:top-20 max-lg:w-auto max-lg:min-w-0 max-lg:max-w-[calc(100vw-2rem)] max-lg:overflow-hidden lg:min-w-[440px]">
             <div className="flex items-center justify-between gap-3 border-b border-pink/10 pb-2">
               <div><p className="text-[14px] font-black text-ink">{dialogLabel}</p><p className="mt-0.5 text-[10px] font-bold text-ink/40">未選択の場合はすべて表示します</p></div>
               <button type="button" onClick={() => setOpen(false)} aria-label="閉じる" className="grid h-9 w-9 place-items-center rounded-full bg-pink/5 text-pink"><X size={17} aria-hidden="true" /></button>
@@ -485,10 +485,10 @@ function MultiSelectField({
             <button type="button" onClick={() => onChange([])} className="mt-2 min-h-9 w-full rounded-lg bg-pink/5 text-[11px] font-black text-pink">すべて表示</button>
             <div className={`mt-3 grid max-h-80 gap-2 overflow-y-auto pr-1 ${isEventField ? "grid-cols-1" : "grid-cols-2"}`}>
               {options.map((item) => (
-                <label key={item} className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-2.5 text-[12px] font-bold ${selected.includes(item) ? "border-pink bg-pink/5 text-pink" : "border-ink/10 text-ink/70"}`}>
+                <label key={item} className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-xl border px-2.5 text-[12px] font-bold ${selected.includes(item) ? "border-pink bg-pink/5 text-pink" : "border-ink/10 text-ink/70"}`}>
                   <input type="checkbox" checked={selected.includes(item)} onChange={() => toggle(item)} className="sr-only" />
                   <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${selected.includes(item) ? "border-pink bg-pink text-white" : "border-ink/15"}`}><Check size={13} aria-hidden="true" /></span>
-                  <span className="min-w-0">{item}</span>
+                  <span className="min-w-0 break-words">{item}</span>
                 </label>
               ))}
             </div>
