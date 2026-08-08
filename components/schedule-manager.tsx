@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, CalendarDays, Check, ChevronDown, CircleAlert, Filter, LoaderCircle, Pencil, Plus, Replace, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { type InitialCharacterData, mergeCharactersWithNames, useCharacters } from "@/lib/character-store";
+import { isScheduleInDateRange } from "@/lib/schedule-date-filter";
 import {
   addScheduleEntry,
   bulkReplaceLocalScheduleEntries,
@@ -123,6 +124,8 @@ export function ScheduleManager({
   const [filter, setFilter] = useState<"all" | ScheduleEntryKind>("all");
   const [selectedTitles, setSelectedTitles] = useState<string[]>([]);
   const [selectedCharacterNames, setSelectedCharacterNames] = useState<string[]>([]);
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
   const [replacementField, setReplacementField] = useState<"title" | "character">("title");
   const [replacementFrom, setReplacementFrom] = useState("");
   const [replacementTo, setReplacementTo] = useState("");
@@ -141,8 +144,9 @@ export function ScheduleManager({
     .filter((entry) => selectedTitles.length === 0 || selectedTitles.includes(entry.title))
     .filter((entry) => selectedCharacterNames.length === 0
       || getEntryCharacterNames(entry).some((name) => selectedCharacterNames.includes(name)))
+    .filter((entry) => isScheduleInDateRange(entry, filterStartDate, filterEndDate))
     .sort((a, b) => `${a.date}-${a.startTime}`.localeCompare(`${b.date}-${b.startTime}`)),
-  [entries, filter, selectedCharacterNames, selectedTitles]);
+  [entries, filter, filterEndDate, filterStartDate, selectedCharacterNames, selectedTitles]);
   const replacementOptions = replacementField === "title" ? titleOptions : characterNameOptions;
   const replacementMatchCount = useMemo(() => {
     if (!replacementFrom) return 0;
@@ -150,7 +154,10 @@ export function ScheduleManager({
       ? entry.title === replacementFrom
       : getEntryCharacterNames(entry).includes(replacementFrom)).length;
   }, [entries, replacementField, replacementFrom]);
-  const activeDetailedFilterCount = selectedTitles.length + selectedCharacterNames.length;
+  const activeDetailedFilterCount = selectedTitles.length
+    + selectedCharacterNames.length
+    + Number(Boolean(filterStartDate))
+    + Number(Boolean(filterEndDate));
 
   const defaultTypeOptions = kind === "greeting" ? greetingTypeOptions : eventTypeOptions;
   const typeOptions = scheduleType && !defaultTypeOptions.includes(scheduleType)
@@ -430,10 +437,32 @@ export function ScheduleManager({
             onClear={() => setSelectedCharacterNames([])}
           />
         </div>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <label>
+            <span className={labelClass}>開始日</span>
+            <input
+              type="date"
+              value={filterStartDate}
+              max={filterEndDate || undefined}
+              onChange={(event) => setFilterStartDate(event.target.value)}
+              className={inputClass}
+            />
+          </label>
+          <label>
+            <span className={labelClass}>終了日</span>
+            <input
+              type="date"
+              value={filterEndDate}
+              min={filterStartDate || undefined}
+              onChange={(event) => setFilterEndDate(event.target.value)}
+              className={inputClass}
+            />
+          </label>
+        </div>
         <div className="mt-2 flex min-h-7 items-center justify-between gap-2 text-[10px] font-bold text-ink/45">
           <span className="inline-flex items-center gap-1.5"><Filter size={12} aria-hidden="true" />{visibleEntries.length}件を表示</span>
           {(filter !== "all" || activeDetailedFilterCount > 0) && (
-            <button type="button" onClick={() => { setFilter("all"); setSelectedTitles([]); setSelectedCharacterNames([]); }} className="font-black text-pink hover:underline">
+            <button type="button" onClick={() => { setFilter("all"); setSelectedTitles([]); setSelectedCharacterNames([]); setFilterStartDate(""); setFilterEndDate(""); }} className="font-black text-pink hover:underline">
               フィルターをすべて解除
             </button>
           )}
