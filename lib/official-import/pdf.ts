@@ -17,7 +17,19 @@ export type PdfTextLine = {
   items: PdfTextItem[];
 };
 
+export async function ensurePdfJsNodeGlobals() {
+  if (globalThis.DOMMatrix && globalThis.ImageData && globalThis.Path2D) return;
+
+  const canvas = await import("@napi-rs/canvas");
+  Object.assign(globalThis, {
+    DOMMatrix: globalThis.DOMMatrix ?? canvas.DOMMatrix,
+    ImageData: globalThis.ImageData ?? canvas.ImageData,
+    Path2D: globalThis.Path2D ?? canvas.Path2D,
+  });
+}
+
 export async function extractPdfTextItems(bytes: Uint8Array) {
+  await ensurePdfJsNodeGlobals();
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   // PDF.js may transfer and detach the supplied ArrayBuffer. Parse a copy so
   // the original bytes remain available for source archiving in Supabase.
