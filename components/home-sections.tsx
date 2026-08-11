@@ -12,36 +12,35 @@ import type { InstagramPostUrls } from "@/data/instagram-posts";
 import type { InitialCharacterData } from "@/lib/character-store";
 import type { InitialScheduleData } from "@/lib/schedule-store";
 import { HomeBirthdayRibbon } from "./home-birthday-ribbon";
-import { HomeHeroStats } from "./home-hero-stats";
 import { HomeTodaySections } from "./home-today-sections";
 import { InstagramEmbedSection } from "./instagram-embed-section";
 import { SectionHeading } from "./section-heading";
 
-function Hero({
-  initialScheduleData,
-  initialCharacterData,
-}: {
-  initialScheduleData: InitialScheduleData;
-  initialCharacterData: InitialCharacterData;
-}) {
+function Hero() {
   return (
     <section className="border-b border-pink/10 bg-[#fff8fb]">
-      <div className="mx-auto grid max-w-[1200px] items-center gap-7 px-4 py-7 sm:px-6 sm:py-9 lg:grid-cols-[1.02fr_.98fr] lg:gap-10 lg:px-8">
-        <div>
+      <div className="mx-auto max-w-[1200px] px-4 py-7 sm:px-6 sm:py-9 lg:px-8">
+        <div className="mx-auto max-w-[820px] lg:text-center">
           <p className="inline-flex items-center gap-2 rounded-full border border-pink/20 bg-white px-3 py-1.5 text-[11px] font-black tracking-[0.12em] text-pink shadow-soft">
             <Sparkles size={13} aria-hidden="true" />
             HARMONYLAND FAN GUIDE
           </p>
-          <h1 className="mt-4 max-w-[620px] font-display text-[34px] font-semibold leading-[1.22] tracking-[-0.045em] text-ink sm:text-[44px] lg:text-[50px]">
-            今日の<span className="text-pink">「会いたい」</span>が、
-            <br className="hidden sm:block" />
-            すぐ見つかる。
+          <h1 className="mx-auto mt-4 max-w-[680px] overflow-hidden rounded-[22px] border border-pink/10 bg-white p-3 shadow-soft sm:p-4">
+            <Image
+              src="/logo-hero.png"
+              alt="Harmony Palette"
+              width={2172}
+              height={724}
+              priority
+              className="h-auto w-full object-contain"
+              sizes="(max-width: 768px) calc(100vw - 56px), 680px"
+            />
           </h1>
-          <p className="mt-4 max-w-[590px] text-[14px] font-medium leading-6 text-ink/65 sm:text-[15px] sm:leading-7">
+          <p className="mt-4 max-w-[650px] text-[14px] font-medium leading-6 text-ink/65 sm:text-[15px] sm:leading-7 lg:mx-auto">
             キャラクターの登場予定、次のグリーティング、旅の準備まで。
             ハーモニーランドを楽しむ情報を、見やすくひとつにまとめました。
           </p>
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap gap-2 lg:justify-center">
             <Link
               href="#today-schedule"
               className="inline-flex min-h-11 items-center gap-2 rounded-full bg-pink px-4 text-[13px] font-black text-white shadow-[0_8px_20px_rgba(235,110,152,0.22)] transition-transform hover:-translate-y-0.5 sm:px-5 sm:text-sm"
@@ -56,7 +55,7 @@ function Hero({
               キャラクターから探す
             </Link>
           </div>
-          <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold text-ink/45">
+          <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold text-ink/45 lg:justify-center">
             <span className="h-2 w-2 rounded-full bg-mint" aria-hidden="true" />
             公開済みスケジュールを表示
             <span className="text-ink/20">|</span>
@@ -64,22 +63,6 @@ function Hero({
           </p>
         </div>
 
-        <aside className="overflow-hidden rounded-[24px] border border-pink/15 bg-white p-2.5 shadow-card sm:p-4" aria-label="今日の概要">
-          <div className="relative aspect-[16/6] overflow-hidden rounded-[18px] bg-[#fffdfd] sm:aspect-[16/7]">
-            <Image
-              src="/logo-hero.png"
-              alt="Harmony Palette ロゴ"
-              fill
-              priority
-              className="object-contain object-center"
-              sizes="(max-width: 1024px) 100vw, 520px"
-            />
-          </div>
-          <HomeHeroStats
-            initialScheduleData={initialScheduleData}
-            initialCharacterData={initialCharacterData}
-          />
-        </aside>
       </div>
     </section>
   );
@@ -210,10 +193,7 @@ export function HomeSections({
 }) {
   return (
     <>
-      <Hero
-        initialScheduleData={initialScheduleData}
-        initialCharacterData={initialCharacterData}
-      />
+      <Hero />
       <HomeBirthdayRibbon initialCharacterData={initialCharacterData} />
       <HomeTodaySections
         initialScheduleData={initialScheduleData}

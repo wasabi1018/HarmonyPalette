@@ -3,6 +3,7 @@ import {
   publishImportRun,
   updateImportDrafts,
   type OperationDraftEdit,
+  type ParkOperatingDayDraftEdit,
   type ScheduleDraftEdit,
 } from "@/lib/supabase/schedule-repository";
 import { assertImportAuthorization } from "@/lib/supabase/server";
@@ -77,6 +78,28 @@ function parseOperationEdit(value: unknown): OperationDraftEdit {
   };
 }
 
+function parseOperatingDayEdit(value: unknown): ParkOperatingDayDraftEdit {
+  const item = record(value, "営業情報の修正内容");
+  const status = requiredText(item.operatingStatus, "営業状態", 20);
+  if (!("open" === status || "closed" === status || "unknown" === status)) {
+    throw new Error("営業状態が正しくありません。");
+  }
+  const openingTime = timeText(item.openingTime, "開園時間", status === "open");
+  const closingTime = timeText(item.closingTime, "閉園時間", status === "open");
+  if (status === "open" && openingTime && closingTime && openingTime >= closingTime) {
+    throw new Error("閉園時間は開園時間より後にしてください。");
+  }
+  return {
+    externalKey: requiredText(item.externalKey, "営業情報識別子", 1000),
+    date: dateText(item.date, "営業日"),
+    operatingStatus: status,
+    openingTime: status === "open" ? openingTime : undefined,
+    closingTime: status === "open" ? closingTime : undefined,
+    sourceTitle: optionalText(item.sourceTitle, "公式タイトル", 500) || "",
+    notes: optionalText(item.notes, "注記") || "",
+  };
+}
+
 export async function POST(request: Request) {
   const authorization = await assertImportAuthorization(request);
   if (!authorization.ok) return NextResponse.json({ error: authorization.message }, { status: authorization.status });
@@ -85,19 +108,30 @@ export async function POST(request: Request) {
       runId?: string;
       scheduleKeys?: string[];
       operationKeys?: string[];
+      operatingDayKeys?: string[];
       scheduleEdits?: unknown[];
       operationEdits?: unknown[];
+      operatingDayEdits?: unknown[];
     };
     if (!body.runId || !/^[0-9a-f-]{36}$/i.test(body.runId)) {
       return NextResponse.json({ error: "公開する取込IDが正しくありません。" }, { status: 400 });
     }
     const scheduleEdits = Array.isArray(body.scheduleEdits) ? body.scheduleEdits.map(parseScheduleEdit) : [];
     const operationEdits = Array.isArray(body.operationEdits) ? body.operationEdits.map(parseOperationEdit) : [];
-    await updateImportDrafts(body.runId, scheduleEdits, operationEdits);
+    const operatingDayEdits = Array.isArray(body.operatingDayEdits) ? body.operatingDayEdits.map(parseOperatingDayEdit) : [];
+    const selectedOperatingDayKeys = Array.isArray(body.operatingDayKeys)
+      ? body.operatingDayKeys.map((key) => requiredText(key, "営業情報識別子", 1000))
+      : undefined;
+    const selectedOperatingDayKeySet = new Set(selectedOperatingDayKeys ?? []);
+    if (operatingDayEdits.some((edit) => selectedOperatingDayKeySet.has(edit.externalKey) && edit.operatingStatus === "unknown")) {
+      return NextResponse.json({ error: "確認が必要な営業情報は、営業日または休園日に修正してから公開してください。" }, { status: 400 });
+    }
+    await updateImportDrafts(body.runId, scheduleEdits, operationEdits, operatingDayEdits);
     await publishImportRun(
       body.runId,
       Array.isArray(body.scheduleKeys) ? body.scheduleKeys : undefined,
       Array.isArray(body.operationKeys) ? body.operationKeys : undefined,
+      selectedOperatingDayKeys,
     );
     return NextResponse.json({ published: true, runId: body.runId });
   } catch (error) {

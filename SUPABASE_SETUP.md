@@ -19,6 +19,8 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/202607300002_plan_options_seed.sql`
 - `supabase/migrations/202608030001_site_analytics.sql`
 - `supabase/migrations/202608030002_site_analytics_plan_exports.sql`
+- `supabase/migrations/202608110001_park_operating_days.sql`
+- `supabase/migrations/202608110002_fix_publish_import_run_operating_day_filter.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read
@@ -33,6 +35,8 @@ The analytics migration stores privacy-friendly daily article view totals
 without IP addresses, cookies, or user-agent data.
 The site analytics migration adds the same privacy-friendly daily totals for
 TOP page visits, newly created My Plans, plan image saves, and plan shares.
+The park operating-days migration adds reviewable and publishable opening,
+closing, and closed-day data sourced from the official calendar.
 The search migration adds Japanese-friendly partial matching indexes and a
 published-article search function.
 The series migration groups ordered articles into public reading collections.

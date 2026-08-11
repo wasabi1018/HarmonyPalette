@@ -3,8 +3,9 @@ import "server-only";
 import type { InitialCharacterData } from "@/lib/character-store";
 import { addDays } from "@/lib/official-import/utils";
 import type { InitialScheduleData, ScheduleEntry } from "@/lib/schedule-store";
+import type { InitialParkOperatingDayData, ParkOperatingDay } from "@/lib/park-operating-day-store";
 import { getRegisteredCharacters } from "@/lib/supabase/character-repository";
-import { getPublishedSchedules } from "@/lib/supabase/schedule-repository";
+import { getPublishedParkOperatingDays, getPublishedSchedules } from "@/lib/supabase/schedule-repository";
 import { getSupabaseConfigStatus } from "@/lib/supabase/server";
 
 function todayInJapan() {
@@ -75,6 +76,35 @@ export async function getInitialCharacterData(): Promise<InitialCharacterData> {
       characters: [],
       status: "error",
       error: error instanceof Error ? error.message : "キャラクター一覧を取得できませんでした。",
+    };
+  }
+}
+
+export async function getInitialParkOperatingDayData(): Promise<InitialParkOperatingDayData> {
+  if (!getSupabaseConfigStatus().canRead) {
+    return { operatingDays: [], status: "unavailable", error: "" };
+  }
+
+  try {
+    const today = todayInJapan();
+    const rows = await getPublishedParkOperatingDays(addDays(today, -31), "9999-12-31");
+    const operatingDays: ParkOperatingDay[] = (rows ?? []).map((row) => ({
+      id: `supabase:${row.id}`,
+      date: row.operation_date,
+      operatingStatus: row.operating_status,
+      openingTime: row.opening_time ? String(row.opening_time).slice(0, 5) : undefined,
+      closingTime: row.closing_time ? String(row.closing_time).slice(0, 5) : undefined,
+      sourceTitle: row.source_title,
+      notes: row.notes,
+      officialUrl: row.official_url,
+      updatedAt: row.updated_at,
+    }));
+    return { operatingDays, status: "success", error: "" };
+  } catch (error) {
+    return {
+      operatingDays: [],
+      status: "error",
+      error: error instanceof Error ? error.message : "公開営業情報を取得できませんでした。",
     };
   }
 }

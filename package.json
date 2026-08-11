@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test:birthday": "tsx --test lib/character-birthday.test.ts",
+    "test:park-operating-days": "tsx --test lib/official-import/park-operating-days.test.ts",
     "test:schedule-calendar": "tsx --test lib/schedule-calendar.test.ts",
     "seed:character-theme-colors": "tsx scripts/seed-character-theme-colors.ts",
     "seed:plan-options": "tsx scripts/seed-plan-options.ts",

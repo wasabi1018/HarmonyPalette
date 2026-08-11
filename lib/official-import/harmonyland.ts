@@ -1,25 +1,20 @@
 import { parseHarmonylandDailyPdf } from "@/lib/official-import/daily-pdf-parser";
 import { importFanStudioSchedules } from "@/lib/official-import/funstudio";
+import { normalizeParkOperatingDay, type HarmonylandCalendarRecord } from "@/lib/official-import/park-operating-days";
 import type { ImportPreview, SourceDocument } from "@/lib/official-import/types";
-import { createRunId, sha256 } from "@/lib/official-import/utils";
+import { addDays, createRunId, sha256 } from "@/lib/official-import/utils";
 import { SITE_URL } from "@/lib/site-config";
 
 const CALENDAR_API = "https://www.harmonyland.jp/wp/?mc-api=json";
 const USER_AGENT = `HarmonyPaletteImporter/0.1 (+${SITE_URL})`;
 
-type CalendarRecord = {
-  category_name?: string;
-  event_link?: string;
-  event_time?: string;
-  event_endtime?: string;
-  event_title?: string;
-};
-
-type CalendarResponse = Record<string, CalendarRecord[]>;
+type CalendarResponse = Record<string, HarmonylandCalendarRecord[]>;
 
 export type OfficialImportOptions = {
   from: string;
   to: string;
+  includeSchedules?: boolean;
+  includeParkOperatingDays?: boolean;
   includeFanStudio?: boolean;
   onProgress?: (message: string) => void;
 };
@@ -40,6 +35,7 @@ export async function importHarmonylandOfficialSchedules(options: OfficialImport
   const generatedAt = new Date().toISOString();
   const schedules: ImportPreview["schedules"] = [];
   const operations: ImportPreview["operations"] = [];
+  const operatingDays: ImportPreview["operatingDays"] = [];
   const documents: SourceDocument[] = [];
   const warnings: string[] = [];
   const apiUrl = `${CALENDAR_API}&from=${options.from}&to=${options.to}`;
@@ -63,10 +59,31 @@ export async function importHarmonylandOfficialSchedules(options: OfficialImport
     metadata: { role: "calendar-api", from: options.from, to: options.to },
   });
 
+  const includeSchedules = options.includeSchedules !== false;
+  const includeParkOperatingDays = options.includeParkOperatingDays !== false;
+  const seenDates = new Set(Object.keys(calendar));
+
+  if (includeParkOperatingDays) {
+    for (let date = options.from; date <= options.to; date = addDays(date, 1)) {
+      if (!seenDates.has(date)) warnings.push(`${date}: 公式カレンダーに営業情報がありません。`);
+    }
+  }
+
   for (const [date, records] of Object.entries(calendar).sort(([a], [b]) => a.localeCompare(b))) {
+    const operatingDay = normalizeParkOperatingDay(date, records, apiUrl);
+    if (includeParkOperatingDays) {
+      operatingDays.push(operatingDay);
+      if (operatingDay.verificationStatus !== "verified") {
+        warnings.push(`${date}: ${operatingDay.notes}`);
+      }
+    }
+
+    if (!includeSchedules) continue;
     const pdf = records.find((record) => record.event_link?.toLocaleLowerCase().includes(".pdf"));
     if (!pdf?.event_link) {
-      warnings.push(`${date}: 日別スケジュールPDFが登録されていません。`);
+      if (operatingDay.operatingStatus !== "closed") {
+        warnings.push(`${date}: 日別スケジュールPDFが登録されていません。`);
+      }
       continue;
     }
     options.onProgress?.(`${date}の公式PDFを解析しています。`);
@@ -98,7 +115,7 @@ export async function importHarmonylandOfficialSchedules(options: OfficialImport
     }
   }
 
-  if (options.includeFanStudio) {
+  if (includeSchedules && options.includeFanStudio) {
     options.onProgress?.("ファンスタジオ予定表を取得しています。");
     try {
       const fanStudio = await importFanStudioSchedules(options.from, options.to, options.onProgress);
@@ -110,7 +127,7 @@ export async function importHarmonylandOfficialSchedules(options: OfficialImport
     }
   }
 
-  return { runId, generatedAt, rangeStart: options.from, rangeEnd: options.to, schedules, operations, documents, warnings };
+  return { runId, generatedAt, rangeStart: options.from, rangeEnd: options.to, schedules, operations, operatingDays, documents, warnings };
 }
 
 export function summarizeImportPreview(preview: ImportPreview) {
@@ -121,9 +138,11 @@ export function summarizeImportPreview(preview: ImportPreview) {
     rangeEnd: preview.rangeEnd,
     scheduleCount: preview.schedules.length,
     operationCount: preview.operations.length,
+    operatingDayCount: preview.operatingDays.length,
     documentCount: preview.documents.length,
     warnings: preview.warnings,
     schedules: preview.schedules.map(({ rawPayload, ...entry }) => ({ ...entry, hasRawPayload: Object.keys(rawPayload).length > 0 })),
     operations: preview.operations.map(({ rawPayload, ...entry }) => ({ ...entry, hasRawPayload: Object.keys(rawPayload).length > 0 })),
+    operatingDays: preview.operatingDays.map(({ rawPayload, ...entry }) => ({ ...entry, hasRawPayload: Object.keys(rawPayload).length > 0 })),
   };
 }

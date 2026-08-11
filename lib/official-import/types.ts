@@ -46,6 +46,23 @@ export type AttractionOperationCandidate = {
   rawPayload: Record<string, unknown>;
 };
 
+export type ParkOperatingDayCandidate = {
+  externalKey: string;
+  sourceId: "harmonyland-calendar";
+  sourceReference: string;
+  sourceHash: string;
+  date: string;
+  operatingStatus: "open" | "closed" | "unknown";
+  openingTime?: string;
+  closingTime?: string;
+  sourceTitle: string;
+  notes: string;
+  officialUrl: string;
+  verificationStatus: VerificationStatus;
+  confidence: number;
+  rawPayload: Record<string, unknown>;
+};
+
 export type SourceDocument = {
   sourceId: ImportSourceId;
   sourceUrl: string;
@@ -63,7 +80,7 @@ export type ImportPreview = {
   rangeEnd: string;
   schedules: ImportedScheduleCandidate[];
   operations: AttractionOperationCandidate[];
+  operatingDays: ParkOperatingDayCandidate[];
   documents: SourceDocument[];
   warnings: string[];
 };
-

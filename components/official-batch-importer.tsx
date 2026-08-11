@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { AlertTriangle, Check, CloudDownload, Database, LoaderCircle, Pencil, Rocket, TrainFront, X } from "lucide-react";
+import { AlertTriangle, Check, Clock3, CloudDownload, Database, LoaderCircle, Pencil, Rocket, TrainFront, X } from "lucide-react";
 
 type PreviewSchedule = {
   externalKey: string;
@@ -28,16 +28,31 @@ type PreviewOperation = {
   confidence: number;
 };
 
+type PreviewOperatingDay = {
+  externalKey: string;
+  date: string;
+  operatingStatus: "open" | "closed" | "unknown";
+  openingTime?: string;
+  closingTime?: string;
+  sourceTitle: string;
+  notes: string;
+  confidence: number;
+};
+
+type ImportMode = "all" | "operating-days-only" | "exclude-operating-days";
+
 type ImportResult = {
   runId: string;
   rangeStart: string;
   rangeEnd: string;
   scheduleCount: number;
   operationCount: number;
+  operatingDayCount: number;
   documentCount: number;
   warnings: string[];
   schedules: PreviewSchedule[];
   operations: PreviewOperation[];
+  operatingDays: PreviewOperatingDay[];
   persisted: boolean;
 };
 
@@ -55,6 +70,11 @@ function todayInJapan() {
 
 const inputClass = "min-h-11 w-full rounded-xl border border-ink/10 bg-white px-3 text-[13px] font-bold text-ink outline-none focus:border-pink focus:ring-4 focus:ring-pink/10";
 const editInputClass = "min-h-10 w-full min-w-0 rounded-lg border border-ink/10 bg-white px-2.5 text-[11px] font-bold text-ink outline-none focus:border-pink focus:ring-2 focus:ring-pink/10";
+const IMPORT_MODE_OPTIONS: Array<{ value: ImportMode; label: string; description: string }> = [
+  { value: "all", label: "すべて取り込む", description: "営業情報と日別PDFを取得します。" },
+  { value: "operating-days-only", label: "営業情報のみ", description: "開園・閉園・休園のみ取得し、PDFやOCRは実行しません。" },
+  { value: "exclude-operating-days", label: "営業情報を除外", description: "日別PDFを解析し、営業情報候補は作成しません。" },
+];
 
 function parseCharacterNames(value: string) {
   return [...new Set(value.split(/[・,、]/).map((name) => name.trim()).filter(Boolean))];
@@ -65,6 +85,7 @@ export function OfficialBatchImporter({ config }: Props) {
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
   const [includeFanStudio, setIncludeFanStudio] = useState(true);
+  const [importMode, setImportMode] = useState<ImportMode>("all");
   const [loading, setLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
@@ -72,8 +93,10 @@ export function OfficialBatchImporter({ config }: Props) {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [selectedSchedules, setSelectedSchedules] = useState<string[]>([]);
   const [selectedOperations, setSelectedOperations] = useState<string[]>([]);
+  const [selectedOperatingDays, setSelectedOperatingDays] = useState<string[]>([]);
   const [editedSchedules, setEditedSchedules] = useState<string[]>([]);
   const [editedOperations, setEditedOperations] = useState<string[]>([]);
+  const [editedOperatingDays, setEditedOperatingDays] = useState<string[]>([]);
 
   const runImport = async () => {
     setLoading(true);
@@ -84,7 +107,12 @@ export function OfficialBatchImporter({ config }: Props) {
       const response = await fetch("/api/admin/import/official", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ from, to, includeFanStudio }),
+        body: JSON.stringify({
+          from,
+          to,
+          importMode,
+          includeFanStudio: importMode === "operating-days-only" ? false : includeFanStudio,
+        }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "公式データの取得に失敗しました。");
@@ -92,8 +120,12 @@ export function OfficialBatchImporter({ config }: Props) {
       setResult(imported);
       setSelectedSchedules(imported.schedules.map((entry) => entry.externalKey));
       setSelectedOperations(imported.operations.map((entry) => entry.externalKey));
+      setSelectedOperatingDays(imported.operatingDays
+        .filter((entry) => entry.operatingStatus !== "unknown")
+        .map((entry) => entry.externalKey));
       setEditedSchedules([]);
       setEditedOperations([]);
+      setEditedOperatingDays([]);
       setFeedback(imported.persisted
         ? "Supabaseへ確認待ちデータとして保存しました。内容を確認して公開してください。"
         : "解析は完了しましたが、Supabaseの秘密鍵が未設定のため保存していません。");
@@ -116,6 +148,7 @@ export function OfficialBatchImporter({ config }: Props) {
           runId: result.runId,
           scheduleKeys: selectedSchedules,
           operationKeys: selectedOperations,
+          operatingDayKeys: selectedOperatingDays,
           scheduleEdits: result.schedules
             .filter((entry) => selectedSchedules.includes(entry.externalKey))
             .map((entry) => ({
@@ -140,11 +173,22 @@ export function OfficialBatchImporter({ config }: Props) {
               operationStatus: entry.operationStatus,
               notes: entry.notes,
             })),
+          operatingDayEdits: result.operatingDays
+            .filter((entry) => selectedOperatingDays.includes(entry.externalKey))
+            .map((entry) => ({
+              externalKey: entry.externalKey,
+              date: entry.date,
+              operatingStatus: entry.operatingStatus,
+              openingTime: entry.openingTime,
+              closingTime: entry.closingTime,
+              sourceTitle: entry.sourceTitle,
+              notes: entry.notes,
+            })),
         }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "公開に失敗しました。");
-      setFeedback(`予定${selectedSchedules.length}件、運行情報${selectedOperations.length}件を公開しました。`);
+      setFeedback(`予定${selectedSchedules.length}件、運行情報${selectedOperations.length}件、営業情報${selectedOperatingDays.length}日を公開しました。`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "公開に失敗しました。");
     } finally {
@@ -172,13 +216,21 @@ export function OfficialBatchImporter({ config }: Props) {
     setEditedOperations((current) => current.includes(key) ? current : [...current, key]);
   };
 
+  const updateOperatingDay = (key: string, patch: Partial<PreviewOperatingDay>) => {
+    setResult((current) => current ? {
+      ...current,
+      operatingDays: current.operatingDays.map((entry) => entry.externalKey === key ? { ...entry, ...patch } : entry),
+    } : current);
+    setEditedOperatingDays((current) => current.includes(key) ? current : [...current, key]);
+  };
+
   return (
     <section className="mb-5 rounded-[24px] border border-sky/20 bg-gradient-to-br from-[#eef8fc] via-white to-[#fff8fb] p-4 shadow-soft sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="flex items-center gap-2 text-[11px] font-black tracking-[0.16em] text-sky"><CloudDownload size={15} aria-hidden="true" />OFFICIAL BATCH IMPORT</p>
           <h2 className="mt-1 text-xl font-black text-ink">公式サイトから取得</h2>
-          <p className="mt-2 max-w-2xl text-[12px] font-bold leading-6 text-ink/55">日別PDFからイベント・グリーティング・アトラクション運行情報を取得します。ファンスタジオ画像はOCRのため、必ず候補を確認してください。</p>
+          <p className="mt-2 max-w-2xl text-[12px] font-bold leading-6 text-ink/55">公式カレンダーから営業情報を取得し、必要に応じて日別PDFからイベント・グリーティング・アトラクション運行情報を解析します。</p>
         </div>
         <span className={`inline-flex min-h-8 items-center gap-1.5 self-start rounded-full px-3 text-[10px] font-black ${config.canWrite ? "bg-mint/15 text-[#35745f]" : "bg-[#fff4df] text-[#9a6620]"}`}><Database size={13} aria-hidden="true" />{config.canWrite ? "Supabase接続準備済み" : "Supabase秘密鍵が未設定"}</span>
       </div>
@@ -194,20 +246,38 @@ export function OfficialBatchImporter({ config }: Props) {
         <label><span className="mb-1.5 block text-[11px] font-black text-ink/55">終了日</span><input type="date" min={from} value={to} onChange={(event) => setTo(event.target.value)} className={inputClass} /></label>
       </div>
 
+      <fieldset className="mt-4">
+        <legend className="mb-2 text-[11px] font-black text-ink/55">取込対象</legend>
+        <div className="grid gap-2 md:grid-cols-3">
+          {IMPORT_MODE_OPTIONS.map((option) => (
+            <label key={option.value} className={`cursor-pointer rounded-xl border p-3 transition-colors ${importMode === option.value ? "border-sky bg-sky/5" : "border-ink/10 bg-white"}`}>
+              <span className="flex items-start gap-2">
+                <input type="radio" name="official-import-mode" value={option.value} checked={importMode === option.value} onChange={() => setImportMode(option.value)} className="mt-0.5 h-4 w-4 shrink-0 accent-sky" />
+                <span>
+                  <span className="block text-[12px] font-black text-ink">{option.label}</span>
+                  <span className="mt-1 block text-[10px] font-bold leading-5 text-ink/45">{option.description}</span>
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-white px-3 text-[12px] font-bold text-ink/65"><input type="checkbox" checked={includeFanStudio} onChange={(event) => setIncludeFanStudio(event.target.checked)} className="h-4 w-4 accent-pink" />ファンスタジオ画像もOCRする</label>
+        <label className={`flex min-h-11 items-center gap-2 rounded-xl border border-ink/10 bg-white px-3 text-[12px] font-bold text-ink/65 ${importMode === "operating-days-only" ? "cursor-not-allowed opacity-45" : "cursor-pointer"}`}><input type="checkbox" checked={includeFanStudio && importMode !== "operating-days-only"} disabled={importMode === "operating-days-only"} onChange={(event) => setIncludeFanStudio(event.target.checked)} className="h-4 w-4 accent-pink" />ファンスタジオ画像もOCRする</label>
         <button type="button" onClick={runImport} disabled={loading || !from || !to} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky px-5 text-[12px] font-black text-white disabled:cursor-not-allowed disabled:opacity-40">{loading ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <CloudDownload size={16} aria-hidden="true" />}{loading ? "公式データを解析中…" : "確認待ちデータを取得"}</button>
       </div>
-      {includeFanStudio && <p className="mt-2 text-[10px] font-bold leading-5 text-ink/40">OCRは時間がかかるため、最初は1日単位での取得をおすすめします。</p>}
+      {includeFanStudio && importMode !== "operating-days-only" && <p className="mt-2 text-[10px] font-bold leading-5 text-ink/40">OCRは時間がかかるため、最初は1日単位での取得をおすすめします。</p>}
 
       {error && <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2.5 text-[11px] font-bold text-red-600">{error}</p>}
       {feedback && <p role="status" className="mt-3 rounded-xl bg-mint/10 px-3 py-2.5 text-[11px] font-bold text-[#35745f]">{feedback}</p>}
 
       {result && (
         <div className="mt-5 space-y-4 border-t border-sky/15 pt-4">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <CountCard label="予定候補" value={result.scheduleCount} />
             <CountCard label="運行情報" value={result.operationCount} />
+            <CountCard label="営業情報" value={result.operatingDayCount} />
             <CountCard label="原本保存" value={result.documentCount} />
           </div>
           {result.warnings.length > 0 && <div className="rounded-xl bg-[#fff9ec] p-3 text-[11px] font-bold leading-5 text-[#76582f]"><p className="font-black">要確認 {result.warnings.length}件</p><ul className="mt-1 list-disc pl-5">{result.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div>}
@@ -226,6 +296,13 @@ export function OfficialBatchImporter({ config }: Props) {
             edited={editedOperations}
             onToggle={(key) => toggle(key, selectedOperations, setSelectedOperations)}
             onChange={updateOperation}
+          />
+          <OperatingDayList
+            entries={result.operatingDays}
+            selected={selectedOperatingDays}
+            edited={editedOperatingDays}
+            onToggle={(key) => toggle(key, selectedOperatingDays, setSelectedOperatingDays)}
+            onChange={updateOperatingDay}
           />
 
           <div className="flex flex-col gap-2 rounded-xl border border-pink/15 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><p className="text-[11px] font-bold leading-5 text-ink/55">「編集」から文字列を修正できます。チェックを外した候補は公開されません。修正内容は公開時にSupabaseへ保存されます。</p><button type="button" onClick={publish} disabled={!result.persisted || publishing} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-pink px-5 text-[12px] font-black text-white disabled:cursor-not-allowed disabled:opacity-40">{publishing ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <Rocket size={16} aria-hidden="true" />}修正内容を保存して公開</button></div>
@@ -248,6 +325,7 @@ function CandidateList({ title, entries, selected, edited, onToggle, onChange }:
   onChange: (key: string, patch: Partial<PreviewSchedule>) => void;
 }) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  if (entries.length === 0) return null;
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
@@ -305,6 +383,7 @@ function OperationList({ entries, selected, edited, onToggle, onChange }: {
   onChange: (key: string, patch: Partial<PreviewOperation>) => void;
 }) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  if (entries.length === 0) return null;
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
@@ -338,6 +417,68 @@ function OperationList({ entries, selected, edited, onToggle, onChange }: {
                   <EditLabel label="開始時間"><input aria-label={`${entry.attractionName}の開始時間`} type="time" value={entry.startTime || ""} onChange={(event) => onChange(entry.externalKey, { startTime: event.target.value || undefined })} className={editInputClass} /></EditLabel>
                   <EditLabel label="終了時間"><input aria-label={`${entry.attractionName}の終了時間`} type="time" value={entry.endTime || ""} onChange={(event) => onChange(entry.externalKey, { endTime: event.target.value || undefined })} className={editInputClass} /></EditLabel>
                   <EditLabel label="注記" wide><textarea aria-label={`${entry.attractionName}の注記`} rows={3} value={entry.notes} onChange={(event) => onChange(entry.externalKey, { notes: event.target.value })} className={`${editInputClass} resize-y py-2`} /></EditLabel>
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function OperatingDayList({ entries, selected, edited, onToggle, onChange }: {
+  entries: PreviewOperatingDay[];
+  selected: string[];
+  edited: string[];
+  onToggle: (key: string) => void;
+  onChange: (key: string, patch: Partial<PreviewOperatingDay>) => void;
+}) {
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  if (entries.length === 0) return null;
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="flex items-center gap-1.5 text-[13px] font-black text-ink"><Clock3 size={15} className="text-[#53a687]" aria-hidden="true" />営業情報（開園・閉園・休園）</h3>
+        <span className="text-[10px] font-bold text-ink/40">選択中 {selected.length}/{entries.length}</span>
+      </div>
+      <div className="grid max-h-[560px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
+        {entries.map((entry) => {
+          const isSelected = selected.includes(entry.externalKey);
+          const isEditing = editingKey === entry.externalKey;
+          const statusLabel = entry.operatingStatus === "open"
+            ? `${entry.openingTime || "時刻未定"}〜${entry.closingTime || "時刻未定"}`
+            : entry.operatingStatus === "closed" ? "休園日" : "確認が必要";
+          return (
+            <article key={entry.externalKey} className={`min-w-0 rounded-xl border p-3 ${isSelected ? "border-mint/40 bg-white" : "border-ink/10 bg-white/50 opacity-60"}`}>
+              <div className="flex min-w-0 items-start gap-2">
+                <label className="flex min-w-0 flex-1 cursor-pointer items-start gap-2">
+                  <input type="checkbox" checked={isSelected} onChange={() => onToggle(entry.externalKey)} className="mt-0.5 h-4 w-4 shrink-0 accent-[#53a687]" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="block min-w-0 flex-1 text-[11px] font-black text-ink">{entry.date.replaceAll("-", "/")}</span>
+                      {edited.includes(entry.externalKey) && <span className="shrink-0 rounded-full bg-mint/15 px-2 py-0.5 text-[8px] font-black text-[#35745f]">修正済み</span>}
+                    </span>
+                    <span className={`mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-black ${entry.operatingStatus === "closed" ? "bg-pink/10 text-pink" : entry.operatingStatus === "open" ? "bg-mint/15 text-[#35745f]" : "bg-[#fff4df] text-[#9a6620]"}`}>{statusLabel}</span>
+                    {entry.notes && <span className="mt-1 block text-[9px] font-bold leading-4 text-[#9a6620]">{entry.notes}</span>}
+                    <span className="mt-1 inline-flex items-center gap-1 text-[9px] font-bold text-ink/35"><Check size={10} aria-hidden="true" />解析確度 {Math.round(entry.confidence * 100)}%</span>
+                  </span>
+                </label>
+                <button type="button" onClick={() => setEditingKey(isEditing ? null : entry.externalKey)} aria-expanded={isEditing} className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg border border-mint/30 px-2 text-[9px] font-black text-[#35745f]">
+                  {isEditing ? <X size={12} aria-hidden="true" /> : <Pencil size={12} aria-hidden="true" />}{isEditing ? "閉じる" : "編集"}
+                </button>
+              </div>
+              {isEditing && (
+                <div className="mt-3 grid min-w-0 gap-2 border-t border-mint/20 pt-3 sm:grid-cols-2">
+                  <EditLabel label="営業日"><input aria-label={`${entry.date}の営業日`} type="date" value={entry.date} onChange={(event) => onChange(entry.externalKey, { date: event.target.value })} className={editInputClass} /></EditLabel>
+                  <EditLabel label="営業状態"><select aria-label={`${entry.date}の営業状態`} value={entry.operatingStatus} onChange={(event) => onChange(entry.externalKey, { operatingStatus: event.target.value as PreviewOperatingDay["operatingStatus"], openingTime: event.target.value === "open" ? entry.openingTime : undefined, closingTime: event.target.value === "open" ? entry.closingTime : undefined })} className={editInputClass}><option value="open">営業日</option><option value="closed">休園日</option><option value="unknown">確認が必要</option></select></EditLabel>
+                  {entry.operatingStatus === "open" && <>
+                    <EditLabel label="開園時間"><input aria-label={`${entry.date}の開園時間`} type="time" value={entry.openingTime || ""} onChange={(event) => onChange(entry.externalKey, { openingTime: event.target.value || undefined })} className={editInputClass} /></EditLabel>
+                    <EditLabel label="閉園時間"><input aria-label={`${entry.date}の閉園時間`} type="time" value={entry.closingTime || ""} onChange={(event) => onChange(entry.externalKey, { closingTime: event.target.value || undefined })} className={editInputClass} /></EditLabel>
+                  </>}
+                  <EditLabel label="公式タイトル" wide><input aria-label={`${entry.date}の公式タイトル`} value={entry.sourceTitle} onChange={(event) => onChange(entry.externalKey, { sourceTitle: event.target.value })} className={editInputClass} /></EditLabel>
+                  <EditLabel label="注記" wide><textarea aria-label={`${entry.date}の注記`} rows={3} value={entry.notes} onChange={(event) => onChange(entry.externalKey, { notes: event.target.value })} className={`${editInputClass} resize-y py-2`} /></EditLabel>
                 </div>
               )}
             </article>

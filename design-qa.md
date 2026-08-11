@@ -546,3 +546,45 @@ The time labels, room headers, character names, and emoji are readable in the fu
 ## Final result
 
 passed
+
+---
+
+# Homepage Centered Logo — Design QA
+
+## Scope
+
+- Removed the hero headline “今日の「会いたい」が、すぐ見つかる。”
+- Added the supplied Harmony Palette logo treatment without the operating-hours card.
+- Centered the logo, supporting copy, and actions at the desktop breakpoint while preserving the mobile layout.
+
+## Visual truth and evidence
+
+- Supplied reference: `C:/Users/mkcs1/AppData/Local/Temp/codex-clipboard-f2cf50e2-b6a2-40bd-bc54-4e266c308ce6.png` (415 × 291)
+- Desktop browser render: `C:/Harmony Palette/audit/73-home-logo-centered-desktop.png` (1515 × 891)
+- Mobile browser render: `C:/Harmony Palette/audit/74-home-logo-mobile.png` (375 × 835)
+- Side-by-side comparison: `C:/Harmony Palette/audit/75-home-logo-centered-comparison.png` (2000 × 680)
+
+The requested target is the hero logo region, which is fully readable in the side-by-side comparison; no additional focused crop was necessary.
+
+## Comparison history
+
+1. The supplied image establishes the illustrated Harmony Palette logo inside a white rounded card.
+2. The implementation reuses the existing full-resolution `logo-hero.png` asset, removes the operating-hours panel, and positions the logo card on the page centerline.
+3. Desktop and mobile browser captures confirm the image is not clipped or stretched and the supporting text and actions remain readable.
+
+## Required fidelity surfaces
+
+- Logo: exact existing Harmony Palette artwork; no redrawing or placeholder treatment.
+- Layout: centered logo card on desktop, full-width responsive card on mobile.
+- Copy: the former hero headline is absent; the existing explanatory copy remains.
+- Responsive behavior: no horizontal overflow or clipped hero content at 1530 × 900 and 390 × 844 CSS viewports.
+
+## Severity review
+
+- P0: none.
+- P1: none.
+- P2: none.
+
+## Final result
+
+passed

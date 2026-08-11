@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CakeSlice, ChevronLeft, ChevronRight, PartyPopper, Sparkles } from "lucide-react";
+import { CakeSlice, CalendarX2, ChevronLeft, ChevronRight, PartyPopper, Sparkles } from "lucide-react";
 import type { CharacterBirthdayOccurrence } from "@/lib/character-birthday";
 import {
   buildScheduleCalendarMonth,
@@ -10,13 +10,14 @@ import {
 } from "@/lib/schedule-calendar";
 import { isFanStudioGreeting } from "@/lib/schedule-display";
 import type { ScheduleEntry } from "@/lib/schedule-store";
+import type { ParkOperatingDay } from "@/lib/park-operating-day-store";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
 type CalendarPreview = {
   key: string;
   label: string;
-  kind: "birthday" | "event" | "fan-studio";
+  kind: "birthday" | "event" | "fan-studio" | "closed";
 };
 
 function entriesForDate(entries: ScheduleEntry[], date: string) {
@@ -48,12 +49,14 @@ function previewItems(
 }
 
 function previewClassName(kind: CalendarPreview["kind"]) {
+  if (kind === "closed") return "bg-[#fff0f5] text-pink";
   if (kind === "birthday") return "bg-pink/10 text-pink";
   if (kind === "fan-studio") return "bg-lavender/10 text-lavender";
   return "bg-[#fff2d8] text-[#966023]";
 }
 
 function PreviewIcon({ kind }: { kind: CalendarPreview["kind"] }) {
+  if (kind === "closed") return <CalendarX2 size={10} aria-hidden="true" />;
   if (kind === "birthday") return <CakeSlice size={10} aria-hidden="true" />;
   if (kind === "fan-studio") return <Sparkles size={10} aria-hidden="true" />;
   return <PartyPopper size={10} aria-hidden="true" />;
@@ -79,12 +82,14 @@ function MonthPanel({
   month,
   entries,
   birthdays,
+  operatingDaysByDate,
   today,
   onSelectDate,
 }: {
   month: ScheduleCalendarMonth;
   entries: ScheduleEntry[];
   birthdays: CharacterBirthdayOccurrence[];
+  operatingDaysByDate: Map<string, ParkOperatingDay>;
   today: string;
   onSelectDate: (date: string) => void;
 }) {
@@ -113,7 +118,13 @@ function MonthPanel({
           const selectable = calendarDate.isInMonth && calendarDate.isInRange;
           const dateEntries = selectable ? entriesForDate(entries, calendarDate.date) : [];
           const dateBirthdays = selectable ? birthdays.filter(({ date }) => date === calendarDate.date) : [];
-          const previews = previewItems(dateEntries, dateBirthdays);
+          const operatingDay = selectable ? operatingDaysByDate.get(calendarDate.date) : undefined;
+          const previews = [
+            ...(operatingDay?.operatingStatus === "closed"
+              ? [{ key: "closed", label: "休園日", kind: "closed" as const }]
+              : []),
+            ...previewItems(dateEntries, dateBirthdays),
+          ];
           const weekdayIndex = index % 7;
           const isToday = calendarDate.date === today;
           const fullDateLabel = new Intl.DateTimeFormat("ja-JP", {
@@ -123,6 +134,7 @@ function MonthPanel({
             weekday: "long",
           }).format(new Date(`${calendarDate.date}T12:00:00`));
           const summary = [
+            operatingDay?.operatingStatus === "closed" ? "休園日" : "",
             dateBirthdays.length > 0 ? `誕生日${dateBirthdays.length}件` : "",
             dateEntries.length > 0 ? `予定${dateEntries.length}件` : "予定なし",
           ].filter(Boolean).join("、");
@@ -189,6 +201,7 @@ export function ScheduleMonthCalendar({
   toDate,
   entries,
   birthdays,
+  operatingDays,
   today,
   onSelectDate,
 }: {
@@ -196,6 +209,7 @@ export function ScheduleMonthCalendar({
   toDate: string;
   entries: ScheduleEntry[];
   birthdays: CharacterBirthdayOccurrence[];
+  operatingDays: ParkOperatingDay[];
   today: string;
   onSelectDate: (date: string) => void;
 }) {
@@ -203,6 +217,10 @@ export function ScheduleMonthCalendar({
     .map((key) => buildScheduleCalendarMonth(key, fromDate, toDate))
     .filter((month): month is ScheduleCalendarMonth => month !== null), [fromDate, toDate]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const operatingDaysByDate = useMemo(
+    () => new Map(operatingDays.map((entry) => [entry.date, entry])),
+    [operatingDays],
+  );
 
   useEffect(() => setActiveIndex(0), [fromDate, toDate]);
 
@@ -241,10 +259,10 @@ export function ScheduleMonthCalendar({
       </div>
 
       <div className="lg:hidden">
-        <MonthPanel month={mobileMonth} entries={entries} birthdays={birthdays} today={today} onSelectDate={onSelectDate} />
+        <MonthPanel month={mobileMonth} entries={entries} birthdays={birthdays} operatingDaysByDate={operatingDaysByDate} today={today} onSelectDate={onSelectDate} />
       </div>
       <div className="hidden gap-4 lg:grid lg:grid-cols-2">
-        {desktopMonths.map((month) => <MonthPanel key={month.key} month={month} entries={entries} birthdays={birthdays} today={today} onSelectDate={onSelectDate} />)}
+        {desktopMonths.map((month) => <MonthPanel key={month.key} month={month} entries={entries} birthdays={birthdays} operatingDaysByDate={operatingDaysByDate} today={today} onSelectDate={onSelectDate} />)}
       </div>
     </div>
   );

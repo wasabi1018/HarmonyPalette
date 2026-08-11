@@ -1,6 +1,5 @@
 import { importHarmonylandOfficialSchedules, summarizeImportPreview } from "@/lib/official-import/harmonyland";
 import { addDays } from "@/lib/official-import/utils";
-import { persistImportPreview } from "@/lib/supabase/schedule-repository";
 
 function argumentValue(name: string) {
   const direct = process.argv.find((argument) => argument.startsWith(`${name}=`));
@@ -14,16 +13,22 @@ async function main() {
   const from = argumentValue("--from") || today;
   const to = argumentValue("--to") || addDays(from, 6);
   const includeFanStudio = process.argv.includes("--fanstudio");
+  const operatingDaysOnly = process.argv.includes("--operating-days-only");
+  const excludeOperatingDays = process.argv.includes("--exclude-operating-days");
+  if (operatingDaysOnly && excludeOperatingDays) throw new Error("営業情報のみと営業情報除外は同時に指定できません。");
   const persist = process.argv.includes("--persist");
 
   const preview = await importHarmonylandOfficialSchedules({
     from,
     to,
-    includeFanStudio,
+    includeSchedules: !operatingDaysOnly,
+    includeParkOperatingDays: !excludeOperatingDays,
+    includeFanStudio: !operatingDaysOnly && includeFanStudio,
     onProgress: (message) => console.error(`[Harmony Palette] ${message}`),
   });
 
   if (persist) {
+    const { persistImportPreview } = await import("@/lib/supabase/schedule-repository");
     await persistImportPreview(preview, "cli");
     console.error(`[Harmony Palette] Supabaseへ確認待ちデータを保存しました: ${preview.runId}`);
   }
@@ -33,6 +38,7 @@ async function main() {
       runId: summary.runId,
       scheduleCount: summary.scheduleCount,
       operationCount: summary.operationCount,
+      operatingDayCount: summary.operatingDayCount,
       documentCount: summary.documentCount,
       warnings: summary.warnings,
       fanStudioSchedules: summary.schedules

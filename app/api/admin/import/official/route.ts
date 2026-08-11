@@ -12,11 +12,23 @@ export async function POST(request: Request) {
   if (!authorization.ok) return NextResponse.json({ error: authorization.message }, { status: authorization.status });
 
   try {
-    const body = await request.json() as { from?: string; to?: string; includeFanStudio?: boolean };
+    const body = await request.json() as {
+      from?: string;
+      to?: string;
+      includeFanStudio?: boolean;
+      importMode?: "all" | "operating-days-only" | "exclude-operating-days";
+    };
+    const importMode = body.importMode || "all";
+    if (!("all" === importMode || "operating-days-only" === importMode || "exclude-operating-days" === importMode)) {
+      return NextResponse.json({ error: "取込対象が正しくありません。" }, { status: 400 });
+    }
+    const includeSchedules = importMode !== "operating-days-only";
     const preview = await importHarmonylandOfficialSchedules({
       from: body.from || "",
       to: body.to || "",
-      includeFanStudio: body.includeFanStudio !== false,
+      includeSchedules,
+      includeParkOperatingDays: importMode !== "exclude-operating-days",
+      includeFanStudio: includeSchedules && body.includeFanStudio !== false,
     });
     const config = getSupabaseConfigStatus();
     let persisted = false;

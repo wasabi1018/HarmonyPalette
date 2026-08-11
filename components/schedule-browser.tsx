@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CakeSlice, CalendarDays, Check, ChevronDown, Clock3, Filter, LayoutList, LoaderCircle, MapPin, RotateCcw, Search, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
+import { CakeSlice, CalendarDays, CalendarX2, Check, ChevronDown, Clock3, Filter, LayoutList, LoaderCircle, MapPin, RotateCcw, Search, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
 import type { Character } from "@/data/types";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { ScheduleEntryCard } from "@/components/schedule-entry-card";
@@ -12,6 +12,7 @@ import { type InitialCharacterData, sortCharacterNames, useCharacters } from "@/
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
 import { buildScheduleEventOptionStates } from "@/lib/schedule-event-options";
 import { getEntryCharacterNames, type InitialScheduleData, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
+import { type InitialParkOperatingDayData, type ParkOperatingDay, useParkOperatingDays } from "@/lib/park-operating-day-store";
 
 type MatchMode = "any" | "all";
 type Period = "all" | "7" | "14" | "30";
@@ -46,6 +47,7 @@ export function ScheduleBrowser({
   initialView = "calendar",
   initialScheduleData,
   initialCharacterData,
+  initialOperatingDayData,
 }: {
   initialCharacters?: string[];
   initialEvents?: string[];
@@ -54,11 +56,14 @@ export function ScheduleBrowser({
   initialView?: ViewMode;
   initialScheduleData: InitialScheduleData;
   initialCharacterData: InitialCharacterData;
+  initialOperatingDayData: InitialParkOperatingDayData;
 }) {
   const scheduleState = useScheduleEntries({ initialData: initialScheduleData });
   const characterState = useCharacters({ initialData: initialCharacterData });
+  const operatingDayState = useParkOperatingDays(initialOperatingDayData);
   const { entries } = scheduleState;
   const { characters } = characterState;
+  const { operatingDays } = operatingDayState;
   const today = useMemo(todayInJapan, []);
   const hasInitialDateRange = Boolean(initialFromDate || initialToDate);
   const [fromDate, setFromDate] = useState(initialFromDate ?? today);
@@ -76,9 +81,12 @@ export function ScheduleBrowser({
   const closeCalendarDialog = useCallback(() => setCalendarDialogDate(null), []);
 
   const bounds = useMemo(() => {
-    const dates = entries.flatMap((entry) => [entry.date, entry.endDate ?? entry.date]).sort();
+    const dates = [
+      ...entries.flatMap((entry) => [entry.date, entry.endDate ?? entry.date]),
+      ...operatingDays.map((entry) => entry.date),
+    ].sort();
     return { min: dates[0] ?? today, max: dates.at(-1) ?? today };
-  }, [entries, today]);
+  }, [entries, operatingDays, today]);
   const locations = useMemo(() => Array.from(new Set(entries.map((entry) => entry.location))).sort((a, b) => a.localeCompare(b, "ja")), [entries]);
   const characterOptions = useMemo(() => sortCharacterNames([
     ...characters.map((character) => character.name),
@@ -193,6 +201,11 @@ export function ScheduleBrowser({
     return grouped;
   }, [birthdayOccurrences]);
 
+  const operatingDaysByDate = useMemo(
+    () => new Map(operatingDays.map((entry) => [entry.date, entry])),
+    [operatingDays],
+  );
+
   const groups = useMemo(() => {
     const grouped = new Map<string, typeof filteredEntries>();
     filteredEntries.forEach((entry) => {
@@ -206,7 +219,10 @@ export function ScheduleBrowser({
   const listDates = useMemo(() => Array.from(new Set([
     ...groups.map(([date]) => date),
     ...birthdayOccurrences.map(({ date }) => date),
-  ])).sort((left, right) => sortAscending ? left.localeCompare(right) : right.localeCompare(left)), [birthdayOccurrences, groups, sortAscending]);
+    ...operatingDays
+      .filter((entry) => entry.operatingStatus === "closed" && entry.date >= fromDate && entry.date <= toDate)
+      .map((entry) => entry.date),
+  ])).sort((left, right) => sortAscending ? left.localeCompare(right) : right.localeCompare(left)), [birthdayOccurrences, fromDate, groups, operatingDays, sortAscending, toDate]);
 
   const reset = () => {
     setFromDate(today);
@@ -255,6 +271,9 @@ export function ScheduleBrowser({
   const calendarDialogBirthdays = calendarDialogDate
     ? birthdaysByDate.get(calendarDialogDate) ?? []
     : [];
+  const calendarDialogOperatingDay = calendarDialogDate
+    ? operatingDaysByDate.get(calendarDialogDate)
+    : undefined;
 
   return (
     <div className="mt-5">
@@ -344,10 +363,10 @@ export function ScheduleBrowser({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-pink/10 px-3 py-2 text-[13px] font-black text-pink">
-            {(isInitialLoading || scheduleState.isRefreshing || characterState.isRefreshing) && (
+            {(isInitialLoading || scheduleState.isRefreshing || characterState.isRefreshing || operatingDayState.isRefreshing) && (
               <LoaderCircle size={13} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
             )}
-            {isInitialLoading ? "読込中" : scheduleState.isRefreshing || characterState.isRefreshing ? "更新中" : resultSummary}
+            {isInitialLoading ? "読込中" : scheduleState.isRefreshing || characterState.isRefreshing || operatingDayState.isRefreshing ? "更新中" : resultSummary}
           </span>
           {viewMode === "list" && <button type="button" onClick={() => setSortAscending((value) => !value)} className="min-h-10 rounded-full border border-ink/10 px-3 text-[11px] font-black text-ink/60">時間の{sortAscending ? "早い順" : "遅い順"}</button>}
         </div>
@@ -395,6 +414,7 @@ export function ScheduleBrowser({
             onRetry={() => {
               scheduleState.retry();
               characterState.retry();
+              operatingDayState.retry();
             }}
           />
         ) : viewMode === "calendar" ? (
@@ -403,18 +423,28 @@ export function ScheduleBrowser({
             toDate={toDate}
             entries={filteredEntries}
             birthdays={birthdayOccurrences}
+            operatingDays={operatingDays}
             onSelectDate={setCalendarDialogDate}
             today={today}
           />
         ) : listDates.length > 0 ? listDates.map((date) => {
           const dayEntries = entriesByDate.get(date) ?? [];
           const dayBirthdays = birthdaysByDate.get(date) ?? [];
+          const operatingDay = operatingDaysByDate.get(date);
           return (
           <div key={date} className="rounded-[22px] border border-pink/10 bg-[#fffdfd] p-3 sm:p-4">
-            <div className="mb-3 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><span className="grid h-11 w-11 place-items-center rounded-[14px] bg-pink text-[12px] font-black text-white shadow-[0_6px_14px_rgba(239,102,143,0.22)]"><CalendarDays size={18} aria-hidden="true" /></span><div><h3 className="text-[15px] font-black text-ink">{formatGroupDate(date)}</h3><p className="text-[10px] font-bold text-ink/40">{date.replaceAll("-", "/")}</p></div></div><span className="text-[11px] font-black text-ink/40">予定{dayEntries.length}件{dayBirthdays.length > 0 ? `・誕生日${dayBirthdays.length}件` : ""}</span></div>
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-pink text-[12px] font-black text-white shadow-[0_6px_14px_rgba(239,102,143,0.22)]"><CalendarDays size={18} aria-hidden="true" /></span>
+                <div className="min-w-0"><h3 className="text-[15px] font-black text-ink">{formatGroupDate(date)}</h3><p className="text-[10px] font-bold text-ink/40">{date.replaceAll("-", "/")}</p></div>
+                <OperatingDayBadge operatingDay={operatingDay} />
+              </div>
+              <span className="self-end text-[11px] font-black text-ink/40 sm:self-auto">予定{dayEntries.length}件{dayBirthdays.length > 0 ? `・誕生日${dayBirthdays.length}件` : ""}</span>
+            </div>
             <div className="grid gap-3">
               {dayBirthdays.length > 0 && <BirthdayCard birthdays={dayBirthdays} />}
               {dayEntries.length > 0 && <ScheduleDayGrid date={date} entries={dayEntries} characters={characters} selectedCharacters={selectedCharacters} />}
+              {operatingDay?.operatingStatus === "closed" && dayBirthdays.length === 0 && dayEntries.length === 0 && <ClosedDayEmptyState />}
             </div>
           </div>
           );
@@ -428,6 +458,7 @@ export function ScheduleBrowser({
           date={calendarDialogDate}
           entries={calendarDialogEntries}
           birthdays={calendarDialogBirthdays}
+          operatingDay={calendarDialogOperatingDay}
           characters={characters}
           selectedCharacters={selectedCharacters}
           onClose={closeCalendarDialog}
@@ -436,6 +467,12 @@ export function ScheduleBrowser({
 
       {!isInitialLoading && !loadProblem && (
         <div className="mt-5 rounded-2xl border border-mint/20 bg-mint/10 p-4 text-[12px] font-bold leading-6 text-ink/60">表示中の情報は、確認・公開されたデータです。最新情報は公式サイトもあわせてご確認ください。</div>
+      )}
+      {!isInitialLoading && !loadProblem && operatingDayState.status === "error" && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#f1d59c] bg-[#fff9ec] px-4 py-3 text-[11px] font-bold text-[#76582f]">
+          <span>営業情報を読み込めませんでした。予定は引き続き確認できます。</span>
+          <button type="button" onClick={operatingDayState.retry} className="min-h-9 rounded-full border border-[#d8b670] px-3 font-black">再読み込み</button>
+        </div>
       )}
     </div>
   );
@@ -537,6 +574,7 @@ function CalendarDayDialog({
   date,
   entries,
   birthdays,
+  operatingDay,
   characters,
   selectedCharacters,
   onClose,
@@ -544,6 +582,7 @@ function CalendarDayDialog({
   date: string;
   entries: ScheduleEntry[];
   birthdays: CharacterBirthdayOccurrence[];
+  operatingDay?: ParkOperatingDay;
   characters: Character[];
   selectedCharacters: string[];
   onClose: () => void;
@@ -613,20 +652,63 @@ function CalendarDayDialog({
         </header>
 
         <div className="overflow-y-auto overscroll-contain p-3 pb-[max(20px,env(safe-area-inset-bottom))] sm:p-5">
-          {birthdays.length > 0 && <BirthdayCard birthdays={birthdays} />}
+          <OperatingDayPanel operatingDay={operatingDay} />
+          {birthdays.length > 0 && <div className={operatingDay && operatingDay.operatingStatus !== "unknown" ? "mt-3" : ""}><BirthdayCard birthdays={birthdays} /></div>}
           {entries.length > 0 && (
-            <div className={birthdays.length > 0 ? "mt-3" : ""}>
+            <div className={birthdays.length > 0 || (operatingDay && operatingDay.operatingStatus !== "unknown") ? "mt-3" : ""}>
               <ScheduleDayGrid date={date} entries={entries} characters={characters} selectedCharacters={selectedCharacters} />
             </div>
           )}
           {birthdays.length === 0 && entries.length === 0 && (
-            <div className="rounded-[22px] border border-dashed border-pink/20 bg-white px-5 py-12 text-center">
-              <CalendarDays size={24} className="mx-auto text-pink/45" aria-hidden="true" />
-              <p className="mt-3 text-[14px] font-black text-ink">この日の予定はありません</p>
-            </div>
+            operatingDay?.operatingStatus === "closed"
+              ? <div className="mt-3"><ClosedDayEmptyState /></div>
+              : <div className={`rounded-[22px] border border-dashed border-pink/20 bg-white px-5 py-12 text-center ${operatingDay?.operatingStatus === "open" ? "mt-3" : ""}`}>
+                  <CalendarDays size={24} className="mx-auto text-pink/45" aria-hidden="true" />
+                  <p className="mt-3 text-[14px] font-black text-ink">この日の予定はありません</p>
+                </div>
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+function OperatingDayBadge({ operatingDay }: { operatingDay?: ParkOperatingDay }) {
+  if (!operatingDay || operatingDay.operatingStatus === "unknown") return null;
+  if (operatingDay.operatingStatus === "closed") {
+    return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-pink/10 px-2.5 py-1.5 text-[10px] font-black text-pink"><CalendarX2 size={12} aria-hidden="true" />休園日</span>;
+  }
+  if (!operatingDay.openingTime || !operatingDay.closingTime) return null;
+  return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-mint/15 px-2.5 py-1.5 text-[10px] font-black text-[#35745f]"><Clock3 size={12} aria-hidden="true" />営業時間 {operatingDay.openingTime}–{operatingDay.closingTime}</span>;
+}
+
+function OperatingDayPanel({ operatingDay }: { operatingDay?: ParkOperatingDay }) {
+  if (!operatingDay || operatingDay.operatingStatus === "unknown") return null;
+  if (operatingDay.operatingStatus === "closed") {
+    return (
+      <div className="flex min-h-16 items-center justify-center gap-2 rounded-[18px] border border-pink/15 bg-[#fff3f7] px-4 text-pink">
+        <CalendarX2 size={20} aria-hidden="true" />
+        <span className="text-[14px] font-black">休園日</span>
+      </div>
+    );
+  }
+  if (!operatingDay.openingTime || !operatingDay.closingTime) return null;
+  return (
+    <div className="flex items-center gap-3 rounded-[18px] border border-mint/25 bg-[#f2faf7] px-4 py-3.5 text-[#35745f]">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white"><Clock3 size={19} aria-hidden="true" /></span>
+      <span>
+        <span className="block text-[10px] font-black tracking-[0.08em]">営業時間</span>
+        <strong className="mt-0.5 block text-[18px] font-black tabular-nums text-ink">{operatingDay.openingTime}–{operatingDay.closingTime}</strong>
+      </span>
+    </div>
+  );
+}
+
+function ClosedDayEmptyState() {
+  return (
+    <div className="rounded-[22px] border border-dashed border-pink/20 bg-white px-5 py-10 text-center">
+      <CalendarX2 size={24} className="mx-auto text-pink/45" aria-hidden="true" />
+      <p className="mt-3 text-[14px] font-black text-ink">この日は休園日です</p>
     </div>
   );
 }

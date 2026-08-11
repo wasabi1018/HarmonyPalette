@@ -44,6 +44,16 @@ export type OperationDraftEdit = {
   notes: string;
 };
 
+export type ParkOperatingDayDraftEdit = {
+  externalKey: string;
+  date: string;
+  operatingStatus: "open" | "closed" | "unknown";
+  openingTime?: string;
+  closingTime?: string;
+  sourceTitle: string;
+  notes: string;
+};
+
 type PublishedScheduleRow = {
   id: string;
   source_id: string;
@@ -150,7 +160,7 @@ export async function persistImportPreview(preview: ImportPreview, triggerType: 
     range_end: preview.rangeEnd,
     status: "running",
     warnings: preview.warnings,
-    metadata: { importerVersion: 1 },
+    metadata: { importerVersion: 2 },
   });
   if (runError) throw new Error(`取込履歴を作成できませんでした: ${runError.message}`);
 
@@ -249,10 +259,34 @@ export async function persistImportPreview(preview: ImportPreview, triggerType: 
       if (error) throw new Error(`運行情報候補を登録できませんでした: ${error.message}`);
     }
 
+    if (preview.operatingDays.length > 0) {
+      const rows = preview.operatingDays.map((entry) => ({
+        import_run_id: preview.runId,
+        source_id: entry.sourceId,
+        external_key: entry.externalKey,
+        source_reference: entry.sourceReference,
+        source_hash: entry.sourceHash,
+        operation_date: entry.date,
+        operating_status: entry.operatingStatus,
+        opening_time: compactTime(entry.openingTime),
+        closing_time: compactTime(entry.closingTime),
+        source_title: entry.sourceTitle,
+        notes: entry.notes,
+        official_url: entry.officialUrl,
+        verification_status: entry.verificationStatus,
+        confidence: entry.confidence,
+        publication_status: "draft",
+        raw_payload: entry.rawPayload,
+      }));
+      const { error } = await client.from("park_operating_days").insert(rows);
+      if (error) throw new Error(`営業情報候補を登録できませんでした: ${error.message}`);
+    }
+
     const { error: finishError } = await client.from("import_runs").update({
       status: "succeeded",
       schedule_count: preview.schedules.length,
       operation_count: preview.operations.length,
+      operating_day_count: preview.operatingDays.length,
       document_count: preview.documents.length,
       warnings: preview.warnings,
       finished_at: new Date().toISOString(),
@@ -268,7 +302,12 @@ export async function persistImportPreview(preview: ImportPreview, triggerType: 
   }
 }
 
-export async function publishImportRun(runId: string, scheduleKeys?: string[], operationKeys?: string[]) {
+export async function publishImportRun(
+  runId: string,
+  scheduleKeys?: string[],
+  operationKeys?: string[],
+  operatingDayKeys?: string[],
+) {
   const client = getSupabaseAdminClient();
   if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
 
@@ -294,6 +333,17 @@ export async function publishImportRun(runId: string, scheduleKeys?: string[], o
     }
   }
 
+  if (operatingDayKeys) {
+    const { data, error: listError } = await client.from("park_operating_days").select("id, external_key").eq("import_run_id", runId).eq("publication_status", "draft");
+    if (listError) throw new Error(`営業情報候補を確認できませんでした: ${listError.message}`);
+    const selected = new Set(operatingDayKeys);
+    const excludedIds = (data ?? []).filter((row) => !selected.has(row.external_key as string)).map((row) => row.id as string);
+    if (excludedIds.length > 0) {
+      const { error } = await client.from("park_operating_days").update({ publication_status: "withdrawn" }).in("id", excludedIds);
+      if (error) throw new Error(`除外した営業情報候補を更新できませんでした: ${error.message}`);
+    }
+  }
+
   const { error } = await client.rpc("publish_import_run", { target_run: runId });
   if (error) throw new Error(`公開処理に失敗しました: ${error.message}`);
 }
@@ -302,6 +352,7 @@ export async function updateImportDrafts(
   runId: string,
   scheduleEdits: ScheduleDraftEdit[],
   operationEdits: OperationDraftEdit[],
+  operatingDayEdits: ParkOperatingDayDraftEdit[] = [],
 ) {
   const client = getSupabaseAdminClient();
   if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
@@ -365,6 +416,28 @@ export async function updateImportDrafts(
       .maybeSingle();
     if (error) throw new Error(`確認待ち運行情報を更新できませんでした: ${error.message}`);
     if (!data?.id) throw new Error(`更新対象の確認待ち運行情報が見つかりません: ${edit.externalKey}`);
+  }
+
+  for (const edit of operatingDayEdits) {
+    const isOpen = edit.operatingStatus === "open";
+    const { data, error } = await client
+      .from("park_operating_days")
+      .update({
+        operation_date: edit.date,
+        operating_status: edit.operatingStatus,
+        opening_time: isOpen ? compactTime(edit.openingTime) : null,
+        closing_time: isOpen ? compactTime(edit.closingTime) : null,
+        source_title: edit.sourceTitle,
+        notes: edit.notes,
+        verification_status: edit.operatingStatus === "unknown" ? "needs-review" : "verified",
+      })
+      .eq("import_run_id", runId)
+      .eq("external_key", edit.externalKey)
+      .eq("publication_status", "draft")
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(`確認待ち営業情報を更新できませんでした: ${error.message}`);
+    if (!data?.id) throw new Error(`更新対象の確認待ち営業情報が見つかりません: ${edit.externalKey}`);
   }
 }
 
@@ -546,6 +619,22 @@ export async function getPublishedOperations(date: string) {
     .eq("operation_date", date)
     .order("start_time", { ascending: true })
     .order("attraction_name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function getPublishedParkOperatingDays(from: string, to: string) {
+  const client = getSupabaseReadClient();
+  if (!client) return null;
+  const { data, error } = await client
+    .from("park_operating_days")
+    .select("*")
+    .eq("publication_status", "published")
+    .eq("verification_status", "verified")
+    .in("operating_status", ["open", "closed"])
+    .gte("operation_date", from)
+    .lte("operation_date", to)
+    .order("operation_date", { ascending: true });
   if (error) throw new Error(error.message);
   return data ?? [];
 }
