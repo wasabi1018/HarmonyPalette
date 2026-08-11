@@ -5,7 +5,7 @@ import { defaultInstagramPostUrls } from "@/data/instagram-posts";
 import { listPublishedArticles } from "@/lib/articles/repository";
 import { getInstagramEmbedSettings } from "@/lib/instagram-settings";
 import { INSTAGRAM_URL, SITE_NAME, SITE_URL } from "@/lib/site-config";
-import { getInitialCharacterData, getInitialScheduleData } from "@/lib/supabase/initial-data";
+import { getInitialCharacterData, getInitialParkOperatingDayData, getInitialScheduleData } from "@/lib/supabase/initial-data";
 
 export const metadata: Metadata = {
   title: "ハーモニーランドの「楽しい！」がそろう場所",
@@ -28,6 +28,7 @@ export default async function HomePage() {
   const initialDataPromise = Promise.all([
     getInitialScheduleData(),
     getInitialCharacterData(),
+    getInitialParkOperatingDayData(),
   ]);
   try {
     const [articles, instagramSettings] = await Promise.all([
@@ -45,6 +46,6 @@ export default async function HomePage() {
   } catch {
     latestArticles = [];
   }
-  const [initialScheduleData, initialCharacterData] = await initialDataPromise;
-  return <><SiteEventTracker eventName="home_view" sessionKey="home-view" /><HomeSections latestArticles={latestArticles} instagramPostUrls={instagramPostUrls} initialScheduleData={initialScheduleData} initialCharacterData={initialCharacterData} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /></>;
+  const [initialScheduleData, initialCharacterData, initialOperatingDayData] = await initialDataPromise;
+  return <><SiteEventTracker eventName="home_view" sessionKey="home-view" /><HomeSections latestArticles={latestArticles} instagramPostUrls={instagramPostUrls} initialScheduleData={initialScheduleData} initialCharacterData={initialCharacterData} initialOperatingDayData={initialOperatingDayData} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /></>;
 }

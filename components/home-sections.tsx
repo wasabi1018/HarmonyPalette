@@ -10,6 +10,7 @@ import {
 import type { ArticleSummary } from "@/lib/articles/types";
 import type { InstagramPostUrls } from "@/data/instagram-posts";
 import type { InitialCharacterData } from "@/lib/character-store";
+import type { InitialParkOperatingDayData } from "@/lib/park-operating-day-store";
 import type { InitialScheduleData } from "@/lib/schedule-store";
 import { HomeBirthdayRibbon } from "./home-birthday-ribbon";
 import { HomeTodaySections } from "./home-today-sections";
@@ -185,11 +186,13 @@ export function HomeSections({
   instagramPostUrls,
   initialScheduleData,
   initialCharacterData,
+  initialOperatingDayData,
 }: {
   latestArticles: ArticleSummary[];
   instagramPostUrls: InstagramPostUrls;
   initialScheduleData: InitialScheduleData;
   initialCharacterData: InitialCharacterData;
+  initialOperatingDayData: InitialParkOperatingDayData;
 }) {
   return (
     <>
@@ -198,6 +201,7 @@ export function HomeSections({
       <HomeTodaySections
         initialScheduleData={initialScheduleData}
         initialCharacterData={initialCharacterData}
+        initialOperatingDayData={initialOperatingDayData}
       />
       <JournalSection
         latestArticles={latestArticles}

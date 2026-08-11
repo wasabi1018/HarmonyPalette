@@ -37,6 +37,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PlanItemCard } from "@/components/plan-item-card";
+import { ParkOperatingInfo } from "@/components/park-operating-info";
 import { ScheduleTimeline } from "@/components/schedule-timeline";
 import {
   addCustomPlanItem,
@@ -57,6 +58,7 @@ import {
   type PlanOptions,
 } from "@/lib/plan-options";
 import { type InitialScheduleData, useScheduleEntries } from "@/lib/schedule-store";
+import { type InitialParkOperatingDayData, useParkOperatingDays } from "@/lib/park-operating-day-store";
 import { recordSiteAnalyticsEvent } from "@/lib/site-analytics";
 
 const DRAG_MINUTES_PER_PIXEL = 0.5;
@@ -227,11 +229,13 @@ function PrintablePlan({ date, items }: { date: string; items: DailyPlanItem[] }
 export function DailyPlanBuilder({
   initialDate,
   initialScheduleData,
+  initialOperatingDayData,
   initialPlanOptions,
   initialPlanOptionsError,
 }: {
   initialDate: string;
   initialScheduleData: InitialScheduleData;
+  initialOperatingDayData: InitialParkOperatingDayData;
   initialPlanOptions: PlanOptions;
   initialPlanOptionsError: string;
 }) {
@@ -241,6 +245,7 @@ export function DailyPlanBuilder({
   const plan = plans[selectedDate];
   const items = useMemo(() => plan?.items ?? [], [plan]);
   const scheduleState = useScheduleEntries({ initialData: initialScheduleData });
+  const operatingDayState = useParkOperatingDays(initialOperatingDayData);
   const [addOpen, setAddOpen] = useState(false);
   const [addTab, setAddTab] = useState<"official" | "custom">("official");
   const [customForm, setCustomForm] = useState<CustomPlanItemInput>(DEFAULT_CUSTOM_FORM);
@@ -614,13 +619,20 @@ export function DailyPlanBuilder({
 
             <div className="max-h-[calc(88dvh-142px)] min-w-0 overflow-x-hidden overflow-y-auto px-4 pb-7 pt-4 sm:px-5">
               {addTab === "official" && !editingItem ? (
-                scheduleState.status === "loading" ? (
-                  <div className="flex min-h-40 items-center justify-center gap-2 text-[12px] font-bold text-ink/45"><LoaderCircle size={18} className="animate-spin text-pink" aria-hidden="true" />読み込み中…</div>
-                ) : officialCandidates.length > 0 ? (
-                  <ScheduleTimeline entries={officialCandidates} date={selectedDate} />
-                ) : (
-                  <p className="rounded-2xl border border-dashed border-pink/20 px-4 py-10 text-center text-[12px] font-bold text-ink/45">この日の公開スケジュールはまだありません。</p>
-                )
+                <div>
+                  <ParkOperatingInfo
+                    date={selectedDate}
+                    operatingDays={operatingDayState.operatingDays}
+                    className="mb-3 border-b border-pink/10 px-1 pb-3"
+                  />
+                  {scheduleState.status === "loading" ? (
+                    <div className="flex min-h-40 items-center justify-center gap-2 text-[12px] font-bold text-ink/45"><LoaderCircle size={18} className="animate-spin text-pink" aria-hidden="true" />読み込み中…</div>
+                  ) : officialCandidates.length > 0 ? (
+                    <ScheduleTimeline entries={officialCandidates} date={selectedDate} />
+                  ) : (
+                    <p className="rounded-2xl border border-dashed border-pink/20 px-4 py-10 text-center text-[12px] font-bold text-ink/45">この日の公開スケジュールはまだありません。</p>
+                  )}
+                </div>
               ) : (
                 <div>
                   <div className="grid gap-4">

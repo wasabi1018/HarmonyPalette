@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CakeSlice, CalendarDays, CalendarX2, Check, ChevronDown, Clock3, Filter, LayoutList, LoaderCircle, MapPin, RotateCcw, Search, SlidersHorizontal, Sparkles, Sun, X } from "lucide-react";
 import type { Character } from "@/data/types";
 import { DataStatePanel } from "@/components/data-state-panel";
+import { ParkOperatingInfo } from "@/components/park-operating-info";
 import { ScheduleEntryCard } from "@/components/schedule-entry-card";
 import { ScheduleMonthCalendar } from "@/components/schedule-month-calendar";
 import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
@@ -639,30 +640,30 @@ function CalendarDayDialog({
         tabIndex={-1}
         className="flex max-h-[92dvh] w-full max-w-[1120px] flex-col overflow-hidden rounded-t-[26px] border border-pink/15 bg-[#fffafd] shadow-[0_28px_80px_rgba(62,53,64,0.28)] outline-none sm:max-h-[88dvh] sm:rounded-[26px]"
       >
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-pink/10 bg-white px-4 py-3.5 sm:px-6 sm:py-4">
-          <div className="flex min-w-0 items-center gap-3">
+        <header className="flex shrink-0 items-center gap-2 border-b border-pink/10 bg-white px-4 py-3.5 sm:gap-3 sm:px-6 sm:py-4">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-pink text-white"><CalendarDays size={19} aria-hidden="true" /></span>
             <div className="min-w-0">
               <p className="text-[10px] font-black tracking-[0.14em] text-pink">DAILY SCHEDULE</p>
               <h3 id="calendar-day-dialog-title" className="truncate text-[17px] font-black text-ink sm:text-[20px]">{formatGroupDate(date)}</h3>
               <p className="text-[10px] font-bold text-ink/40">予定{entries.length}件{birthdays.length > 0 ? `・誕生日${birthdays.length}件` : ""}</p>
             </div>
+            <OperatingDayPanel operatingDay={operatingDay} />
           </div>
           <button type="button" onClick={onClose} aria-label="日付の予定を閉じる" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-pink/5 text-pink transition-colors hover:bg-pink/10"><X size={19} aria-hidden="true" /></button>
         </header>
 
         <div className="overflow-y-auto overscroll-contain p-3 pb-[max(20px,env(safe-area-inset-bottom))] sm:p-5">
-          <OperatingDayPanel operatingDay={operatingDay} />
-          {birthdays.length > 0 && <div className={operatingDay && operatingDay.operatingStatus !== "unknown" ? "mt-3" : ""}><BirthdayCard birthdays={birthdays} /></div>}
+          {birthdays.length > 0 && <BirthdayCard birthdays={birthdays} />}
           {entries.length > 0 && (
-            <div className={birthdays.length > 0 || (operatingDay && operatingDay.operatingStatus !== "unknown") ? "mt-3" : ""}>
+            <div className={birthdays.length > 0 ? "mt-3" : ""}>
               <ScheduleDayGrid date={date} entries={entries} characters={characters} selectedCharacters={selectedCharacters} />
             </div>
           )}
           {birthdays.length === 0 && entries.length === 0 && (
             operatingDay?.operatingStatus === "closed"
-              ? <div className="mt-3"><ClosedDayEmptyState /></div>
-              : <div className={`rounded-[22px] border border-dashed border-pink/20 bg-white px-5 py-12 text-center ${operatingDay?.operatingStatus === "open" ? "mt-3" : ""}`}>
+              ? <ClosedDayEmptyState />
+              : <div className="rounded-[22px] border border-dashed border-pink/20 bg-white px-5 py-12 text-center">
                   <CalendarDays size={24} className="mx-auto text-pink/45" aria-hidden="true" />
                   <p className="mt-3 text-[14px] font-black text-ink">この日の予定はありません</p>
                 </div>
@@ -683,25 +684,8 @@ function OperatingDayBadge({ operatingDay }: { operatingDay?: ParkOperatingDay }
 }
 
 function OperatingDayPanel({ operatingDay }: { operatingDay?: ParkOperatingDay }) {
-  if (!operatingDay || operatingDay.operatingStatus === "unknown") return null;
-  if (operatingDay.operatingStatus === "closed") {
-    return (
-      <div className="flex min-h-16 items-center justify-center gap-2 rounded-[18px] border border-pink/15 bg-[#fff3f7] px-4 text-pink">
-        <CalendarX2 size={20} aria-hidden="true" />
-        <span className="text-[14px] font-black">休園日</span>
-      </div>
-    );
-  }
-  if (!operatingDay.openingTime || !operatingDay.closingTime) return null;
-  return (
-    <div className="flex items-center gap-3 rounded-[18px] border border-mint/25 bg-[#f2faf7] px-4 py-3.5 text-[#35745f]">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white"><Clock3 size={19} aria-hidden="true" /></span>
-      <span>
-        <span className="block text-[10px] font-black tracking-[0.08em]">営業時間</span>
-        <strong className="mt-0.5 block text-[18px] font-black tabular-nums text-ink">{operatingDay.openingTime}–{operatingDay.closingTime}</strong>
-      </span>
-    </div>
-  );
+  if (!operatingDay) return null;
+  return <ParkOperatingInfo date={operatingDay.date} operatingDays={[operatingDay]} className="ml-auto whitespace-nowrap max-[420px]:gap-1 max-[420px]:text-[10px]" />;
 }
 
 function ClosedDayEmptyState() {

@@ -8,8 +8,10 @@ import { compareCharacters, type InitialCharacterData, mergeCharactersWithNames,
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
 import { getEntryCharacterNames, type InitialScheduleData, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 import { DataStatePanel } from "@/components/data-state-panel";
+import { ParkOperatingInfo } from "@/components/park-operating-info";
 import { SectionHeading } from "@/components/section-heading";
 import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
+import { type InitialParkOperatingDayData, useParkOperatingDays } from "@/lib/park-operating-day-store";
 
 function japanDate(date = new Date()) {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(date);
@@ -96,12 +98,15 @@ function displayUpdatedAt(value?: string) {
 export function HomeTodaySections({
   initialScheduleData,
   initialCharacterData,
+  initialOperatingDayData,
 }: {
   initialScheduleData: InitialScheduleData;
   initialCharacterData: InitialCharacterData;
+  initialOperatingDayData: InitialParkOperatingDayData;
 }) {
   const scheduleState = useScheduleEntries({ initialData: initialScheduleData });
   const characterState = useCharacters({ initialData: initialCharacterData });
+  const operatingDayState = useParkOperatingDays(initialOperatingDayData);
   const { entries } = scheduleState;
   const { characters: catalogCharacters } = characterState;
   const [now, setNow] = useState(() => new Date());
@@ -295,7 +300,6 @@ export function HomeTodaySections({
                 <input type="date" value={selectedDate} onChange={(event) => event.target.value && setSelectedDate(event.target.value)} className="min-h-10 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[12px] font-black text-ink outline-none focus:border-pink" />
               </label>
               <button type="button" onClick={() => setSelectedDate((date) => addDays(date, 1))} aria-label="翌日のスケジュール" className="grid h-10 w-10 place-items-center rounded-xl border border-ink/10 bg-white text-ink/60 transition-colors hover:border-pink/30 hover:text-pink"><ChevronRight size={17} aria-hidden="true" /></button>
-              <button type="button" onClick={() => setSelectedDate(today)} disabled={selectedDate === today} className="min-h-10 rounded-xl bg-pink/10 px-3 text-[11px] font-black text-pink disabled:cursor-default disabled:opacity-40">今日</button>
             </div>
           </div>
           {scheduleState.status === "loading" ? (
@@ -310,6 +314,11 @@ export function HomeTodaySections({
             />
           ) : timelineStartTimes.length > 0 ? (
             <div className="overflow-hidden rounded-[18px] border border-pink/10 bg-white shadow-[0_8px_24px_rgba(118,73,86,0.05)]">
+              <ParkOperatingInfo
+                date={selectedDate}
+                operatingDays={operatingDayState.operatingDays}
+                className="border-b border-pink/10 px-3 py-3 sm:px-4"
+              />
               <div className="grid grid-cols-[38px_minmax(0,1.1fr)_minmax(0,.9fr)] gap-1.5 border-b border-pink/10 bg-[#fffafd] px-2 py-2.5 sm:grid-cols-[64px_minmax(0,1.25fr)_minmax(0,.75fr)] sm:gap-3 sm:px-4 sm:py-3">
                 <div className="flex items-center gap-1 text-[9px] font-black text-ink/35 sm:text-[11px]">
                   <Clock3 size={12} aria-hidden="true" />
@@ -503,9 +512,16 @@ export function HomeTodaySections({
               </div>
             </div>
           ) : (
-            <p className="rounded-2xl border border-dashed border-pink/20 bg-white px-4 py-7 text-center text-[12px] font-bold text-ink/50">
-              {displayScheduleDate(selectedDate)}の公開済みスケジュールはまだありません。
-            </p>
+            <div className="overflow-hidden rounded-[18px] border border-pink/10 bg-white shadow-[0_8px_24px_rgba(118,73,86,0.05)]">
+              <ParkOperatingInfo
+                date={selectedDate}
+                operatingDays={operatingDayState.operatingDays}
+                className="border-b border-pink/10 px-3 py-3 sm:px-4"
+              />
+              <p className="px-4 py-7 text-center text-[12px] font-bold text-ink/50">
+                {displayScheduleDate(selectedDate)}の公開済みスケジュールはまだありません。
+              </p>
+            </div>
           )}
           {scheduleState.status !== "loading" && !scheduleSectionProblem && (
             <p className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-bold text-ink/45">
