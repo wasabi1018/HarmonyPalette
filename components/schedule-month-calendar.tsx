@@ -59,6 +59,22 @@ function PreviewIcon({ kind }: { kind: CalendarPreview["kind"] }) {
   return <PartyPopper size={10} aria-hidden="true" />;
 }
 
+function MoreCount({ count, className }: { count: number; className: string }) {
+  return (
+    <span className={`inline-flex items-center gap-px whitespace-nowrap text-[8px] font-black text-ink/35 lg:text-[9px] ${className}`}>
+      <span className="sr-only">ほか{count}件</span>
+      <span aria-hidden="true">ほか</span>
+      <span
+        aria-hidden="true"
+        className="grid h-3.5 min-w-3.5 place-items-center rounded-full bg-pink px-0.5 text-[7px] leading-none text-white lg:h-4 lg:min-w-4 lg:text-[8px]"
+      >
+        {count}
+      </span>
+      <span aria-hidden="true">件</span>
+    </span>
+  );
+}
+
 function MonthPanel({
   month,
   entries,
@@ -124,12 +140,14 @@ function MonthPanel({
                   : "cursor-default bg-[#fbf9fa] text-ink/20"
               }`}
             >
+              {isToday && selectable && (
+                <span aria-hidden="true" className="pointer-events-none absolute inset-[1px] rounded-lg border-2 border-pink" />
+              )}
+
               <span className={`grid h-5 min-w-5 place-items-center self-start rounded-full px-1 text-[10px] font-black sm:text-[11px] ${
                 !calendarDate.isInMonth
                   ? "text-ink/15"
-                  : isToday && selectable
-                    ? "bg-pink text-white"
-                    : weekdayIndex === 0
+                  : weekdayIndex === 0
                       ? "text-pink"
                       : weekdayIndex === 6
                         ? "text-sky"
@@ -153,10 +171,10 @@ function MonthPanel({
               )}
 
               {selectable && previews.length > 1 && (
-                <span className="mt-auto self-end text-[8px] font-black text-ink/35 lg:hidden">ほか{previews.length - 1}件</span>
+                <MoreCount count={previews.length - 1} className="mt-auto self-end lg:hidden" />
               )}
               {selectable && previews.length > 3 && (
-                <span className="mt-auto hidden self-end text-[9px] font-black text-ink/35 lg:block">ほか{previews.length - 3}件</span>
+                <MoreCount count={previews.length - 3} className="mt-auto hidden self-end lg:inline-flex" />
               )}
             </button>
           );
