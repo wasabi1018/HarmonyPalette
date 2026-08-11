@@ -50,7 +50,7 @@ function Hero({
               <ArrowRight size={16} aria-hidden="true" />
             </Link>
             <Link
-              href="/characters"
+              href="/schedule"
               className="inline-flex min-h-11 items-center gap-2 rounded-full border border-pink/20 bg-white px-4 text-[13px] font-black text-ink transition-colors hover:border-pink/50 hover:text-pink sm:px-5 sm:text-sm"
             >
               キャラクターから探す

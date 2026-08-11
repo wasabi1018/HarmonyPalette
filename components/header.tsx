@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ChevronRight, Menu, X } from "lucide-react";
+import { ChevronRight, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { mainNavigation } from "@/lib/navigation";
 
@@ -14,7 +14,12 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-pink/10 bg-white/95 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex min-w-0 items-center" onClick={() => setIsOpen(false)}>
+        <Link
+          href="/"
+          aria-label="ホームに戻る"
+          className="flex min-w-0 items-center"
+          onClick={() => setIsOpen(false)}
+        >
           <div className="relative h-11 w-[154px] shrink-0 overflow-hidden sm:w-[188px]" aria-label="Harmony Palette ロゴ">
             <Image
               src="/logo-compact.png"
@@ -42,20 +47,13 @@ export function Header() {
           })}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <Link
-            href="/schedule"
-            className="hidden min-h-10 items-center gap-2 rounded-full bg-ink px-4 text-[12px] font-bold text-white shadow-soft transition-transform hover:-translate-y-0.5 lg:flex"
-          >
-            <CalendarDays size={15} aria-hidden="true" />
-            予定を探す
-          </Link>
+        <div className="hidden shrink-0 items-center lg:flex xl:hidden">
           <button
             type="button"
             aria-label={isOpen ? "メニューを閉じる" : "メニューを開く"}
             aria-expanded={isOpen}
             onClick={() => setIsOpen((value) => !value)}
-            className="hidden h-10 w-10 place-items-center rounded-full border border-ink/10 text-ink transition-colors hover:border-pink/30 hover:text-pink lg:grid xl:hidden"
+            className="grid h-10 w-10 place-items-center rounded-full border border-ink/10 text-ink transition-colors hover:border-pink/30 hover:text-pink"
           >
             {isOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
           </button>

@@ -8,7 +8,7 @@ import { mainNavigation } from "@/lib/navigation";
 
 const items = [
   { label: "ホーム", href: "/", icon: Home },
-  { label: "予定を探す", href: "/schedule", icon: CalendarDays },
+  { label: "キャラ検索", href: "/schedule", icon: CalendarDays },
   { label: "マイプラン", href: "/plan", icon: ClipboardList },
   { label: "記事", href: "/articles", icon: BookOpen },
   { label: "メニュー", href: "#menu", icon: Menu },
