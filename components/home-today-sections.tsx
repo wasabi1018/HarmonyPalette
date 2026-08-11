@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, LoaderCircle, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, LoaderCircle, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
 import type { Character } from "@/data/types";
 import { compareCharacters, type InitialCharacterData, mergeCharactersWithNames, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
 import { getEntryCharacterNames, type InitialScheduleData, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
-import { CharacterAvatar } from "@/components/character-avatar";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { SectionHeading } from "@/components/section-heading";
 import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
@@ -228,9 +227,8 @@ export function HomeTodaySections({
     <>
       <section id="today-characters" className="mx-auto max-w-[1200px] scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8">
         <SectionHeading
+          eyebrow="TODAY'S CHARACTERS"
           title="今日会えるキャラクター"
-          href="/characters"
-          linkLabel="キャラクターから探す"
         />
         {characterSectionLoading ? (
           <DataStatePanel state="loading" message="今日会えるキャラクターを読み込んでいます…" />
@@ -246,39 +244,27 @@ export function HomeTodaySections({
             }}
           />
         ) : todayCharacterCards.length > 0 ? (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+          <ul className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-[20px] border border-pink/10 bg-white px-4 py-3 shadow-soft sm:gap-x-6 sm:px-5 sm:py-4 lg:grid-cols-4 lg:gap-x-8">
             {todayCharacterCards.map(({ character }) => (
-              <a
+              <li
                 key={character.id}
-                href={`/schedule?character=${encodeURIComponent(character.name)}&from=${today}&to=${today}#schedule-results`}
-                className="group flex min-h-[68px] items-center gap-2.5 rounded-[18px] border border-pink/10 bg-white p-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-pink/30 hover:shadow-card"
+                className="flex min-w-0 items-center gap-2"
               >
-                <CharacterAvatar character={character} size="xs" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[12px] font-black leading-[1.35] text-ink sm:text-[13px]">{character.name}</p>
-                  <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-black text-pink group-hover:underline">
-                    予定を見る <ArrowRight size={11} aria-hidden="true" />
-                  </span>
-                </div>
-              </a>
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: character.themeColor }}
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 text-[11px] font-black leading-4 text-ink sm:text-[12px]">
+                  {character.name}
+                </span>
+              </li>
             ))}
-          </div>
+          </ul>
         ) : (
           <p className="rounded-2xl border border-dashed border-pink/20 bg-white px-4 py-7 text-center text-[12px] font-bold text-ink/50">
             今日の公開済みキャラクター予定はまだありません。
           </p>
-        )}
-        {!characterSectionLoading && !characterSectionProblem && (
-          <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-bold leading-4 text-ink/50">
-            <span className="inline-flex items-center gap-1 text-lavender"><Sparkles size={12} aria-hidden="true" />公開済み予定</span>
-            <span>取込後に確認・公開した予定を反映します。</span>
-            {(scheduleState.isRefreshing || characterState.isRefreshing) && (
-              <span className="inline-flex items-center gap-1 text-pink" role="status">
-                <LoaderCircle size={11} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
-                更新中…
-              </span>
-            )}
-          </div>
         )}
       </section>
 
