@@ -148,7 +148,7 @@ async function ensureCharacterCatalog(
   return idByName;
 }
 
-export async function persistImportPreview(preview: ImportPreview, triggerType: "manual" | "scheduled" | "cli") {
+export async function persistImportPreview(preview: ImportPreview, triggerType: "manual" | "scheduled" | "cli" | "detected-update") {
   const client = getSupabaseAdminClient();
   if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
 
@@ -185,6 +185,7 @@ export async function persistImportPreview(preview: ImportPreview, triggerType: 
         content_type: document.contentType,
         storage_path: path,
         sha256: document.sha256,
+        byte_size: document.bytes.byteLength,
         parse_status: "parsed",
         metadata: document.metadata,
       });

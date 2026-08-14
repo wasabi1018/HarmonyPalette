@@ -21,6 +21,7 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/202608030002_site_analytics_plan_exports.sql`
 - `supabase/migrations/202608110001_park_operating_days.sql`
 - `supabase/migrations/202608110002_fix_publish_import_run_operating_day_filter.sql`
+- `supabase/migrations/202608150001_official_update_monitor.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read
@@ -53,7 +54,8 @@ SUPABASE_SECRET_KEY=your_secret_key
 ADMIN_EMAILS=admin@example.com
 ADMIN_IMPORT_SECRET=your_long_random_admin_secret
 CRON_SECRET=your_long_random_cron_secret
-AUTO_PUBLISH_IMPORTS=false
+# Optional Discord fallback. Prefer configuring it from /admin/official-updates.
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your_webhook_id/your_webhook_token
 ```
 
 Never expose `SUPABASE_SECRET_KEY`, `ADMIN_EMAILS`, `ADMIN_IMPORT_SECRET`, or `CRON_SECRET` to browser code or commit them to source control.
@@ -122,13 +124,46 @@ After applying the articles migration, sign in and open `/admin/articles`.
   Supabase Storage.
 - Published articles appear under `/articles`; readers can filter them by tag.
 
-## 6. Scheduled import
+## 6. Official update monitor
 
-`vercel.json` calls `/api/cron/import-schedules` daily at 21:00 UTC (06:00 JST). The route archives and saves candidates as drafts. With the recommended `AUTO_PUBLISH_IMPORTS=false`, an administrator must review and publish them.
+The old unconditional schedule-import Cron has been removed. Open
+`/admin/official-updates`, save a Discord Incoming Webhook, select a time in
+15-minute increments, and enable monitoring. The first run records a baseline
+without sending a notification. Later source changes are hashed first; only
+changed dates are parsed and saved as reviewable drafts. Nothing is published
+until an administrator selects the semantic diffs and confirms them.
 
-It also calls `/api/cron/publish-articles` every 10 minutes to publish due
-articles. For non-Vercel hosting, call the same routes from an external
-scheduler with:
+The monitor uses Supabase Cron because Vercel Hobby Cron is limited to one run
+per day. Store the deployed site URL and the same `CRON_SECRET` used by the
+Vercel environment in Supabase Vault, then schedule a lightweight 15-minute call:
+
+```sql
+select vault.create_secret('https://your-public-site.example', 'harmony_palette_site_url');
+select vault.create_secret('replace-with-the-vercel-cron-secret', 'harmony_palette_cron_secret');
+
+select cron.schedule(
+  'harmony-palette-official-update-monitor',
+  '*/15 * * * *',
+  $$
+  select net.http_post(
+    url := (select decrypted_secret from vault.decrypted_secrets where name = 'harmony_palette_site_url') || '/api/cron/official-updates',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'harmony_palette_cron_secret')
+    ),
+    body := '{}'::jsonb
+  );
+  $$
+);
+```
+
+The endpoint checks `next_run_at`, so 15-minute calls normally return without
+fetching the official site. While changed dates are queued, one heavy import is
+processed per call. Only changed originals are retained; the default internal
+cap is 250MB and can be lowered in the admin UI.
+
+`vercel.json` still calls `/api/cron/publish-articles` once per day to publish due
+articles. Cron endpoints require:
 
 ```text
 Authorization: Bearer <CRON_SECRET>
