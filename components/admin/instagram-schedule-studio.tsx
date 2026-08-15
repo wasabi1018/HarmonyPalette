@@ -1281,7 +1281,7 @@ export function DailyFanStudioInstagramCard({
               fontWeight: 900,
             }}
           >
-            {isClosed ? "この日は休園日です" : "この日のファンスタジオ予定はありません"}
+            {isClosed ? "休園日" : "この日のファンスタジオ予定はありません"}
           </div>
         )}
       </main>
@@ -2019,7 +2019,7 @@ export function InstagramScheduleStudio({
         {template === "fan-studio-daily" && activeDailyFanStudio.rows.length === 0 && (
           <p className="mt-3 text-[11px] font-bold text-[#b65364]">
             {closedDates.has(activePeriod.start)
-              ? "この日は休園日です。ファンスタジオの予定は表示しません。"
+              ? "休園日"
               : "この日に表示できるファンスタジオ予定がありません。"}
           </p>
         )}
