@@ -20,6 +20,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/data/types";
 import { type InitialCharacterData, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import {
+  type InitialParkOperatingDayData,
+  useParkOperatingDays,
+} from "@/lib/park-operating-day-store";
+import {
   getEntryCharacterNames,
   type InitialScheduleData,
   type ScheduleEntry,
@@ -35,7 +39,7 @@ import {
 type GenerationMode = "week" | "month";
 type ImageTemplate = "overview" | "fan-studio" | "fan-studio-daily";
 type ThemeKey = "pink" | "sky" | "lavender";
-type FanStudioCellState = "none" | "normal" | "special";
+type FanStudioCellState = "none" | "normal" | "special" | "closed";
 
 type DailyFanStudioItem = {
   name: string;
@@ -195,7 +199,14 @@ function eventNameForEntry(entry: ScheduleEntry) {
   return isFanStudioGreeting(entry) ? FAN_STUDIO_EVENT : entry.title;
 }
 
-function characterNamesForCell(entries: ScheduleEntry[], date: string, eventName: string) {
+function characterNamesForCell(
+  entries: ScheduleEntry[],
+  date: string,
+  eventName: string,
+  closedDates: ReadonlySet<string>,
+) {
+  if (eventName === FAN_STUDIO_EVENT && closedDates.has(date)) return [];
+
   const names = entries
     .filter(
       (entry) =>
@@ -222,7 +233,10 @@ function fanStudioCellState(
   date: string,
   entries: ScheduleEntry[],
   regularCharacterNames: Set<string>,
+  closedDates: ReadonlySet<string>,
 ): FanStudioCellState {
+  if (closedDates.has(date)) return "closed";
+
   const appearances = entries
     .filter(
       (entry) =>
@@ -237,10 +251,11 @@ function fanStudioCellState(
   return "none";
 }
 
-function buildFanStudioRows(
+export function buildFanStudioRows(
   period: WeekPeriod,
   entries: ScheduleEntry[],
   characters: Character[],
+  closedDates: ReadonlySet<string> = new Set(),
 ) {
   const dates = datesInPeriod(period);
   const periodEntries = entries.filter(
@@ -262,7 +277,7 @@ function buildFanStudioRows(
   return names.map((name) => ({
     name,
     cells: dates.map((date) =>
-      fanStudioCellState(name, date, periodEntries, regularCharacterNames)),
+      fanStudioCellState(name, date, periodEntries, regularCharacterNames, closedDates)),
   }));
 }
 
@@ -271,7 +286,13 @@ function roomSortValue(room: string) {
   return Number.isFinite(roomNumber) ? roomNumber : Number.MAX_SAFE_INTEGER;
 }
 
-function buildDailyFanStudioSchedule(date: string, entries: ScheduleEntry[]) {
+export function buildDailyFanStudioSchedule(
+  date: string,
+  entries: ScheduleEntry[],
+  closedDates: ReadonlySet<string> = new Set(),
+) {
+  if (closedDates.has(date)) return { rooms: [], rows: [] };
+
   const dailyEntries = entries.filter(
     (entry) => isFanStudioGreeting(entry) && entryOccursOn(entry, date),
   );
@@ -442,6 +463,7 @@ function ScheduleInstagramCard({
   targetMonth,
   pageIndex,
   pageCount,
+  closedDates = new Set(),
 }: {
   period: WeekPeriod;
   entries: ScheduleEntry[];
@@ -451,6 +473,7 @@ function ScheduleInstagramCard({
   targetMonth?: string;
   pageIndex: number;
   pageCount: number;
+  closedDates?: ReadonlySet<string>;
 }) {
   const dates = datesInPeriod(period);
   const columns = eventNames.length > 0 ? eventNames : ["イベント未選択"];
@@ -639,7 +662,7 @@ function ScheduleInstagramCard({
               </div>
 
               {columns.map((eventName) => {
-                const names = characterNamesForCell(entries, date, eventName).filter(
+                const names = characterNamesForCell(entries, date, eventName, closedDates).filter(
                   (name) =>
                     eventName !== FAN_STUDIO_EVENT
                     || !fanStudioRegularNames.has(name),
@@ -709,6 +732,7 @@ export function FanStudioInstagramCard({
   targetMonth,
   pageIndex,
   pageCount,
+  closedDates = new Set(),
 }: {
   period: WeekPeriod;
   entries: ScheduleEntry[];
@@ -718,9 +742,10 @@ export function FanStudioInstagramCard({
   targetMonth?: string;
   pageIndex: number;
   pageCount: number;
+  closedDates?: ReadonlySet<string>;
 }) {
   const dates = datesInPeriod(period);
-  const rows = buildFanStudioRows(period, entries, characters);
+  const rows = buildFanStudioRows(period, entries, characters, closedDates);
   const rowGap = rows.length >= 13 ? 4 : rows.length >= 10 ? 6 : 8;
   const nameFontSize = rows.length >= 14 ? 16 : rows.length >= 11 ? 18 : 21;
   const heartSize = rows.length >= 14 ? 25 : rows.length >= 11 ? 31 : 38;
@@ -876,6 +901,7 @@ export function FanStudioInstagramCard({
           </div>
           {dates.map((date) => {
             const parts = dateParts(date);
+            const isClosed = closedDates.has(date);
             const weekdayColor = parts.weekday === "土"
               ? "#317fc4"
               : parts.weekday === "日"
@@ -900,6 +926,11 @@ export function FanStudioInstagramCard({
               >
                 <span>{parts.month}/{parts.day}</span>
                 <span style={{ color: weekdayColor }}>{parts.weekday}</span>
+                {isClosed && (
+                  <span style={{ fontSize: 12, lineHeight: 1, letterSpacing: "0.04em" }}>
+                    休園
+                  </span>
+                )}
               </div>
             );
           })}
@@ -937,6 +968,7 @@ export function FanStudioInstagramCard({
               const date = dates[index];
               const parts = dateParts(date);
               const color = state === "special" ? theme.secondary : theme.accent;
+              const isClosed = state === "closed";
               const outsideTargetMonth = targetMonth ? !date.startsWith(targetMonth) : false;
 
               return (
@@ -947,11 +979,11 @@ export function FanStudioInstagramCard({
                     minWidth: 0,
                     placeItems: "center",
                     borderRight: `2px solid ${theme.soft}`,
-                    background: parts.weekend ? `${theme.soft}72` : "#fff",
+                    background: isClosed ? "#f5f1f4" : parts.weekend ? `${theme.soft}72` : "#fff",
                     opacity: outsideTargetMonth ? 0.62 : 1,
                   }}
                 >
-                  {state !== "none" && (
+                  {state !== "none" && state !== "closed" && (
                     <Heart size={heartSize} fill={color} color={color} strokeWidth={1.4} />
                   )}
                 </div>
@@ -1005,14 +1037,20 @@ export function DailyFanStudioInstagramCard({
   theme,
   specialEmoji,
   specialEmojiMeaning,
+  isClosed = false,
 }: {
   date: string;
   entries: ScheduleEntry[];
   theme: Theme;
   specialEmoji: string;
   specialEmojiMeaning: string;
+  isClosed?: boolean;
 }) {
-  const { rooms, rows } = buildDailyFanStudioSchedule(date, entries);
+  const { rooms, rows } = buildDailyFanStudioSchedule(
+    date,
+    entries,
+    isClosed ? new Set([date]) : new Set(),
+  );
   const rowGap = rows.length >= 13 ? 4 : rows.length >= 10 ? 6 : 8;
   const timeWidth = 150;
   const tableColumns = `${timeWidth}px repeat(${Math.max(rooms.length, 1)}, minmax(0, 1fr))`;
@@ -1243,7 +1281,7 @@ export function DailyFanStudioInstagramCard({
               fontWeight: 900,
             }}
           >
-            この日のファンスタジオ予定はありません
+            {isClosed ? "この日は休園日です" : "この日のファンスタジオ予定はありません"}
           </div>
         )}
       </main>
@@ -1305,12 +1343,15 @@ async function captureCard(node: HTMLElement) {
 export function InstagramScheduleStudio({
   initialScheduleData,
   initialCharacterData,
+  initialParkOperatingDayData,
 }: {
   initialScheduleData: InitialScheduleData;
   initialCharacterData: InitialCharacterData;
+  initialParkOperatingDayData: InitialParkOperatingDayData;
 }) {
   const scheduleState = useScheduleEntries({ fallbackToBundled: true, initialData: initialScheduleData });
   const characterState = useCharacters({ initialData: initialCharacterData });
+  const operatingDayState = useParkOperatingDays(initialParkOperatingDayData);
   const today = useMemo(todayInJapan, []);
   const [template, setTemplate] = useState<ImageTemplate>("overview");
   const [mode, setMode] = useState<GenerationMode>("week");
@@ -1391,13 +1432,21 @@ export function InstagramScheduleStudio({
   const normalizedSpecialLegend = specialLegend.trim() || DEFAULT_SPECIAL_LEGEND;
   const normalizedSpecialEmoji = specialEmoji.trim() || DEFAULT_SPECIAL_EMOJI;
   const normalizedSpecialEmojiMeaning = specialEmojiMeaning.trim() || DEFAULT_SPECIAL_EMOJI_MEANING;
+  const closedDates = useMemo(
+    () => new Set(
+      operatingDayState.operatingDays
+        .filter((day) => day.operatingStatus === "closed")
+        .map((day) => day.date),
+    ),
+    [operatingDayState.operatingDays],
+  );
   const activeFanStudioRows = useMemo(
-    () => buildFanStudioRows(activePeriod, scheduleState.entries, characterState.characters),
-    [activePeriod, characterState.characters, scheduleState.entries],
+    () => buildFanStudioRows(activePeriod, scheduleState.entries, characterState.characters, closedDates),
+    [activePeriod, characterState.characters, closedDates, scheduleState.entries],
   );
   const activeDailyFanStudio = useMemo(
-    () => buildDailyFanStudioSchedule(activePeriod.start, scheduleState.entries),
-    [activePeriod.start, scheduleState.entries],
+    () => buildDailyFanStudioSchedule(activePeriod.start, scheduleState.entries, closedDates),
+    [activePeriod.start, closedDates, scheduleState.entries],
   );
   const isDailyTemplate = template === "fan-studio-daily";
   const isBatchMode = !isDailyTemplate && mode === "month";
@@ -1885,6 +1934,7 @@ export function InstagramScheduleStudio({
                     theme={theme}
                     specialEmoji={normalizedSpecialEmoji}
                     specialEmojiMeaning={normalizedSpecialEmojiMeaning}
+                    isClosed={closedDates.has(activePeriod.start)}
                   />
                 ) : template === "fan-studio" ? (
                   <FanStudioInstagramCard
@@ -1896,6 +1946,7 @@ export function InstagramScheduleStudio({
                     targetMonth={mode === "month" ? selectedMonth : undefined}
                     pageIndex={previewIndex}
                     pageCount={periods.length}
+                    closedDates={closedDates}
                   />
                 ) : (
                   <ScheduleInstagramCard
@@ -1907,6 +1958,7 @@ export function InstagramScheduleStudio({
                     targetMonth={mode === "month" ? selectedMonth : undefined}
                     pageIndex={previewIndex}
                     pageCount={periods.length}
+                    closedDates={closedDates}
                   />
                 )}
               </div>
@@ -1940,6 +1992,12 @@ export function InstagramScheduleStudio({
             最新データを取得できなかったため、保存済みの予定でプレビューしています。
           </p>
         )}
+        {(template === "fan-studio" || template === "fan-studio-daily")
+          && operatingDayState.status === "error" && (
+          <p className="mt-3 text-[11px] font-bold text-[#b65364]">
+            休園日データを取得できなかったため、休園日の表示が正しくない可能性があります。
+          </p>
+        )}
         {feedback && (
           <p
             role="status"
@@ -1960,7 +2018,9 @@ export function InstagramScheduleStudio({
         )}
         {template === "fan-studio-daily" && activeDailyFanStudio.rows.length === 0 && (
           <p className="mt-3 text-[11px] font-bold text-[#b65364]">
-            この日に表示できるファンスタジオ予定がありません。
+            {closedDates.has(activePeriod.start)
+              ? "この日は休園日です。ファンスタジオの予定は表示しません。"
+              : "この日に表示できるファンスタジオ予定がありません。"}
           </p>
         )}
       </section>
@@ -1990,6 +2050,7 @@ export function InstagramScheduleStudio({
                 theme={theme}
                 specialEmoji={normalizedSpecialEmoji}
                 specialEmojiMeaning={normalizedSpecialEmojiMeaning}
+                isClosed={closedDates.has(period.start)}
               />
             ) : template === "fan-studio" ? (
               <FanStudioInstagramCard
@@ -2001,6 +2062,7 @@ export function InstagramScheduleStudio({
                 targetMonth={mode === "month" ? selectedMonth : undefined}
                 pageIndex={index}
                 pageCount={periods.length}
+                closedDates={closedDates}
               />
             ) : (
               <ScheduleInstagramCard
@@ -2012,6 +2074,7 @@ export function InstagramScheduleStudio({
                 targetMonth={mode === "month" ? selectedMonth : undefined}
                 pageIndex={index}
                 pageCount={periods.length}
+                closedDates={closedDates}
               />
             )}
           </div>
