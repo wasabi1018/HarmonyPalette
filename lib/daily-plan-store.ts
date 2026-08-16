@@ -87,18 +87,27 @@ function normalizedItem(value: unknown): DailyPlanItem | null {
     return null;
   }
 
+  const sourceScheduleKey = typeof item.sourceScheduleKey === "string" ? item.sourceScheduleKey : undefined;
+  const location = typeof item.location === "string" ? item.location : "";
+  const storedSyncStatus = item.syncStatus === "current"
+    || item.syncStatus === "updated"
+    || item.syncStatus === "missing"
+    || item.syncStatus === "needs-review"
+    ? item.syncStatus
+    : undefined;
+  const syncStatus = storedSyncStatus === "missing"
+    && !sourceScheduleKey
+    && !isFanStudioLocation(location)
+    ? "current"
+    : storedSyncStatus;
+
   return {
     id: item.id,
     kind: item.kind,
     sourceScheduleId: typeof item.sourceScheduleId === "string" ? item.sourceScheduleId : undefined,
-    sourceScheduleKey: typeof item.sourceScheduleKey === "string" ? item.sourceScheduleKey : undefined,
+    sourceScheduleKey,
     sourceUpdatedAt: typeof item.sourceUpdatedAt === "string" ? item.sourceUpdatedAt : undefined,
-    syncStatus: item.syncStatus === "current"
-      || item.syncStatus === "updated"
-      || item.syncStatus === "missing"
-      || item.syncStatus === "needs-review"
-      ? item.syncStatus
-      : undefined,
+    syncStatus,
     title: item.title,
     characterNames: Array.isArray(item.characterNames)
       ? item.characterNames.filter((name): name is string => typeof name === "string")
@@ -106,7 +115,7 @@ function normalizedItem(value: unknown): DailyPlanItem | null {
     scheduleType: typeof item.scheduleType === "string" ? item.scheduleType : undefined,
     startTime: item.startTime,
     endTime: item.endTime,
-    location: typeof item.location === "string" ? item.location : "",
+    location,
     note: typeof item.note === "string" ? item.note : "",
     accentColor: item.kind === "custom" && isCustomPlanColor(item.accentColor)
       ? item.accentColor
@@ -352,6 +361,10 @@ function isFanStudioLocation(value: string) {
   return value.normalize("NFKC").includes("ファンスタジオ");
 }
 
+function normalizeLegacyIdentityPart(value: string) {
+  return value.normalize("NFKC").replace(/[\u00a0\u3000]/g, " ").replace(/\s+/g, " ").trim().toLocaleLowerCase("ja");
+}
+
 function legacyFanStudioMatches(date: string, item: DailyPlanItem, entries: ScheduleEntry[]) {
   if (!isFanStudioLocation(item.location)) return [];
   const normalizedLocation = item.location.normalize("NFKC").replace(/\s+/g, "").toLocaleLowerCase("ja");
@@ -359,6 +372,17 @@ function legacyFanStudioMatches(date: string, item: DailyPlanItem, entries: Sche
     && entry.date === date
     && entry.startTime === item.startTime
     && entry.location.normalize("NFKC").replace(/\s+/g, "").toLocaleLowerCase("ja") === normalizedLocation);
+}
+
+function legacyGeneralScheduleMatches(date: string, item: DailyPlanItem, entries: ScheduleEntry[]) {
+  if (isFanStudioLocation(item.location)) return [];
+  const normalizedTitle = normalizeLegacyIdentityPart(item.title);
+  const normalizedLocation = normalizeLegacyIdentityPart(item.location);
+  return entries.filter((entry) => entry.date <= date
+    && (entry.endDate ?? entry.date) >= date
+    && entry.startTime === item.startTime
+    && normalizeLegacyIdentityPart(entry.title) === normalizedTitle
+    && normalizeLegacyIdentityPart(entry.location) === normalizedLocation);
 }
 
 export type OfficialPlanSyncResult = {
@@ -402,12 +426,21 @@ export function reconcileOfficialPlanItems(
       const keyedMatches = !exactMatch && item.sourceScheduleKey
         ? entriesByKey.get(item.sourceScheduleKey) ?? []
         : [];
-      const legacyMatches = !exactMatch && !item.sourceScheduleKey
-        ? legacyFanStudioMatches(date, item, scheduleEntries)
+      const isLegacyItem = !exactMatch && !item.sourceScheduleKey;
+      const isLegacyFanStudioItem = isLegacyItem && isFanStudioLocation(item.location);
+      const legacyMatches = isLegacyItem
+        ? isLegacyFanStudioItem
+          ? legacyFanStudioMatches(date, item, scheduleEntries)
+          : legacyGeneralScheduleMatches(date, item, scheduleEntries)
         : [];
       const candidates = exactMatch ? [exactMatch] : keyedMatches.length > 0 ? keyedMatches : legacyMatches;
 
       if (candidates.length !== 1) {
+        if (isLegacyItem && !isLegacyFanStudioItem && candidates.length === 0) {
+          if (item.syncStatus === undefined || item.syncStatus === "current") return item;
+          planChanged = true;
+          return { ...item, syncStatus: "current" as const };
+        }
         const syncStatus: OfficialPlanSyncStatus = candidates.length > 1 ? "needs-review" : "missing";
         if (syncStatus === "needs-review") reviewCount += 1;
         else missingCount += 1;
@@ -419,8 +452,7 @@ export function reconcileOfficialPlanItems(
       const latest = candidates[0];
       const latestNames = getEntryCharacterNames(latest);
       const latestEndTime = normalizedEndTime(latest.startTime, latest.endTime);
-      const contentChanged = item.sourceScheduleId !== latest.id
-        || item.title !== latest.title
+      const contentChanged = item.title !== latest.title
         || !sameNames(item.characterNames, latestNames)
         || item.scheduleType !== latest.scheduleType
         || item.startTime !== latest.startTime
@@ -428,7 +460,8 @@ export function reconcileOfficialPlanItems(
         || item.location !== latest.location;
       const sourceScheduleKey = getScheduleSourceKey(latest);
       const syncStatus: OfficialPlanSyncStatus = contentChanged ? "updated" : "current";
-      const metadataChanged = item.sourceScheduleKey !== sourceScheduleKey
+      const metadataChanged = item.sourceScheduleId !== latest.id
+        || item.sourceScheduleKey !== sourceScheduleKey
         || item.sourceUpdatedAt !== latest.updatedAt
         || item.syncStatus !== syncStatus;
       if (!contentChanged && !metadataChanged) return item;

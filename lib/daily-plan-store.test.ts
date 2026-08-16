@@ -62,6 +62,31 @@ function fanStudioEntry(overrides: Partial<ScheduleEntry> = {}): ScheduleEntry {
   };
 }
 
+function generalScheduleEntry(overrides: Partial<ScheduleEntry> = {}): ScheduleEntry {
+  return {
+    id: "supabase:iceful-current",
+    externalKey: "2026-08-17:iceful-parade:13:00",
+    kind: "event",
+    title: "Iceful Parade アイスフルパレード",
+    date,
+    startTime: "13:00",
+    endTime: "13:25",
+    characterIds: [],
+    characterNames: ["ハローキティ"],
+    scheduleType: "ショー・パレード",
+    location: "ハーモニービレッジ",
+    description: "",
+    officialUrl: "https://www.harmonyland.jp/",
+    sourceName: "ハーモニーランド公式 日別PDF",
+    sourceId: "harmonyland-daily-pdf",
+    updatedAt: "2026-08-17T00:00:00.000Z",
+    status: "upcoming",
+    isSample: false,
+    isImported: true,
+    ...overrides,
+  };
+}
+
 test("旧IDのファンスタジオ予定を同じ枠の最新キャラクターへ同期する", () => {
   const result = reconcileOfficialPlanItems(planWith(officialPlanItem()), [fanStudioEntry()], "2026-08-17T01:00:00.000Z");
   const item = result.plans[date].items[0];
@@ -87,6 +112,54 @@ test("同じ枠に複数候補がある場合は自動更新しない", () => {
   assert.equal(result.reviewCount, 1);
   assert.deepEqual(item.characterNames, ["クロミ"]);
   assert.equal(item.syncStatus, "needs-review");
+});
+
+test("旧IDの一般イベントを内容が一致する公開予定へ移行する", () => {
+  const oldItem = officialPlanItem({
+    sourceScheduleId: "legacy:iceful",
+    title: "Iceful Parade アイスフルパレード",
+    characterNames: ["ハローキティ"],
+    scheduleType: "ショー・パレード",
+    startTime: "13:00",
+    endTime: "13:25",
+    location: "ハーモニービレッジ",
+    syncStatus: "missing",
+  });
+  const result = reconcileOfficialPlanItems(planWith(oldItem), [generalScheduleEntry()], "2026-08-17T01:00:00.000Z");
+  const item = result.plans[date].items[0];
+  assert.equal(result.updatedCount, 0);
+  assert.equal(result.missingCount, 0);
+  assert.equal(item.sourceScheduleId, "supabase:iceful-current");
+  assert.equal(item.sourceScheduleKey, "harmonyland-daily-pdf:2026-08-17:iceful-parade:13:00");
+  assert.equal(item.syncStatus, "current");
+});
+
+test("識別キーのない一般イベントは一致候補がなくても未公開扱いにしない", () => {
+  const oldItem = officialPlanItem({
+    sourceScheduleId: "legacy:splash-party",
+    title: "南の島の！？はちゃめちゃスプラッシュパーリー！",
+    characterNames: [],
+    scheduleType: "ステージイベント",
+    startTime: "11:45",
+    endTime: "12:00",
+    location: "ハーモニーパーク",
+    syncStatus: "missing",
+  });
+  const result = reconcileOfficialPlanItems(planWith(oldItem), [], "2026-08-17T01:00:00.000Z");
+  const item = result.plans[date].items[0];
+  assert.equal(result.missingCount, 0);
+  assert.equal(item.syncStatus, "current");
+});
+
+test("識別キーを保存済みの一般イベントが消えた場合は未公開扱いにする", () => {
+  const itemWithKey = officialPlanItem({
+    title: "Iceful Parade アイスフルパレード",
+    location: "ハーモニービレッジ",
+    sourceScheduleKey: "harmonyland-daily-pdf:2026-08-17:iceful-parade:13:00",
+  });
+  const result = reconcileOfficialPlanItems(planWith(itemWithKey), [], "2026-08-17T01:00:00.000Z");
+  assert.equal(result.missingCount, 1);
+  assert.equal(result.plans[date].items[0].syncStatus, "missing");
 });
 
 test("カスタム予定は同期対象にしない", () => {
