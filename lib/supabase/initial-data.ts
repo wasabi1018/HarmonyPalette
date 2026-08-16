@@ -24,6 +24,7 @@ export async function getInitialScheduleData(): Promise<InitialScheduleData> {
       const characters = Array.isArray(row.schedule_characters) ? row.schedule_characters : [];
       return {
         id: `supabase:${row.id}`,
+        externalKey: row.external_key,
         kind: row.kind,
         title: row.title,
         date: row.event_date,

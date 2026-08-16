@@ -1,7 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import { GripVertical, LockKeyhole, MapPin, Pencil, Trash2, TriangleAlert, Users } from "lucide-react";
+import { CircleCheck, GripVertical, LockKeyhole, MapPin, Pencil, Trash2, TriangleAlert, Users } from "lucide-react";
 import type { DailyPlanItem } from "@/lib/daily-plan-store";
 import { getCustomPlanColorValue } from "@/lib/plan-options";
 
@@ -105,6 +105,20 @@ export function PlanItemCard({
           {item.note && (
             <p className="mt-1.5 line-clamp-2 rounded-lg bg-[#fffafd] px-2 py-1.5 text-[10px] font-bold leading-4 text-ink/50" title={item.note}>
               {item.note}
+            </p>
+          )}
+          {item.kind === "official" && item.syncStatus === "updated" && (
+            <p className="mt-1.5 flex items-center gap-1 rounded-lg bg-mint/10 px-2 py-1.5 text-[10px] font-black text-[#35745f]">
+              <CircleCheck size={11} aria-hidden="true" />
+              最新の公式予定に更新しました
+            </p>
+          )}
+          {item.kind === "official" && (item.syncStatus === "missing" || item.syncStatus === "needs-review") && (
+            <p className="mt-1.5 flex items-start gap-1 rounded-lg bg-[#fff9ec] px-2 py-1.5 text-[10px] font-black leading-4 text-[#8a652c]">
+              <TriangleAlert size={11} className="mt-0.5 shrink-0" aria-hidden="true" />
+              {item.syncStatus === "needs-review"
+                ? "公式予定の変更候補が複数あります。内容を確認してください。"
+                : "この公式予定は現在公開されていません。内容を確認してください。"}
             </p>
           )}
         </div>

@@ -8,6 +8,7 @@ export type ScheduleEntryKind = "greeting" | "event";
 
 export type ScheduleEntry = {
   id: string;
+  externalKey?: string;
   kind: ScheduleEntryKind;
   title: string;
   date: string;
@@ -30,6 +31,21 @@ export type ScheduleEntry = {
   verificationStatus?: ImportVerificationStatus;
   appearanceNotes?: string[];
 };
+
+function normalizeScheduleIdentityPart(value: string) {
+  return value.normalize("NFKC").replace(/[\u00a0\u3000]/g, " ").replace(/\s+/g, " ").trim().toLocaleLowerCase("ja");
+}
+
+export function getScheduleSourceKey(entry: Pick<ScheduleEntry, "sourceId" | "externalKey" | "date" | "location" | "startTime">) {
+  if (!entry.sourceId) return undefined;
+  if (entry.sourceId === "harmonyland-funstudio") {
+    return [entry.sourceId, entry.date, entry.location, entry.startTime]
+      .map(normalizeScheduleIdentityPart)
+      .join(":");
+  }
+  if (!entry.externalKey) return undefined;
+  return `${normalizeScheduleIdentityPart(entry.sourceId)}:${normalizeScheduleIdentityPart(entry.externalKey)}`;
+}
 
 type StoredScheduleState = {
   customEntries: ScheduleEntry[];

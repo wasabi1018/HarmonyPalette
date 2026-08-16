@@ -47,6 +47,7 @@ import {
   minutesToTime,
   removePlanItem,
   shiftCustomPlanItem,
+  syncOfficialPlanItems,
   timeToMinutes,
   updateCustomPlanItem,
   useDailyPlans,
@@ -280,6 +281,16 @@ export function DailyPlanBuilder({
     const timer = window.setTimeout(() => setNotice(""), 3500);
     return () => window.clearTimeout(timer);
   }, [notice]);
+
+  useEffect(() => {
+    if (scheduleState.status !== "success") return;
+    const result = syncOfficialPlanItems(scheduleState.entries, addDays(today, -31));
+    if (result.updatedCount > 0) {
+      setNotice(`公式予定の変更を${result.updatedCount}件のマイプランへ反映しました。`);
+    } else if (result.reviewCount > 0 || result.missingCount > 0) {
+      setNotice("確認が必要な公式予定があります。");
+    }
+  }, [scheduleState.entries, scheduleState.status, today]);
 
   useEffect(() => {
     const url = new URL(window.location.href);

@@ -56,6 +56,7 @@ export type ParkOperatingDayDraftEdit = {
 
 type PublishedScheduleRow = {
   id: string;
+  external_key: string;
   source_id: string;
   source_reference: string;
   kind: "greeting" | "event";
