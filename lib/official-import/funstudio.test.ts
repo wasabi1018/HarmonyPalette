@@ -4,10 +4,19 @@ import {
   canonicalCharacters,
   normalizeCharacterNamesInText,
 } from "@/lib/official-import/character-name-normalizer";
+import { buildFanStudioExternalKey } from "@/lib/official-import/funstudio";
+import { buildExternalKey } from "@/lib/official-import/utils";
 
 function names(value: string) {
   return canonicalCharacters(value).map((character) => character.name);
 }
+
+test("ファンスタジオの識別キーはキャラクター変更で変わらない", () => {
+  const stableKey = buildFanStudioExternalKey("2026-08-17", "ファンスタジオ101号室", "11:00");
+  assert.equal(stableKey, buildExternalKey(["2026-08-17", "ファンスタジオ101号室", "11:00"]));
+  assert.notEqual(stableKey, buildExternalKey(["2026-08-17", "ファンスタジオ101号室", "11:00", "クロミ"]));
+  assert.notEqual(stableKey, buildExternalKey(["2026-08-17", "ファンスタジオ101号室", "11:00", "あひるのペックル"]));
+});
 
 test("マイスウィートピアノの表記揺れを正規化する", () => {
   assert.deepEqual(names("マイスウィートピアノ"), ["マイスウィートピアノ"]);

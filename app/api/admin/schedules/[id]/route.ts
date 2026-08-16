@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { updatePublishedSchedule, type PublishedScheduleEdit } from "@/lib/supabase/schedule-repository";
+import {
+  updatePublishedSchedule,
+  withdrawPublishedSchedule,
+  type PublishedScheduleEdit,
+} from "@/lib/supabase/schedule-repository";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -80,6 +84,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   } catch (error) {
     const message = error instanceof Error ? error.message : "予定の更新に失敗しました。";
     const status = message === "編集対象の予定が見つかりません。" ? 404 : 400;
+    return NextResponse.json({ error: message }, { status });
+  }
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const authorization = await assertImportAuthorization(request);
+  if (!authorization.ok) return NextResponse.json({ error: authorization.message }, { status: authorization.status });
+
+  try {
+    const { id } = await params;
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "予定IDが正しくありません。" }, { status: 400 });
+    await withdrawPublishedSchedule(id);
+    return NextResponse.json({ withdrawn: true, id });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "予定の削除に失敗しました。";
+    const status = message === "削除対象の公開予定が見つかりません。" ? 404 : 400;
     return NextResponse.json({ error: message }, { status });
   }
 }

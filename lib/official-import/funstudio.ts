@@ -26,6 +26,10 @@ type ParsedRowTime = {
   endTime: string;
 };
 
+export function buildFanStudioExternalKey(date: string, room: string, startTime: string) {
+  return buildExternalKey([date, room, startTime]);
+}
+
 function groupConsecutive(values: number[]) {
   const groups: Array<[number, number]> = [];
   for (const value of values) {
@@ -361,7 +365,7 @@ export async function importFanStudioSchedules(
         const characterNames = characters.map((character) => character.name).join("・");
         const appearance = row.hasIcon ? "（日焼け姿）" : "";
         schedules.push({
-          externalKey: buildExternalKey([date, room, row.startTime, characterNames]),
+          externalKey: buildFanStudioExternalKey(date, room, row.startTime),
           sourceId: "harmonyland-funstudio",
           sourceReference: target.url,
           sourceHash,

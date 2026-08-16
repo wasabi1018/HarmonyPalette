@@ -131,6 +131,7 @@ export function ScheduleManager({
   const [replacementTo, setReplacementTo] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [replacing, setReplacing] = useState(false);
   const formSectionRef = useRef<HTMLElement>(null);
 
@@ -268,11 +269,29 @@ export function ScheduleManager({
     }
   };
 
-  const handleDelete = (id: string, entryTitle: string) => {
+  const handleDelete = async (id: string, entryTitle: string) => {
     if (!window.confirm(`「${entryTitle}」をスケジュールから削除しますか？`)) return;
-    deleteScheduleEntry(id);
-    if (editingId === id) resetForm();
-    setFeedback(`「${entryTitle}」を削除しました。`);
+    setDeletingId(id);
+    setFeedback("");
+    try {
+      if (id.startsWith("supabase:")) {
+        const databaseId = id.slice("supabase:".length);
+        const response = await fetch(`/api/admin/schedules/${encodeURIComponent(databaseId)}`, {
+          method: "DELETE",
+        });
+        const result = await response.json() as { error?: string };
+        if (!response.ok) throw new Error(result.error || "予定の削除に失敗しました。");
+        refreshScheduleEntries();
+      } else {
+        deleteScheduleEntry(id);
+      }
+      if (editingId === id) resetForm();
+      setFeedback(`「${entryTitle}」を削除しました。`);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "予定の削除に失敗しました。");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleRestore = () => {
@@ -512,7 +531,7 @@ export function ScheduleManager({
                 <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-1.5 text-[9px] font-black"><span className={`rounded-full px-2 py-1 ${entry.kind === "event" ? "bg-[#fff4df] text-[#a76624]" : "bg-pink/10 text-pink"}`}>{entry.kind === "event" ? "イベント" : "グリーティング"}</span><span className="rounded-full bg-[#f5f2f4] px-2 py-1 text-ink/45">{entry.isSample ? "公式取込" : entry.isImported ? "JSON取込" : "追加データ"}</span></div><h3 className="mt-1.5 truncate text-[13px] font-black text-ink">{entry.title}</h3><p className="mt-1 text-[10px] font-bold text-ink/45">{entry.date.replaceAll("-", "/")} {entry.startTime}・{entry.location}</p>{names.length > 0 && <p className="mt-1 truncate text-[10px] font-bold text-ink/45">{names.join("・")}</p>}</div>
                 <div className="flex shrink-0 gap-1.5">
                   <button type="button" onClick={() => openEdit(entry)} aria-label={`${entry.title}を編集`} className="grid h-10 w-10 place-items-center rounded-xl border border-lavender/15 bg-lavender/5 text-lavender hover:bg-lavender/10"><Pencil size={15} aria-hidden="true" /></button>
-                  <button type="button" onClick={() => handleDelete(entry.id, entry.title)} aria-label={`${entry.title}を削除`} className="grid h-10 w-10 place-items-center rounded-xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-100"><Trash2 size={16} aria-hidden="true" /></button>
+                  <button type="button" onClick={() => handleDelete(entry.id, entry.title)} disabled={deletingId === entry.id} aria-label={`${entry.title}を削除`} className="grid h-10 w-10 place-items-center rounded-xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40">{deletingId === entry.id ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <Trash2 size={16} aria-hidden="true" />}</button>
                 </div>
               </div>
             </article>;

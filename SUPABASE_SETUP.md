@@ -22,6 +22,7 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/202608110001_park_operating_days.sql`
 - `supabase/migrations/202608110002_fix_publish_import_run_operating_day_filter.sql`
 - `supabase/migrations/202608150001_official_update_monitor.sql`
+- `supabase/migrations/202608170001_schedule_withdrawal_and_fanstudio_reconciliation.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read

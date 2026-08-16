@@ -494,6 +494,26 @@ export async function updatePublishedSchedule(id: string, edit: PublishedSchedul
   return updated;
 }
 
+export async function withdrawPublishedSchedule(id: string) {
+  const client = getSupabaseAdminClient();
+  if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
+
+  const { data, error } = await client
+    .from("schedule_items")
+    .update({
+      publication_status: "withdrawn",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("publication_status", "published")
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(`予定を削除できませんでした: ${error.message}`);
+  if (!data?.id) throw new Error("削除対象の公開予定が見つかりません。");
+
+  return data;
+}
+
 export async function bulkReplacePublishedSchedules(replacement: PublishedScheduleBulkReplacement) {
   const client = getSupabaseAdminClient();
   if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
