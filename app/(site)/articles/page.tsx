@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { cache } from "react";
+import { FirstVisitGuideLink } from "@/components/first-visit-guide-link";
 import { OfficialNotice } from "@/components/official-notice";
 import { PageIntro } from "@/components/page-intro";
 import {
@@ -150,6 +151,8 @@ export default async function ArticlesPage({
           RSSで新着記事を購読
         </Link>
       </div>
+
+      <FirstVisitGuideLink className="mt-6" />
 
       {publishedSeries.length > 0 && (
         <section className="mt-6 rounded-2xl border border-pink/10 bg-white p-4 shadow-soft sm:p-5">
