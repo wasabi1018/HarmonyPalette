@@ -532,13 +532,13 @@ function MultiSelectField({
       {open && (
         <>
           <button type="button" aria-label={`${dialogLabel}を閉じる`} onClick={() => setOpen(false)} className="fixed inset-0 z-[60] bg-ink/30 lg:hidden" />
-          <div role="dialog" aria-label={dialogLabel} className="absolute left-0 top-[72px] z-[70] w-full min-w-[300px] rounded-2xl border border-pink/15 bg-white p-3 shadow-[0_20px_50px_rgba(75,45,55,0.2)] max-lg:fixed max-lg:inset-x-4 max-lg:top-20 max-lg:w-auto max-lg:min-w-0 max-lg:max-w-[calc(100vw-2rem)] max-lg:overflow-hidden lg:min-w-[440px]">
-            <div className="flex items-center justify-between gap-3 border-b border-pink/10 pb-2">
+          <div role="dialog" aria-label={dialogLabel} className="absolute left-0 top-[72px] z-[70] w-full min-w-[300px] rounded-2xl border border-pink/15 bg-white p-3 shadow-[0_20px_50px_rgba(75,45,55,0.2)] max-lg:fixed max-lg:inset-x-4 max-lg:top-20 max-lg:flex max-lg:max-h-[calc(100dvh-6rem)] max-lg:w-auto max-lg:min-w-0 max-lg:max-w-[calc(100vw-2rem)] max-lg:flex-col max-lg:overflow-clip max-lg:overscroll-contain max-lg:[overflow-anchor:none] lg:min-w-[440px]">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-pink/10 pb-2">
               <div><p className="text-[14px] font-black text-ink">{dialogLabel}</p><p className="mt-0.5 text-[10px] font-bold text-ink/40">未選択の場合はすべて表示します</p></div>
               <button type="button" onClick={() => setOpen(false)} aria-label="閉じる" className="grid h-9 w-9 place-items-center rounded-full bg-pink/5 text-pink"><X size={17} aria-hidden="true" /></button>
             </div>
-            <button type="button" onClick={() => onChange([])} className="mt-2 min-h-9 w-full rounded-lg bg-pink/5 text-[11px] font-black text-pink">すべて表示</button>
-            <div className={`mt-3 grid max-h-80 gap-2 overflow-y-auto pr-1 ${isEventField ? "grid-cols-1" : "grid-cols-2"}`}>
+            <button type="button" onClick={() => onChange([])} className="mt-2 min-h-9 w-full shrink-0 rounded-lg bg-pink/5 text-[11px] font-black text-pink">すべて表示</button>
+            <div className={`mt-3 grid min-h-0 max-h-80 flex-1 gap-2 overflow-y-auto overscroll-contain pr-1 [overflow-anchor:none] ${isEventField ? "grid-cols-1" : "grid-cols-2"}`}>
               {options.map((item) => (
                 <label key={item} className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-xl border px-2.5 text-[12px] font-bold ${selected.includes(item) ? "border-pink bg-pink/5 text-pink" : "border-ink/10 text-ink/70"}`}>
                   <input type="checkbox" checked={selected.includes(item)} onChange={() => toggle(item)} className="sr-only" />
@@ -547,7 +547,7 @@ function MultiSelectField({
                 </label>
               ))}
             </div>
-            <button type="button" onClick={() => setOpen(false)} className="mt-3 min-h-11 w-full rounded-xl bg-pink text-[12px] font-black text-white">選択を反映して閉じる</button>
+            <button type="button" onClick={() => setOpen(false)} className="mt-3 min-h-11 w-full shrink-0 rounded-xl bg-pink text-[12px] font-black text-white">選択を反映して閉じる</button>
           </div>
         </>
       )}
