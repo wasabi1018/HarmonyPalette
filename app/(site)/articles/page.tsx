@@ -19,6 +19,7 @@ import {
   searchPublishedArticles,
 } from "@/lib/articles/repository";
 import { listPublishedArticleSeries } from "@/lib/articles/series-repository";
+import { publicArticleImageUrl } from "@/lib/articles/media-url";
 
 const loadPublishedJournalArticles = cache(async () => {
   try {
@@ -252,7 +253,7 @@ export default async function ArticlesPage({
                   {article.coverImageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={article.coverImageUrl}
+                      src={publicArticleImageUrl(article.coverImageUrl)}
                       alt={`${article.title}のアイキャッチ画像`}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
                     />

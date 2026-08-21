@@ -7,6 +7,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { ArticleSummary } from "@/lib/articles/types";
+import { publicArticleImageUrl } from "@/lib/articles/media-url";
 import type { InstagramPostUrls } from "@/data/instagram-posts";
 import type { InitialCharacterData } from "@/lib/character-store";
 import type { InitialParkOperatingDayData } from "@/lib/park-operating-day-store";
@@ -111,7 +112,7 @@ function JournalSection({
                   {article.coverImageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={article.coverImageUrl}
+                      src={publicArticleImageUrl(article.coverImageUrl)}
                       alt={`${article.title}のアイキャッチ画像`}
                       loading="lazy"
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"

@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import sharp from "sharp";
+import {
+  articleImageSourceLimitBytes,
+  optimizeArticleImage,
+} from "@/lib/articles/image-optimization";
 import { createArticleMedia } from "@/lib/articles/media-repository";
 import { getAdminAccess } from "@/lib/supabase/auth-server";
 import {
@@ -41,7 +44,7 @@ export async function POST(request: Request) {
     if (!(file instanceof File)) throw new Error("画像ファイルを選択してください。");
     const extension = imageExtensions[file.type];
     if (!extension) throw new Error("JPEG、PNG、WebP、GIF形式の画像を選択してください。");
-    if (file.size <= 0 || file.size > 10 * 1024 * 1024) {
+    if (file.size <= 0 || file.size > articleImageSourceLimitBytes) {
       throw new Error("画像は10MB以内で選択してください。");
     }
 
@@ -49,13 +52,13 @@ export async function POST(request: Request) {
       ? String(formData.get("altText")).trim().slice(0, 300)
       : "";
     const buffer = Buffer.from(await file.arrayBuffer());
-    const metadata = await sharp(buffer, { animated: true }).metadata();
+    const optimized = await optimizeArticleImage(buffer, file.type);
     const date = new Date().toISOString().slice(0, 10);
-    const path = `${date}/${randomUUID()}.${extension}`;
+    const path = `${date}/${randomUUID()}.${optimized.extension}`;
     const { error } = await client.storage
       .from("article-images")
-      .upload(path, buffer, {
-        contentType: file.type,
+      .upload(path, optimized.buffer, {
+        contentType: optimized.contentType,
         cacheControl: "31536000",
         upsert: false,
       });
@@ -67,11 +70,11 @@ export async function POST(request: Request) {
     const media = await createArticleMedia({
       storagePath: path,
       publicUrl: data.publicUrl,
-      fileName: (file.name || `image.${extension}`).slice(0, 255),
-      mimeType: file.type,
-      sizeBytes: file.size,
-      width: metadata.width || null,
-      height: metadata.height || null,
+      fileName: (file.name || `image.${optimized.extension}`).slice(0, 255),
+      mimeType: optimized.contentType,
+      sizeBytes: optimized.buffer.byteLength,
+      width: optimized.width,
+      height: optimized.height,
       altText,
       createdBy: access.ok ? access.user.id : null,
     });

@@ -25,7 +25,7 @@ const fallbackSettings: OfficialMonitorSettings = {
   discordConfigured: false,
   discordWebhookMasked: null,
   retentionDays: 90,
-  maxStorageBytes: 262_144_000,
+  maxStorageBytes: 157_286_400,
 };
 
 export default async function OfficialUpdatesPage({ searchParams }: { searchParams: Promise<{ event?: string }> }) {

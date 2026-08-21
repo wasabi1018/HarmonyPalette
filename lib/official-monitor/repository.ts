@@ -36,7 +36,7 @@ function settingsFromRow(row: Record<string, unknown>): OfficialMonitorSettings 
     discordConfigured: Boolean(row.discord_webhook_secret_id || process.env.DISCORD_WEBHOOK_URL),
     discordWebhookMasked: row.discord_webhook_masked ? String(row.discord_webhook_masked) : process.env.DISCORD_WEBHOOK_URL ? "環境変数で設定済み" : null,
     retentionDays: Number(row.retention_days ?? 90),
-    maxStorageBytes: Number(row.max_storage_bytes ?? 262_144_000),
+    maxStorageBytes: Number(row.max_storage_bytes ?? 157_286_400),
   };
 }
 
@@ -162,8 +162,10 @@ export async function saveSourceFingerprint(fingerprint: SourceFingerprint, chan
   const path = `monitor/${fingerprint.sourceKey}/${safeEntity}/${fingerprint.rawSha256}.${extension(fingerprint.contentType)}`;
   let storagePath: string | null = path;
   const settings = await getOfficialMonitorSettings();
-  const { data: totals } = await db.from("official_source_versions").select("byte_size");
-  const currentBytes = (totals ?? []).reduce((sum, row) => sum + Number(row.byte_size || 0), 0);
+  const { data: storageUsage, error: storageUsageError } = await db.rpc("get_official_source_storage_usage");
+  const currentBytes = storageUsageError
+    ? settings.maxStorageBytes
+    : Number(storageUsage || 0);
   if (currentBytes + fingerprint.bytes.byteLength <= settings.maxStorageBytes) {
     const { error: uploadError } = await db.storage.from("official-source-documents").upload(path, fingerprint.bytes, {
       contentType: fingerprint.contentType,

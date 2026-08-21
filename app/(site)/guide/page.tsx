@@ -5,6 +5,7 @@ import { cache } from "react";
 import { OfficialNotice } from "@/components/official-notice";
 import { PageIntro } from "@/components/page-intro";
 import { listPublishedArticles } from "@/lib/articles/repository";
+import { publicArticleImageUrl } from "@/lib/articles/media-url";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ export default async function GuidePage() {
                   {article.coverImageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={article.coverImageUrl}
+                      src={publicArticleImageUrl(article.coverImageUrl)}
                       alt={`${article.title}のアイキャッチ画像`}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
                     />

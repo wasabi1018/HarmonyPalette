@@ -161,7 +161,8 @@ select cron.schedule(
 The endpoint checks `next_run_at`, so 15-minute calls normally return without
 fetching the official site. While changed dates are queued, one heavy import is
 processed per call. Only changed originals are retained; the default internal
-cap is 250MB and can be lowered in the admin UI.
+cap is 150MB and can be adjusted in the admin UI. The cap is calculated from
+the entire private source-document bucket.
 
 `vercel.json` still calls `/api/cron/publish-articles` once per day to publish due
 articles. Cron endpoints require:

@@ -1,4 +1,5 @@
 import { listPublishedArticles } from "@/lib/articles/repository";
+import { publicArticleImageUrl } from "@/lib/articles/media-url";
 import { SITE_URL } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export async function GET() {
         url,
         title: article.title,
         summary: article.excerpt,
-        image: absoluteUrl(article.coverImageUrl),
+        image: absoluteUrl(publicArticleImageUrl(article.coverImageUrl)),
         date_published: article.publishedAt || article.updatedAt,
         date_modified: article.updatedAt,
         tags: article.tags.map((tag) => tag.name),

@@ -1,6 +1,7 @@
 import "server-only";
 
 import sanitizeHtml from "sanitize-html";
+import { proxyArticleImageSources } from "@/lib/articles/media-url";
 
 export type ArticleHeading = {
   id: string;
@@ -31,7 +32,7 @@ function headingId(text: string, index: number) {
 export function prepareArticleContent(contentHtml: string) {
   const headings: ArticleHeading[] = [];
   const counts = new Map<string, number>();
-  const html = contentHtml.replace(
+  const htmlWithHeadings = contentHtml.replace(
     /<h([2-4])>([\s\S]*?)<\/h\1>/gi,
     (match, rawLevel: string, innerHtml: string) => {
       const text = plainText(innerHtml);
@@ -45,6 +46,7 @@ export function prepareArticleContent(contentHtml: string) {
       return `<h${level} id="${id}">${innerHtml}</h${level}>`;
     },
   );
+  const html = proxyArticleImageSources(htmlWithHeadings);
 
   return {
     html,

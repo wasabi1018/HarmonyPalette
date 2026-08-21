@@ -10,6 +10,7 @@ import {
   listRelatedArticles,
 } from "@/lib/articles/repository";
 import { prepareArticleContent } from "@/lib/articles/publishing";
+import { publicArticleImageUrl } from "@/lib/articles/media-url";
 import { getPublishedArticleSeriesContext } from "@/lib/articles/series-repository";
 import {
   SITE_NAME,
@@ -33,6 +34,7 @@ export async function generateMetadata({
     const title = article.seoTitle || article.title;
     const description = article.seoDescription || article.excerpt || `${article.title}の記事です。`;
     const url = `/articles/${article.slug}`;
+    const coverImageUrl = publicArticleImageUrl(article.coverImageUrl);
     return {
       title,
       description,
@@ -51,13 +53,13 @@ export async function generateMetadata({
         publishedTime: article.publishedAt || undefined,
         modifiedTime: article.updatedAt,
         tags: article.tags.map((tag) => tag.name),
-        images: article.coverImageUrl ? [article.coverImageUrl] : undefined,
+        images: coverImageUrl ? [coverImageUrl] : undefined,
       },
       twitter: {
         card: article.coverImageUrl ? "summary_large_image" : "summary",
         title,
         description,
-        images: article.coverImageUrl ? [article.coverImageUrl] : undefined,
+        images: coverImageUrl ? [coverImageUrl] : undefined,
       },
     };
   } catch {
@@ -95,6 +97,7 @@ export default async function ArticleDetailPage({
     seriesContext = null;
   }
   const articleUrl = siteUrl(`/articles/${article.slug}`);
+  const coverImageUrl = publicArticleImageUrl(article.coverImageUrl);
   const preparedContent = prepareArticleContent(article.contentHtml);
   const listingUrl = siteUrl(article.destination === "guide" ? "/guide" : "/articles");
   const listingName = article.destination === "guide" ? "初めての方へ" : "記事";
@@ -115,7 +118,7 @@ export default async function ArticleDetailPage({
         "@id": `${articleUrl}#article`,
         headline: article.seoTitle || article.title,
         description: article.seoDescription || article.excerpt,
-        image: article.coverImageUrl ? [article.coverImageUrl] : undefined,
+        image: coverImageUrl ? [siteUrl(coverImageUrl)] : undefined,
         datePublished: article.publishedAt,
         dateModified: article.updatedAt,
         mainEntityOfPage: {
@@ -174,7 +177,7 @@ export default async function ArticleDetailPage({
       <ArticlePreview
         title={article.title}
         excerpt={article.excerpt}
-        coverImageUrl={article.coverImageUrl}
+        coverImageUrl={coverImageUrl}
         contentHtml={preparedContent.html}
         tags={article.tags}
         publishedAt={article.publishedAt || article.updatedAt}
@@ -245,7 +248,7 @@ export default async function ArticleDetailPage({
                     {related.coverImageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={related.coverImageUrl}
+                        src={publicArticleImageUrl(related.coverImageUrl)}
                         alt={`${related.title}のアイキャッチ画像`}
                         loading="lazy"
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"

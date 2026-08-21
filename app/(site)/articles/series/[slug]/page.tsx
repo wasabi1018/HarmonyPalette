@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, BookCopy, BookOpen, CalendarDays } from "lucide-react";
 import { OfficialNotice } from "@/components/official-notice";
 import { getPublishedArticleSeries } from "@/lib/articles/series-repository";
+import { publicArticleImageUrl } from "@/lib/articles/media-url";
 import { siteUrl } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
@@ -99,7 +100,7 @@ export default async function ArticleSeriesPage({
                 {article.coverImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={article.coverImageUrl}
+                    src={publicArticleImageUrl(article.coverImageUrl)}
                     alt={`${article.title}のアイキャッチ画像`}
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                   />
