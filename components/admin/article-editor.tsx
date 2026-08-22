@@ -199,7 +199,6 @@ export function ArticleEditor({
   const [restoringRevisionId, setRestoringRevisionId] = useState("");
   const coverInputRef = useRef<HTMLInputElement>(null);
   const bodyInputRef = useRef<HTMLInputElement>(null);
-  const autoSaveRef = useRef<() => void>(() => {});
   const changeVersionRef = useRef(0);
 
   const editor = useEditor({
@@ -435,7 +434,7 @@ export function ArticleEditor({
     markDirty();
   };
 
-  const save = async (nextStatus: ArticleStatus, isAutoSave = false) => {
+  const save = async (nextStatus: ArticleStatus) => {
     if (!title.trim()) {
       setMessage("タイトルを入力してください。");
       setSaveState("error");
@@ -461,7 +460,6 @@ export function ArticleEditor({
     }
     if (
       nextStatus !== "draft"
-      && !isAutoSave
       && (qualityReport.errorCount > 0 || qualityReport.warningCount > 0)
     ) {
       const confirmed = window.confirm(
@@ -500,7 +498,7 @@ export function ArticleEditor({
         if (changeVersionRef.current === saveVersion) {
           setStatus(nextStatus);
           setSaveState("saved");
-          setMessage(isAutoSave ? "下書きを自動保存しました。" : savedMessage(nextStatus));
+          setMessage(savedMessage(nextStatus));
         } else {
           setSaveState("dirty");
           setMessage("保存後に追加の変更があります。");
@@ -531,7 +529,7 @@ export function ArticleEditor({
         setDestination(data.article.destination);
         setPublishedAt(localDateTime(data.article.publishedAt));
         setSaveState("saved");
-        setMessage(isAutoSave ? "下書きを自動保存しました。" : savedMessage(data.article.status));
+        setMessage(savedMessage(data.article.status));
       } else {
         setSaveState("dirty");
         setMessage("保存後に追加の変更があります。");
@@ -543,30 +541,12 @@ export function ArticleEditor({
         const revisionData = await revisionResponse.json() as { revisions?: ArticleRevision[] };
         if (revisionResponse.ok && revisionData.revisions) setRevisions(revisionData.revisions);
       }
-      if (!isAutoSave) router.refresh();
+      router.refresh();
     } catch (error) {
       setSaveState("error");
       setMessage(error instanceof Error ? error.message : "記事の保存に失敗しました。");
     }
   };
-
-  autoSaveRef.current = () => {
-    void save("draft", true);
-  };
-
-  useEffect(() => {
-    if (
-      !articleId
-      || status !== "draft"
-      || saveState !== "dirty"
-      || setupError
-      || !title.trim()
-      || !editor
-      || editor.isEmpty
-    ) return;
-    const timer = window.setTimeout(() => autoSaveRef.current(), 15_000);
-    return () => window.clearTimeout(timer);
-  }, [articleId, editor, saveState, setupError, status, title]);
 
   const restoreRevision = async (revision: ArticleRevision) => {
     if (!articleId) return;

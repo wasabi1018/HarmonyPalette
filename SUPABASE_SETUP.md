@@ -100,7 +100,7 @@ After applying the articles migration, sign in and open `/admin/articles`.
 - Choose **予約公開** and a future date to publish through the scheduled batch.
 - Configure the search title and description, and restore an earlier saved
   revision when needed.
-- Existing drafts are automatically saved after 15 seconds of unsaved editing.
+- Draft changes are saved only when an editor explicitly selects the draft save action.
 - Duplicate an article as a new draft, or move an article to the trash and
   restore it later. Permanent deletion is only available inside the trash.
 - Open `/admin/media` to upload reusable images and maintain alternative text.
