@@ -23,6 +23,8 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/202608110002_fix_publish_import_run_operating_day_filter.sql`
 - `supabase/migrations/202608150001_official_update_monitor.sql`
 - `supabase/migrations/202608170001_schedule_withdrawal_and_fanstudio_reconciliation.sql`
+- `supabase/migrations/20260821234044_free_plan_usage_guards.sql`
+- `supabase/migrations/20260822001455_retention_and_revision_limits.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read
@@ -99,7 +101,7 @@ After applying the articles migration, sign in and open `/admin/articles`.
   it.
 - Choose **予約公開** and a future date to publish through the scheduled batch.
 - Configure the search title and description, and restore an earlier saved
-  revision when needed.
+  revision when needed. Revision history keeps the latest 10 entries per article.
 - Draft changes are saved only when an editor explicitly selects the draft save action.
 - Duplicate an article as a new draft, or move an article to the trash and
   restore it later. Permanent deletion is only available inside the trash.
@@ -116,7 +118,7 @@ After applying the articles migration, sign in and open `/admin/articles`.
 - Editors see a real-time publication quality score for titles, search
   metadata, heading order, image alternative text, link URLs, internal link
   availability, cover images, and tags. Publication warns about remaining
-  issues without interrupting draft or automatic saves.
+  issues without interrupting draft saves.
 - Open `/admin/series` to create an article series, then choose the series and
   reading order in the article editor. Published series have their own landing
   pages and previous/next article navigation.
@@ -133,6 +135,7 @@ The old unconditional schedule-import Cron has been removed. Open
 without sending a notification. Later source changes are hashed first; only
 changed dates are parsed and saved as reviewable drafts. Nothing is published
 until an administrator selects the semantic diffs and confirms them.
+Archived official source originals are retained for 45 days by default.
 
 The monitor uses Supabase Cron because Vercel Hobby Cron is limited to one run
 per day. Store the deployed site URL and the same `CRON_SECRET` used by the

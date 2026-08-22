@@ -316,7 +316,7 @@ export async function listArticleRevisions(articleId: string): Promise<ArticleRe
     .select("id,article_id,revision_number,snapshot,created_at")
     .eq("article_id", articleId)
     .order("revision_number", { ascending: false })
-    .limit(20);
+    .limit(10);
   if (error) throw new Error(error.message);
   return (data ?? []).map((item) => {
     const row = item as Row;

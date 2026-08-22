@@ -24,7 +24,7 @@ const fallbackSettings: OfficialMonitorSettings = {
   consecutiveFailures: 0,
   discordConfigured: false,
   discordWebhookMasked: null,
-  retentionDays: 90,
+  retentionDays: 45,
   maxStorageBytes: 157_286_400,
 };
 

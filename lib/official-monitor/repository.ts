@@ -35,7 +35,7 @@ function settingsFromRow(row: Record<string, unknown>): OfficialMonitorSettings 
     consecutiveFailures: Number(row.consecutive_failures ?? 0),
     discordConfigured: Boolean(row.discord_webhook_secret_id || process.env.DISCORD_WEBHOOK_URL),
     discordWebhookMasked: row.discord_webhook_masked ? String(row.discord_webhook_masked) : process.env.DISCORD_WEBHOOK_URL ? "環境変数で設定済み" : null,
-    retentionDays: Number(row.retention_days ?? 90),
+    retentionDays: Number(row.retention_days ?? 45),
     maxStorageBytes: Number(row.max_storage_bytes ?? 157_286_400),
   };
 }
