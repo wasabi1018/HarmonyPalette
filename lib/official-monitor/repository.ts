@@ -203,6 +203,7 @@ export async function createUpdateEvent(input: {
   summary: string;
   previousSha256?: string | null;
   currentSha256?: string | null;
+  diffCounts?: Record<string, number>;
   metadata?: Record<string, unknown>;
 }) {
   const { data, error } = await client().from("official_update_events").insert({
@@ -212,6 +213,7 @@ export async function createUpdateEvent(input: {
     summary: input.summary,
     previous_sha256: input.previousSha256 || null,
     current_sha256: input.currentSha256 || null,
+    diff_counts: input.diffCounts ?? {},
     metadata: input.metadata ?? {},
   }).select("*").single();
   if (error) throw new Error(`更新履歴を作成できませんでした: ${error.message}`);

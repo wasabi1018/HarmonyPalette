@@ -1,4 +1,5 @@
 import type { PublishedData, SemanticDiff, StoredImportData } from "@/lib/official-monitor/types";
+import type { ImportPreview } from "@/lib/official-import/types";
 
 type EntityKind = SemanticDiff["entityType"];
 
@@ -137,6 +138,51 @@ export function createSemanticDiff(before: PublishedData, after: StoredImportDat
     ...diffCollection("operation", before.operations, after.operations),
     ...diffCollection("operating-day", before.operatingDays, after.operatingDays),
   ];
+}
+
+export function importPreviewData(preview: ImportPreview): StoredImportData {
+  return {
+    schedules: preview.schedules.map((entry) => ({
+      external_key: entry.externalKey,
+      source_id: entry.sourceId,
+      title: entry.title,
+      event_date: entry.date,
+      end_date: entry.endDate ?? null,
+      start_time: entry.startTime,
+      end_time: entry.endTime ?? null,
+      schedule_type: entry.scheduleType,
+      location: entry.location,
+      description: entry.description,
+      official_url: entry.officialUrl,
+      schedule_characters: entry.characters.map((character) => ({ character_name: character.name })),
+    })),
+    operations: preview.operations.map((entry) => ({
+      external_key: entry.externalKey,
+      source_id: entry.sourceId,
+      operation_date: entry.date,
+      attraction_name: entry.attractionName,
+      start_time: entry.startTime ?? null,
+      end_time: entry.endTime ?? null,
+      operation_status: entry.operationStatus,
+      notes: entry.notes,
+      official_url: entry.officialUrl,
+    })),
+    operatingDays: preview.operatingDays.map((entry) => ({
+      external_key: entry.externalKey,
+      source_id: entry.sourceId,
+      operation_date: entry.date,
+      operating_status: entry.operatingStatus,
+      opening_time: entry.openingTime ?? null,
+      closing_time: entry.closingTime ?? null,
+      source_title: entry.sourceTitle,
+      notes: entry.notes,
+      official_url: entry.officialUrl,
+    })),
+  };
+}
+
+export function meaningfulSemanticDiffs(diffs: SemanticDiff[]) {
+  return diffs.filter((diff) => diff.changeType !== "unchanged");
 }
 
 export function countSemanticDiffs(diffs: SemanticDiff[]) {

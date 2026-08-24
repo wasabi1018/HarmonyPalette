@@ -20,4 +20,5 @@ test("detected schedule changes are notification-only", () => {
 test("official monitor runner does not enqueue or persist automatic imports", () => {
   const source = readFileSync("lib/official-monitor/runner.ts", "utf8");
   assert.doesNotMatch(source, /enqueueImportJob|claimNextImportJob|persistImportPreview/);
+  assert.match(source, /if \(diffs\.length === 0\) continue/);
 });

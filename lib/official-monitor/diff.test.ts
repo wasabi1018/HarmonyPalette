@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createSemanticDiff } from "@/lib/official-monitor/diff";
+import { createSemanticDiff, importPreviewData, meaningfulSemanticDiffs } from "@/lib/official-monitor/diff";
 
 test("mutable schedule external keys are matched by stable fields", () => {
   const diffs = createSemanticDiff({
@@ -42,4 +42,54 @@ test("ambiguous stable matches do not create automatic removal candidates", () =
     operatingDays: [],
   });
   assert.deepEqual(diffs.map((diff) => diff.changeType), ["uncertain"]);
+});
+
+test("equivalent non-persisted previews do not produce a meaningful diff", () => {
+  const before = {
+    schedules: [{
+      external_key: "schedule-1",
+      source_id: "harmonyland-calendar",
+      title: "パレード",
+      event_date: "2026-08-20",
+      end_date: null,
+      start_time: "10:00:00",
+      end_time: null,
+      schedule_type: "event",
+      location: "ハーモニービレッジ",
+      description: "開催します",
+      official_url: "https://www.harmonyland.jp/",
+      schedule_characters: [{ character_name: "ハローキティ" }],
+    }],
+    operations: [],
+    operatingDays: [],
+  };
+  const preview = importPreviewData({
+    runId: "00000000-0000-0000-0000-000000000000",
+    generatedAt: "2026-08-20T00:00:00.000Z",
+    rangeStart: "2026-08-20",
+    rangeEnd: "2026-08-20",
+    schedules: [{
+      externalKey: "schedule-1",
+      sourceId: "harmonyland-calendar",
+      sourceReference: "calendar",
+      sourceHash: "hash",
+      kind: "event",
+      title: "パレード",
+      date: "2026-08-20",
+      startTime: "10:00",
+      scheduleType: "event",
+      location: "ハーモニービレッジ",
+      description: "開催します",
+      officialUrl: "https://www.harmonyland.jp/",
+      characters: [{ name: "ハローキティ" }],
+      verificationStatus: "verified",
+      confidence: 1,
+      rawPayload: {},
+    }],
+    operations: [],
+    operatingDays: [],
+    documents: [],
+    warnings: [],
+  });
+  assert.deepEqual(meaningfulSemanticDiffs(createSemanticDiff(before, preview)), []);
 });
