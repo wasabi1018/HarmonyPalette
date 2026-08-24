@@ -6,6 +6,7 @@ import {
   CircleAlert,
   Clipboard,
   Download,
+  ExternalLink,
   Heart,
   ImageDown,
   Instagram,
@@ -164,6 +165,14 @@ function getMonthPeriods(month: string) {
 
 function datesInPeriod(period: WeekPeriod) {
   return Array.from({ length: 7 }, (_, index) => addDays(period.start, index));
+}
+
+export function getDailyFanStudioPeriods(value: string): WeekPeriod[] {
+  const start = startOfWeek(value);
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(start, index);
+    return { id: date, start: date, end: date };
+  });
 }
 
 function formatShortDate(value: string, withWeekday = true) {
@@ -1364,13 +1373,14 @@ export function InstagramScheduleStudio({
   const [themeKey, setThemeKey] = useState<ThemeKey>("pink");
   const [previewIndex, setPreviewIndex] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDisplaying, setIsDisplaying] = useState(false);
   const [feedback, setFeedback] = useState("");
   const captureRefs = useRef(new Map<string, HTMLElement>());
   const { containerRef, scale } = usePreviewScale();
 
   const periods = useMemo<WeekPeriod[]>(() => {
     if (template === "fan-studio-daily") {
-      return [{ id: selectedDate, start: selectedDate, end: selectedDate }];
+      return getDailyFanStudioPeriods(selectedDate);
     }
     if (mode === "month") return getMonthPeriods(selectedMonth);
     const start = startOfWeek(selectedDate);
@@ -1449,11 +1459,12 @@ export function InstagramScheduleStudio({
     [activePeriod.start, closedDates, scheduleState.entries],
   );
   const isDailyTemplate = template === "fan-studio-daily";
-  const isBatchMode = !isDailyTemplate && mode === "month";
+  const isBatchMode = periods.length > 1;
+  const isBusy = isDownloading || isDisplaying;
   const canDownload = template === "fan-studio"
     ? activeFanStudioRows.length > 0
     : isDailyTemplate
-      ? activeDailyFanStudio.rows.length > 0
+      ? true
       : selectedEvents.length > 0;
 
   const caption = useMemo(() => {
@@ -1557,13 +1568,43 @@ export function InstagramScheduleStudio({
         });
       }
       const archive = createZip(files);
-      const label = template === "fan-studio" ? "fanstudio" : "schedules";
-      downloadBlob(archive, `harmony-palette_${selectedMonth}_weekly-${label}.zip`);
+      const archiveName = isDailyTemplate
+        ? `harmony-palette_fanstudio_daily_${periods[0].start}_${periods[periods.length - 1].start}.zip`
+        : `harmony-palette_${selectedMonth}_weekly-${template === "fan-studio" ? "fanstudio" : "schedules"}.zip`;
+      downloadBlob(archive, archiveName);
       setFeedback(`${files.length}枚の画像をZIPにまとめて保存しました。`);
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "画像の作成に失敗しました。");
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleDisplayImage = async () => {
+    const imageWindow = window.open("about:blank", "_blank");
+    if (!imageWindow) {
+      setFeedback("画像を表示できませんでした。ブラウザのポップアップを許可してください。");
+      return;
+    }
+
+    imageWindow.document.title = "画像を準備しています";
+    imageWindow.document.body.textContent = "画像を準備しています…";
+    setIsDisplaying(true);
+    setFeedback("");
+    try {
+      const node = captureRefs.current.get(activePeriod.id);
+      if (!node) throw new Error("画像の準備ができていません。");
+      const blob = await captureCard(node);
+      const url = URL.createObjectURL(blob);
+      imageWindow.opener = null;
+      imageWindow.location.replace(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 60 * 60 * 1000);
+      setFeedback("画像を別タブで表示しました。スマートフォンでは画像を長押しして保存できます。");
+    } catch (error) {
+      imageWindow.close();
+      setFeedback(error instanceof Error ? error.message : "画像の表示に失敗しました。");
+    } finally {
+      setIsDisplaying(false);
     }
   };
 
@@ -1607,7 +1648,7 @@ export function InstagramScheduleStudio({
             {template === "fan-studio"
               ? "キャラクターを縦軸、1週間の日付を横軸にした専用画像を作成します。"
               : template === "fan-studio-daily"
-                ? "時間を縦軸、予定のある部屋を横軸にした1日単位の画像を作成します。"
+                ? "時間を縦軸、予定のある部屋を横軸にした日別画像を、月〜日の7枚作成します。"
                 : "選択したイベントを横軸に並べた、現在のスケジュール画像を作成します。"}
           </p>
         </section>
@@ -1645,7 +1686,7 @@ export function InstagramScheduleStudio({
 
           <label className="mt-4 block">
             <span className="mb-1.5 block text-[11px] font-black text-ink/55">
-              {isDailyTemplate ? "作成する日" : mode === "week" ? "週に含まれる日" : "作成する月"}
+              {isDailyTemplate || mode === "week" ? "週に含まれる日" : "作成する月"}
             </span>
             <input
               type={isDailyTemplate || mode === "week" ? "date" : "month"}
@@ -1661,7 +1702,7 @@ export function InstagramScheduleStudio({
 
           <p className="mt-3 rounded-xl bg-mint/10 px-3 py-2.5 text-[11px] font-bold leading-5 text-[#35745f]">
             {isDailyTemplate
-              ? `${formatJapaneseDate(selectedDate)} の予定を1枚作成します。`
+              ? `月曜始まりの ${formatLongRange({ id: periods[0].id, start: periods[0].start, end: periods[periods.length - 1].start })} を、日別画像7枚で作成します。`
               : mode === "week"
               ? `月曜始まりの ${formatLongRange(periods[0])} を作成します。`
               : `${periods.length}週間分を作成し、ZIPでまとめて保存します。`}
@@ -1870,29 +1911,47 @@ export function InstagramScheduleStudio({
               1080 × 1350px・フィード投稿向け
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={isDownloading || !canDownload}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-pink px-5 text-[12px] font-black text-white shadow-[0_10px_22px_rgba(235,110,152,0.22)] transition hover:bg-[#df638e] disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            {isDownloading ? (
-              <LoaderCircle size={17} className="animate-spin" aria-hidden="true" />
-            ) : isBatchMode ? (
-              <Package size={17} aria-hidden="true" />
-            ) : (
-              <ImageDown size={17} aria-hidden="true" />
-            )}
-            {isDownloading
-              ? "画像を作成中…"
-              : isBatchMode
-                ? `${periods.length}枚をまとめて保存`
-                : "PNG画像を保存"}
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleDisplayImage}
+              disabled={isBusy || !canDownload}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-pink/20 bg-white px-5 text-[12px] font-black text-pink transition hover:bg-pink/5 disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {isDisplaying ? (
+                <LoaderCircle size={17} className="animate-spin" aria-hidden="true" />
+              ) : (
+                <ExternalLink size={17} aria-hidden="true" />
+              )}
+              {isDisplaying ? "画像を準備中…" : "画像を表示"}
+            </button>
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={isBusy || !canDownload}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-pink px-5 text-[12px] font-black text-white shadow-[0_10px_22px_rgba(235,110,152,0.22)] transition hover:bg-[#df638e] disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {isDownloading ? (
+                <LoaderCircle size={17} className="animate-spin" aria-hidden="true" />
+              ) : isBatchMode ? (
+                <Package size={17} aria-hidden="true" />
+              ) : (
+                <ImageDown size={17} aria-hidden="true" />
+              )}
+              {isDownloading
+                ? "画像を作成中…"
+                : isBatchMode
+                  ? `${periods.length}枚をまとめて保存`
+                  : "PNG画像を保存"}
+            </button>
+          </div>
         </div>
 
         {isBatchMode && periods.length > 1 && (
-          <div className="mt-5 flex gap-2 overflow-x-auto pb-1" aria-label="週のプレビュー切り替え">
+          <div
+            className="mt-5 flex gap-2 overflow-x-auto pb-1"
+            aria-label={isDailyTemplate ? "日のプレビュー切り替え" : "週のプレビュー切り替え"}
+          >
             {periods.map((period, index) => (
               <button
                 key={period.id}
@@ -1904,8 +1963,10 @@ export function InstagramScheduleStudio({
                     : "border border-pink/10 bg-[#fffafd] text-ink/50 hover:text-pink"
                 }`}
               >
-                第{index + 1}週
-                <span className="ml-1.5 text-[9px] opacity-75">{formatShortDate(period.start, false)}〜</span>
+                {isDailyTemplate ? formatShortDate(period.start) : `第${index + 1}週`}
+                {!isDailyTemplate && (
+                  <span className="ml-1.5 text-[9px] opacity-75">{formatShortDate(period.start, false)}〜</span>
+                )}
               </button>
             ))}
           </div>

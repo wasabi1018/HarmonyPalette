@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildDailyFanStudioSchedule, buildFanStudioRows } from "@/components/admin/instagram-schedule-studio";
+import {
+  buildDailyFanStudioSchedule,
+  buildFanStudioRows,
+  getDailyFanStudioPeriods,
+} from "@/components/admin/instagram-schedule-studio";
 import type { Character } from "@/data/types";
 import type { ScheduleEntry } from "@/lib/schedule-store";
 
@@ -56,4 +60,16 @@ test("休園日は個別予定も週間・日別ファンスタジオ表に表�
 
   assert.equal(rows[0].cells[2], "closed");
   assert.deepEqual(daily, { rooms: [], rows: [] });
+});
+
+test("日別ファンスタジオは選択日を含む月曜日から日曜日までを作成する", () => {
+  assert.deepEqual(getDailyFanStudioPeriods("2026-08-26"), [
+    { id: "2026-08-24", start: "2026-08-24", end: "2026-08-24" },
+    { id: "2026-08-25", start: "2026-08-25", end: "2026-08-25" },
+    { id: "2026-08-26", start: "2026-08-26", end: "2026-08-26" },
+    { id: "2026-08-27", start: "2026-08-27", end: "2026-08-27" },
+    { id: "2026-08-28", start: "2026-08-28", end: "2026-08-28" },
+    { id: "2026-08-29", start: "2026-08-29", end: "2026-08-29" },
+    { id: "2026-08-30", start: "2026-08-30", end: "2026-08-30" },
+  ]);
 });
