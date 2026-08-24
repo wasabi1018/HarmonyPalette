@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { toBlob } from "html-to-image";
 import Image from "next/image";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/data/types";
 import { type InitialCharacterData, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import {
@@ -1337,9 +1337,21 @@ function usePreviewScale() {
 }
 
 async function captureCard(node: HTMLElement) {
-  await document.fonts.ready;
+  const images = Array.from(node.querySelectorAll("img"));
+  await Promise.all(images.map(async (image) => {
+    if (!image.complete) {
+      await new Promise<void>((resolve) => {
+        image.addEventListener("load", () => resolve(), { once: true });
+        image.addEventListener("error", () => resolve(), { once: true });
+      });
+    }
+    if (typeof image.decode === "function") {
+      await image.decode().catch(() => undefined);
+    }
+  }));
+
   const blob = await toBlob(node, {
-    cacheBust: true,
+    skipFonts: true,
     pixelRatio: 1,
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
@@ -1374,8 +1386,12 @@ export function InstagramScheduleStudio({
   const [previewIndex, setPreviewIndex] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDisplaying, setIsDisplaying] = useState(false);
+  const [captureRevision, setCaptureRevision] = useState(0);
   const [feedback, setFeedback] = useState("");
   const captureRefs = useRef(new Map<string, HTMLElement>());
+  const captureRevisionRef = useRef(0);
+  const capturedBlobsRef = useRef(new Map<string, Blob>());
+  const pendingCapturesRef = useRef(new Map<string, Promise<Blob>>());
   const { containerRef, scale } = usePreviewScale();
 
   const periods = useMemo<WeekPeriod[]>(() => {
@@ -1467,6 +1483,76 @@ export function InstagramScheduleStudio({
       ? true
       : selectedEvents.length > 0;
 
+  useEffect(() => {
+    captureRevisionRef.current += 1;
+    capturedBlobsRef.current.clear();
+    pendingCapturesRef.current.clear();
+    setCaptureRevision(captureRevisionRef.current);
+  }, [
+    characterState.characters,
+    closedDates,
+    mode,
+    normalizedSpecialEmoji,
+    normalizedSpecialEmojiMeaning,
+    normalizedSpecialLegend,
+    scheduleState.entries,
+    selectedEvents,
+    selectedMonth,
+    template,
+    themeKey,
+  ]);
+
+  const getCapturedBlob = useCallback(async (period: WeekPeriod) => {
+    const key = `${captureRevision}:${period.id}`;
+    const cached = capturedBlobsRef.current.get(key);
+    if (cached) return cached;
+
+    const pending = pendingCapturesRef.current.get(key);
+    if (pending) return pending;
+
+    const node = captureRefs.current.get(period.id);
+    if (!node) throw new Error("画像の準備ができていません。");
+
+    const capture = captureCard(node).then((blob) => {
+      if (captureRevisionRef.current === captureRevision) {
+        capturedBlobsRef.current.set(key, blob);
+      }
+      return blob;
+    }).finally(() => {
+      pendingCapturesRef.current.delete(key);
+    });
+    pendingCapturesRef.current.set(key, capture);
+    return capture;
+  }, [captureRevision]);
+
+  useEffect(() => {
+    if (captureRevision === 0) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        const orderedPeriods = [
+          activePeriod,
+          ...periods.filter((period) => period.id !== activePeriod.id),
+        ];
+        for (const period of orderedPeriods) {
+          if (cancelled) return;
+          try {
+            await getCapturedBlob(period);
+          } catch {
+            return;
+          }
+          await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+        }
+      })();
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [activePeriod, captureRevision, getCapturedBlob, periods]);
+
   const caption = useMemo(() => {
     if (isDailyTemplate) {
       return `＼${formatJapaneseDate(activePeriod.start)}のファンスタジオ／
@@ -1547,9 +1633,7 @@ export function InstagramScheduleStudio({
     setFeedback("");
     try {
       if (!isBatchMode) {
-        const node = captureRefs.current.get(activePeriod.id);
-        if (!node) throw new Error("画像の準備ができていません。");
-        const blob = await captureCard(node);
+        const blob = await getCapturedBlob(activePeriod);
         downloadBlob(blob, fileNameForPeriod(activePeriod, template));
         setFeedback("Instagram用画像を保存しました。");
         return;
@@ -1559,9 +1643,7 @@ export function InstagramScheduleStudio({
       for (let index = 0; index < periods.length; index += 1) {
         setFeedback(`${index + 1} / ${periods.length}枚目を作成中…`);
         const period = periods[index];
-        const node = captureRefs.current.get(period.id);
-        if (!node) throw new Error("画像の準備ができていません。");
-        const blob = await captureCard(node);
+        const blob = await getCapturedBlob(period);
         files.push({
           name: fileNameForPeriod(period, template),
           bytes: new Uint8Array(await blob.arrayBuffer()),
@@ -1595,9 +1677,7 @@ export function InstagramScheduleStudio({
     setIsDisplaying(true);
     setFeedback("");
     try {
-      const node = captureRefs.current.get(activePeriod.id);
-      if (!node) throw new Error("画像の準備ができていません。");
-      const blob = await captureCard(node);
+      const blob = await getCapturedBlob(activePeriod);
       if (imageWindow.closed) throw new Error("画像を表示するタブが閉じられました。");
 
       const url = URL.createObjectURL(blob);
