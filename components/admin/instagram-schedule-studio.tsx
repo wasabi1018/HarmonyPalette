@@ -1588,6 +1588,9 @@ export function InstagramScheduleStudio({
     }
 
     imageWindow.document.title = "画像を準備しています";
+    imageWindow.document.documentElement.lang = "ja";
+    imageWindow.document.body.style.margin = "24px";
+    imageWindow.document.body.style.fontFamily = '"Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif';
     imageWindow.document.body.textContent = "画像を準備しています…";
     setIsDisplaying(true);
     setFeedback("");
@@ -1595,14 +1598,34 @@ export function InstagramScheduleStudio({
       const node = captureRefs.current.get(activePeriod.id);
       if (!node) throw new Error("画像の準備ができていません。");
       const blob = await captureCard(node);
+      if (imageWindow.closed) throw new Error("画像を表示するタブが閉じられました。");
+
       const url = URL.createObjectURL(blob);
-      imageWindow.opener = null;
-      imageWindow.location.replace(url);
-      window.setTimeout(() => URL.revokeObjectURL(url), 60 * 60 * 1000);
+      const fileName = fileNameForPeriod(activePeriod, template);
+      const image = imageWindow.document.createElement("img");
+      image.src = url;
+      image.alt = `${formatJapaneseDate(activePeriod.start)}のInstagram投稿画像`;
+      image.style.display = "block";
+      image.style.width = "100%";
+      image.style.maxWidth = `${CARD_WIDTH}px`;
+      image.style.height = "auto";
+      image.style.margin = "0 auto";
+      image.style.background = "#fff";
+
+      imageWindow.document.title = fileName;
+      imageWindow.document.body.style.margin = "0";
+      imageWindow.document.body.style.background = "#f5f0f4";
+      imageWindow.document.body.replaceChildren(image);
+      imageWindow.addEventListener("pagehide", () => URL.revokeObjectURL(url), { once: true });
+      imageWindow.focus();
       setFeedback("画像を別タブで表示しました。スマートフォンでは画像を長押しして保存できます。");
     } catch (error) {
-      imageWindow.close();
-      setFeedback(error instanceof Error ? error.message : "画像の表示に失敗しました。");
+      const message = error instanceof Error ? error.message : "画像の表示に失敗しました。";
+      if (!imageWindow.closed) {
+        imageWindow.document.title = "画像を表示できませんでした";
+        imageWindow.document.body.textContent = message;
+      }
+      setFeedback(message);
     } finally {
       setIsDisplaying(false);
     }
