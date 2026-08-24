@@ -13,6 +13,7 @@ import {
   Home,
   Images,
   Instagram,
+  Link2,
   ListTree,
   Menu,
   Settings,
@@ -39,6 +40,7 @@ const navigation = [
   { href: "/admin/schedule", label: "スケジュール", icon: CalendarDays, exact: false },
   { href: "/admin/official-updates", label: "公式更新監視", icon: BellRing, exact: false },
   { href: "/admin/instagram", label: "Instagram画像", icon: Instagram, exact: false },
+  { href: "/admin/links", label: "リンク集設定", icon: Link2, exact: false },
   { href: "/admin/characters", label: "キャラクター", icon: UsersRound, exact: false },
   { href: "/admin/plan-options", label: "マイプラン候補", icon: ListTree, exact: false },
 ] as const;
