@@ -6,4 +6,5 @@ out/
 .env.*.local
 *.log
 .supabase/
-
+knowledge/.obsidian/workspace.json
+knowledge/.obsidian/workspace-mobile.json
