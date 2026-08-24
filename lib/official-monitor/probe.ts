@@ -6,6 +6,7 @@ import { SITE_URL } from "@/lib/site-config";
 const CALENDAR_API = "https://www.harmonyland.jp/wp/?mc-api=json";
 const FUN_STUDIO_URL = "https://www.harmonyland.jp/sp/funstudio/c_schedule.html";
 const NEWS_URL = "https://www.harmonyland.jp/news/";
+const NEWS_API = "https://www.harmonyland.jp/wp/news/";
 const USER_AGENT = `HarmonyPaletteMonitor/1.0 (+${SITE_URL})`;
 
 function hash(bytes: Uint8Array) {
@@ -41,14 +42,30 @@ function dateRange(from: string, to: string) {
   return dates;
 }
 
-function extractNews(html: string) {
-  const entries: Array<{ title: string; url: string }> = [];
-  const linkPattern = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-  for (const match of html.matchAll(linkPattern)) {
-    const url = new URL(match[1], NEWS_URL).toString();
-    if (!url.startsWith("https://www.harmonyland.jp/") || !/\/(news|topics)\//i.test(url)) continue;
-    const title = match[2].replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/\s+/g, " ").trim();
-    if (title) entries.push({ title, url });
+export function normalizeNewsEntries(payload: unknown) {
+  if (!payload || typeof payload !== "object" || !Array.isArray((payload as Record<string, unknown>).posts)) {
+    throw new Error("公式サイトのお知らせAPIの形式が変更されています。");
+  }
+
+  const entries: Array<{ id: string; title: string; url: string; publishedAt: string; contentSha256: string }> = [];
+  for (const value of (payload as { posts: unknown[] }).posts) {
+    if (!value || typeof value !== "object") continue;
+    const post = value as Record<string, unknown>;
+    if (post.post_status !== "publish") continue;
+    const id = String(post.ID ?? "").trim();
+    const title = String(post.post_title ?? "").trim();
+    const permalink = String(post.permalink ?? "").trim();
+    if (!id || !title || !permalink) continue;
+    const url = new URL(permalink, NEWS_URL);
+    if (url.origin !== "https://www.harmonyland.jp" || !/^\/news\/\d+\/?$/i.test(url.pathname)) continue;
+    const content = String(post.post_content ?? "").normalize("NFKC").replace(/\s+/g, " ").trim();
+    entries.push({
+      id,
+      title,
+      url: url.toString(),
+      publishedAt: String(post.post_date ?? "").trim(),
+      contentSha256: hash(new TextEncoder().encode(content)),
+    });
   }
   return Array.from(new Map(entries.map((entry) => [entry.url, entry])).values())
     .sort((left, right) => left.url.localeCompare(right.url));
@@ -116,17 +133,17 @@ export async function probeOfficialSources(from: string, to: string): Promise<So
     });
   }
 
-  const newsDocument = await fetchBytes(NEWS_URL);
-  const newsEntries = extractNews(new TextDecoder().decode(newsDocument.bytes));
+  const newsDocument = await fetchBytes(NEWS_API);
+  const newsEntries = normalizeNewsEntries(JSON.parse(new TextDecoder().decode(newsDocument.bytes)) as unknown);
   const newsBytes = encoded(newsEntries);
   fingerprints.push({
     sourceKey: "news",
     entityKey: "index",
-    sourceUrl: NEWS_URL,
+    sourceUrl: NEWS_API,
     contentType: "application/json",
     rawSha256: hash(newsDocument.bytes),
     normalizedSha256: hash(newsBytes),
-    bytes: newsBytes,
+    bytes: newsDocument.bytes,
     metadata: { role: "news-index", entries: newsEntries.slice(0, 20) },
   });
 

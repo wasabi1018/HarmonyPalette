@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "test:birthday": "tsx --test lib/character-birthday.test.ts",
     "test:park-operating-days": "tsx --test lib/official-import/park-operating-days.test.ts",
-    "test:official-monitor": "tsx --test lib/official-monitor/diff.test.ts lib/official-monitor/runner.test.ts",
+    "test:official-monitor": "tsx --test lib/official-monitor/diff.test.ts lib/official-monitor/probe.test.ts lib/official-monitor/runner.test.ts",
     "test:schedule-calendar": "tsx --test lib/schedule-calendar.test.ts",
     "seed:character-theme-colors": "tsx scripts/seed-character-theme-colors.ts",
     "seed:plan-options": "tsx scripts/seed-plan-options.ts",
