@@ -45,7 +45,7 @@ export default async function OfficialUpdatesPage({ searchParams }: { searchPara
     <div className="mb-5 rounded-[26px] border border-pink/10 bg-gradient-to-br from-[#fff0f5] via-white to-[#f4f0fb] px-5 py-6 sm:px-8">
       <p className="flex items-center gap-2 text-[11px] font-black tracking-[0.18em] text-pink"><BellRing size={15} />OFFICIAL UPDATE MONITOR</p>
       <h1 className="mt-2 font-display text-[28px] font-semibold text-ink sm:text-[36px]">公式サイト更新監視</h1>
-      <p className="mt-2 text-[13px] font-bold leading-6 text-ink/55">更新の検出、Discord通知、自動取り込みされた確認待ちデータの公開判断を行います。</p>
+      <p className="mt-2 text-[13px] font-bold leading-6 text-ink/55">公式サイトの更新を検出してDiscordへ通知します。スケジュールの自動取り込みは行いません。</p>
     </div>
     <OfficialUpdateManager settings={settings} events={events} detail={detail as Parameters<typeof OfficialUpdateManager>[0]["detail"]} setupError={setupError} />
   </div>;

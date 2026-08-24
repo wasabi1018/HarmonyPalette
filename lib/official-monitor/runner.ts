@@ -1,105 +1,23 @@
 import "server-only";
 
 import { sendDiscordUpdate } from "@/lib/official-monitor/discord";
-import { countSemanticDiffs, createSemanticDiff } from "@/lib/official-monitor/diff";
 import { probeOfficialSources } from "@/lib/official-monitor/probe";
 import { nextRunAt } from "@/lib/official-monitor/schedule";
 import {
-  attachImportDiffs,
-  claimNextImportJob,
   createUpdateEvent,
-  enqueueImportJob,
-  finishImportJob,
   getOfficialMonitorSettings,
-  getOfficialUpdateEvent,
-  getPublishedDataForDate,
   getSourceStates,
-  getStoredImportData,
-  markImportEventFailed,
   markMonitorFinished,
   markMonitorStarted,
   pruneOfficialMonitorHistory,
   removeSourceState,
   saveSourceFingerprint,
 } from "@/lib/official-monitor/repository";
-import type { ImportJobPayload, MonitorRunResult } from "@/lib/official-monitor/types";
-import { importFanStudioSchedules } from "@/lib/official-import/funstudio";
-import { importHarmonylandOfficialSchedules } from "@/lib/official-import/harmonyland";
-import type { ImportPreview } from "@/lib/official-import/types";
-import { addDays, createRunId } from "@/lib/official-import/utils";
-import { persistImportPreview } from "@/lib/supabase/schedule-repository";
+import type { MonitorRunResult } from "@/lib/official-monitor/types";
+import { addDays } from "@/lib/official-import/utils";
 
 function todayInJapan() {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-}
-
-function filterPublishedSources(data: Awaited<ReturnType<typeof getPublishedDataForDate>>, payload: ImportJobPayload) {
-  const scheduleSources = new Set<string>();
-  if (payload.includeCalendar) scheduleSources.add("harmonyland-calendar");
-  if (payload.includeFanStudio) scheduleSources.add("harmonyland-funstudio");
-  return {
-    schedules: data.schedules.filter((row) => scheduleSources.has(String(row.source_id))),
-    operations: payload.includeCalendar ? data.operations.filter((row) => row.source_id === "harmonyland-calendar") : [],
-    operatingDays: payload.includeCalendar ? data.operatingDays.filter((row) => row.source_id === "harmonyland-calendar") : [],
-  };
-}
-
-async function importChangedDate(payload: ImportJobPayload): Promise<ImportPreview> {
-  let preview: ImportPreview = {
-    runId: createRunId(),
-    generatedAt: new Date().toISOString(),
-    rangeStart: payload.date,
-    rangeEnd: payload.date,
-    schedules: [],
-    operations: [],
-    operatingDays: [],
-    documents: [],
-    warnings: [],
-  };
-  if (payload.includeCalendar) {
-    preview = await importHarmonylandOfficialSchedules({
-      from: payload.date,
-      to: payload.date,
-      includeSchedules: true,
-      includeParkOperatingDays: true,
-      includeFanStudio: false,
-    });
-  }
-  if (payload.includeFanStudio) {
-    const fanStudio = await importFanStudioSchedules(payload.date, payload.date);
-    preview.schedules.push(...fanStudio.schedules);
-    preview.documents.push(...fanStudio.documents);
-    preview.warnings.push(...fanStudio.warnings);
-  }
-  const changedHashes = new Set(payload.hashes);
-  preview.documents = preview.documents.filter((document) => changedHashes.has(document.sha256));
-  return preview;
-}
-
-async function processOneJob() {
-  const job = await claimNextImportJob();
-  if (!job) return null;
-  try {
-    const before = filterPublishedSources(await getPublishedDataForDate(job.payload.date), job.payload);
-    const preview = await importChangedDate(job.payload);
-    await persistImportPreview(preview, "detected-update");
-    const after = await getStoredImportData(preview.runId);
-    const diffs = createSemanticDiff(before, after);
-    const counts = countSemanticDiffs(diffs);
-    await attachImportDiffs(job.eventId, preview.runId, diffs, counts);
-    await finishImportJob(job.id);
-    const detail = await getOfficialUpdateEvent(job.eventId);
-    if (detail) await sendDiscordUpdate(detail.event).catch(() => undefined);
-    return { preview };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const retry = job.attempts < job.maxAttempts;
-    await finishImportJob(job.id, message, retry);
-    await markImportEventFailed(job.eventId, message, retry);
-    const detail = await getOfficialUpdateEvent(job.eventId);
-    if (detail && !retry) await sendDiscordUpdate(detail.event).catch(() => undefined);
-    return { error: message };
-  }
 }
 
 export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRunResult> {
@@ -107,7 +25,7 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
   const due = force || (settings.enabled && (!settings.nextRunAt || new Date(settings.nextRunAt).getTime() <= Date.now()));
   let baseline = false;
   let changedSources = 0;
-  let queuedDates = 0;
+  const queuedDates = 0;
 
   if (due) {
     await markMonitorStarted(nextRunAt(settings.scheduledTime));
@@ -171,17 +89,11 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
           sourceKey: "structured-schedule",
           entityKey: date,
           eventType: "source-modified",
-          summary: `${date} の公式予定データが更新されました。自動取り込みを待機しています。`,
+          summary: `${date} の公式予定データが更新されました。公式サイトで内容を確認してください。`,
           currentSha256: group.hashes.join(":"),
-          metadata: { includeCalendar: group.calendar, includeFanStudio: group.fanstudio },
+          metadata: { includeCalendar: group.calendar, includeFanStudio: group.fanstudio, notificationOnly: true },
         });
-        await enqueueImportJob(event.id, {
-          date,
-          includeCalendar: group.calendar,
-          includeFanStudio: group.fanstudio,
-          hashes: group.hashes,
-        });
-        queuedDates += 1;
+        await sendDiscordUpdate(event).catch(() => undefined);
       }
       await pruneOfficialMonitorHistory(settings.retentionDays);
       await markMonitorFinished();
@@ -191,13 +103,11 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
     }
   }
 
-  const processed = await processOneJob();
   return {
     checked: due,
     baseline,
     changedSources,
     queuedDates,
-    processedJob: Boolean(processed),
-    ...(processed && "preview" in processed && processed.preview ? { importPreview: processed.preview } : {}),
+    processedJob: false,
   };
 }

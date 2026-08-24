@@ -46,6 +46,10 @@ export type MonitorEvent = {
   reviewedAt: string | null;
 };
 
+export function isNotificationOnlyEvent(event: Pick<MonitorEvent, "eventType" | "importRunId" | "metadata">) {
+  return !event.importRunId && (event.eventType === "news" || event.metadata.notificationOnly === true);
+}
+
 export type PublishedData = {
   schedules: Array<Record<string, unknown>>;
   operations: Array<Record<string, unknown>>;

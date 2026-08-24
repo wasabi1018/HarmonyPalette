@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BellRing, Check, Clock3, ExternalLink, Loader2, Play, RefreshCw, Save, Send, ShieldCheck, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { MonitorEvent, OfficialMonitorSettings } from "@/lib/official-monitor/types";
+import { isNotificationOnlyEvent, type MonitorEvent, type OfficialMonitorSettings } from "@/lib/official-monitor/types";
 
 type DiffRow = {
   id: string;
@@ -29,7 +29,7 @@ function eventStatus(event: MonitorEvent) {
   if (event.reviewStatus === "reviewed") return { label: "反映済み", className: "bg-mint/20 text-[#35745f]" };
   if (event.reviewStatus === "ignored") return { label: "見送り", className: "bg-ink/5 text-ink/45" };
   if (event.eventType === "import-failed") return { label: "取込失敗", className: "bg-red-50 text-red-600" };
-  if (event.eventType === "news") return { label: "通知のみ", className: "bg-sky/10 text-sky" };
+  if (isNotificationOnlyEvent(event)) return { label: "通知のみ", className: "bg-sky/10 text-sky" };
   if (event.importRunId) return { label: "公開確認待ち", className: "bg-[#fff4df] text-[#9a6620]" };
   return { label: "取込待ち", className: "bg-pink/10 text-pink" };
 }
@@ -60,7 +60,7 @@ export function OfficialUpdateManager({ settings: initialSettings, events, detai
   const defaultSelection = useMemo(() => detail?.diffs.filter((diff) => ["added", "modified", "removed"].includes(diff.change_type)).map((diff) => diff.id) ?? [], [detail]);
   const [selected, setSelected] = useState(defaultSelection);
   const canDismiss = Boolean(detail?.event.importRunId)
-    || detail?.event.eventType === "news"
+    || Boolean(detail && isNotificationOnlyEvent(detail.event))
     || (detail?.event.eventType === "import-failed" && detail.event.metadata.retry === false);
   useEffect(() => setSelected(defaultSelection), [defaultSelection]);
 
@@ -90,7 +90,7 @@ export function OfficialUpdateManager({ settings: initialSettings, events, detai
           <div>
             <p className="flex items-center gap-2 text-[11px] font-black tracking-[0.15em] text-pink"><ShieldCheck size={15} />MONITOR SETTINGS</p>
             <h2 className="mt-2 text-lg font-black text-ink">公式サイト更新監視</h2>
-            <p className="mt-1 max-w-2xl text-[12px] font-bold leading-6 text-ink/50">変更があった日だけ公式データを確認待ちとして取り込みます。公開はこの画面で選択して確定するまで行われません。</p>
+            <p className="mt-1 max-w-2xl text-[12px] font-bold leading-6 text-ink/50">公式サイトの変更を検知してDiscordへ通知します。スケジュールデータの自動取り込みや公開は行いません。</p>
           </div>
           <label className="inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-xl bg-[#fff8fa] px-4 text-[12px] font-black text-ink">
             <input type="checkbox" checked={settings.enabled} onChange={(event) => setSettings({ ...settings, enabled: event.target.checked })} className="h-4 w-4 accent-pink" />自動監視を有効にする
@@ -135,8 +135,9 @@ export function OfficialUpdateManager({ settings: initialSettings, events, detai
               const selectable = row.change_type !== "unchanged" && detail.event.reviewStatus === "pending";
               return <label key={row.id} className={`block rounded-xl border p-3 ${selected.includes(row.id) ? "border-pink/25 bg-[#fffafd]" : "border-ink/5"}`}><div className="flex items-start gap-3"><input type="checkbox" disabled={!selectable} checked={selected.includes(row.id)} onChange={() => setSelected((current) => current.includes(row.id) ? current.filter((id) => id !== row.id) : [...current, row.id])} className="mt-1 h-4 w-4 accent-pink" /><span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2"><strong className="text-[12px] text-ink">{primaryLabel(row)}</strong><span className="rounded-full bg-ink/5 px-2 py-0.5 text-[9px] font-black text-ink/45">{entityLabels[row.entity_type]}</span><span className="rounded-full bg-pink/10 px-2 py-0.5 text-[9px] font-black text-pink">{changeLabels[row.change_type]}</span>{row.change_type === "uncertain" && <span className="text-[9px] font-black text-[#9a6620]">対応付けを目視確認してください</span>}</span>{Object.entries(row.field_changes || {}).length > 0 && <span className="mt-2 block space-y-1">{Object.entries(row.field_changes).map(([field, values]) => <span key={field} className="block text-[10px] font-bold text-ink/45"><span className="text-ink/60">{field}</span>: {String(values.before ?? "なし")} → <span className="text-pink">{String(values.after ?? "なし")}</span></span>)}</span>}</span></div></label>;
             })}</div> : <p className="mt-5 rounded-xl bg-ink/[0.025] p-5 text-[12px] font-bold text-ink/45">この更新は通知のみです。内容は公式サイトで確認してください。</p>}
-            {detail.event.reviewStatus === "pending" && canDismiss && <div className="mt-5 flex flex-wrap gap-2"><button disabled={Boolean(busy) || !detail.event.importRunId} onClick={() => act("review", () => api(`/api/admin/official-updates/${detail.event.id}/review`, { method: "POST", body: JSON.stringify({ action: "publish", selectedDiffIds: selected }) }), "選択した変更を公開データへ反映しました。") } className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-pink px-4 text-[12px] font-black text-white disabled:opacity-40">{busy === "review" ? <Loader2 className="animate-spin" size={15} /> : <Check size={15} />}選択内容を反映</button><button disabled={Boolean(busy)} onClick={() => act("ignore", () => api(`/api/admin/official-updates/${detail.event.id}/review`, { method: "POST", body: JSON.stringify({ action: "ignore" }) }), "今回は反映せず、確認済みにしました。") } className="inline-flex min-h-11 items-center rounded-xl border border-ink/10 px-4 text-[12px] font-black text-ink/50 disabled:opacity-40">今回は反映しない</button></div>}
-            {detail.event.reviewStatus === "pending" && !canDismiss && <p className="mt-5 rounded-xl bg-[#fff4df] px-4 py-3 text-[11px] font-bold text-[#8c5b18]">自動取り込みを処理中です。次の15分間隔の実行後に再確認してください。</p>}
+            {detail.event.reviewStatus === "pending" && detail.event.importRunId && <div className="mt-5 flex flex-wrap gap-2"><button disabled={Boolean(busy)} onClick={() => act("review", () => api(`/api/admin/official-updates/${detail.event.id}/review`, { method: "POST", body: JSON.stringify({ action: "publish", selectedDiffIds: selected }) }), "選択した変更を公開データへ反映しました。") } className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-pink px-4 text-[12px] font-black text-white disabled:opacity-40">{busy === "review" ? <Loader2 className="animate-spin" size={15} /> : <Check size={15} />}選択内容を反映</button><button disabled={Boolean(busy)} onClick={() => act("ignore", () => api(`/api/admin/official-updates/${detail.event.id}/review`, { method: "POST", body: JSON.stringify({ action: "ignore" }) }), "今回は反映せず、確認済みにしました。") } className="inline-flex min-h-11 items-center rounded-xl border border-ink/10 px-4 text-[12px] font-black text-ink/50 disabled:opacity-40">今回は反映しない</button></div>}
+            {detail.event.reviewStatus === "pending" && isNotificationOnlyEvent(detail.event) && <div className="mt-5"><button disabled={Boolean(busy)} onClick={() => act("ignore", () => api(`/api/admin/official-updates/${detail.event.id}/review`, { method: "POST", body: JSON.stringify({ action: "ignore" }) }), "確認済みにしました。") } className="inline-flex min-h-11 items-center rounded-xl border border-ink/10 px-4 text-[12px] font-black text-ink/50 disabled:opacity-40">確認済みにする</button></div>}
+            {detail.event.reviewStatus === "pending" && !canDismiss && <p className="mt-5 rounded-xl bg-[#fff4df] px-4 py-3 text-[11px] font-bold text-[#8c5b18]">過去の自動取り込み待ち履歴です。自動処理は停止されています。</p>}
           </>}
         </section>
       </div>

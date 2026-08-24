@@ -129,12 +129,13 @@ After applying the articles migration, sign in and open `/admin/articles`.
 
 ## 6. Official update monitor
 
-The old unconditional schedule-import Cron has been removed. Open
+The old schedule-import Cron has been removed. Open
 `/admin/official-updates`, save a Discord Incoming Webhook, select a time in
 15-minute increments, and enable monitoring. The first run records a baseline
-without sending a notification. Later source changes are hashed first; only
-changed dates are parsed and saved as reviewable drafts. Nothing is published
-until an administrator selects the semantic diffs and confirms them.
+without sending a notification. Later source changes are hashed and recorded in
+the update history, then sent to Discord. Detected schedule changes are not
+imported or published automatically; use the manual schedule import screen when
+data needs to be updated.
 Archived official source originals are retained for 45 days by default.
 
 The monitor uses Supabase Cron because Vercel Hobby Cron is limited to one run
@@ -162,10 +163,9 @@ select cron.schedule(
 ```
 
 The endpoint checks `next_run_at`, so 15-minute calls normally return without
-fetching the official site. While changed dates are queued, one heavy import is
-processed per call. Only changed originals are retained; the default internal
-cap is 150MB and can be adjusted in the admin UI. The cap is calculated from
-the entire private source-document bucket.
+fetching the official site. Only changed originals are retained; the default
+internal cap is 150MB and can be adjusted in the admin UI. The cap is calculated
+from the entire private source-document bucket.
 
 `vercel.json` still calls `/api/cron/publish-articles` once per day to publish due
 articles. Cron endpoints require:

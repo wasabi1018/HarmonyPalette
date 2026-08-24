@@ -10,6 +10,7 @@ import type {
   SourceState,
   StoredImportData,
 } from "@/lib/official-monitor/types";
+import { isNotificationOnlyEvent } from "@/lib/official-monitor/types";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 
 function client() {
@@ -342,9 +343,9 @@ export async function markEventIgnored(eventId: string) {
   const db = client();
   const detail = await getOfficialUpdateEvent(eventId);
   if (detail?.event.importRunId) return resolveOfficialUpdate(eventId, []);
-  const canIgnoreWithoutImport = detail?.event.eventType === "news"
+  const canIgnoreWithoutImport = Boolean(detail && isNotificationOnlyEvent(detail.event))
     || (detail?.event.eventType === "import-failed" && detail.event.metadata.retry === false);
-  if (!canIgnoreWithoutImport) throw new Error("自動取り込みが完了してから確認してください。");
+  if (!canIgnoreWithoutImport) throw new Error("この更新はまだ確認済みにできません。");
   const { error } = await db.from("official_update_events").update({ review_status: "ignored", reviewed_at: new Date().toISOString() }).eq("id", eventId).eq("review_status", "pending");
   if (error) throw new Error(`更新履歴を無視済みにできませんでした: ${error.message}`);
 }
