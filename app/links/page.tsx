@@ -71,7 +71,7 @@ export default async function LinksPage() {
         </Link>
       </header>
 
-      <main className="mx-auto flex min-h-0 w-full max-w-[540px] flex-1 flex-col justify-center px-4 py-[clamp(10px,2.2dvh,20px)] sm:px-6">
+      <main className="mx-auto flex min-h-0 w-full max-w-[540px] flex-1 flex-col justify-start px-4 py-[clamp(10px,2.2dvh,20px)] sm:px-6">
         <div className="shrink-0 text-center">
           <p className="text-[9px] font-black tracking-[0.2em] text-pink sm:text-[10px]">INSTAGRAM LINKS</p>
           <h1 className="mt-1 font-display text-[clamp(21px,3.5dvh,30px)] font-semibold leading-tight text-ink">
