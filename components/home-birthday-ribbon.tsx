@@ -1,20 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CakeSlice, Sparkles } from "lucide-react";
 import {
   formatCharacterBirthday,
-  getNextCharacterBirthdayGroup,
+  getUpcomingCharacterBirthdays,
   isBirthdayCountdownVisible,
   todayInJapan,
 } from "@/lib/character-birthday";
 import { type InitialCharacterData, useCharacters } from "@/lib/character-store";
-import { CharacterAvatar } from "./character-avatar";
-
-function characterNames(names: string[]) {
-  if (names.length <= 2) return names.join("・");
-  return `${names.slice(0, 2).join("・")}ほか${names.length - 2}キャラクター`;
-}
+import { SectionHeading } from "./section-heading";
 
 export function HomeBirthdayRibbon({
   initialCharacterData,
@@ -22,72 +16,50 @@ export function HomeBirthdayRibbon({
   initialCharacterData: InitialCharacterData;
 }) {
   const { characters } = useCharacters({ initialData: initialCharacterData });
-  const birthdays = getNextCharacterBirthdayGroup(characters, todayInJapan());
+  const birthdays = getUpcomingCharacterBirthdays(characters, todayInJapan())
+    .filter(({ daysUntil }) => isBirthdayCountdownVisible(daysUntil));
 
-  if (
-    birthdays.length === 0
-    || !isBirthdayCountdownVisible(birthdays[0].daysUntil)
-  ) {
-    return null;
-  }
-
-  const { birthday, daysUntil } = birthdays[0];
-  const featuredCharacter = birthdays[0].character;
-  const names = characterNames(birthdays.map(({ character }) => character.name));
-  const timing = daysUntil === 0 ? "今日が誕生日！" : `あと${daysUntil}日`;
-  const message = daysUntil === 0
-    ? `今日は${names}の誕生日！`
-    : `${names}の誕生日まであと${daysUntil}日`;
+  if (birthdays.length === 0) return null;
 
   return (
     <section
-      aria-label="キャラクターの誕生日"
-      className="mx-auto max-w-[1200px] px-4 pt-5 sm:px-6 lg:px-8"
+      aria-label="30日以内のキャラクターの誕生日"
+      className="mx-auto max-w-[1200px] px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8"
     >
-      <Link
-        href={`/characters#character-${encodeURIComponent(featuredCharacter.slug)}`}
-        aria-label={`キャラクター一覧で${names}の誕生日を見る`}
-        className="group relative flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[20px] border border-pink/20 bg-gradient-to-r from-[#fff0f5] via-white to-[#f6f1ff] px-4 py-3 shadow-soft transition-all hover:-translate-y-0.5 hover:border-pink/35 hover:shadow-card sm:gap-4 sm:px-5"
-      >
-        <span
-          className="absolute -right-8 -top-12 h-28 w-28 rounded-full bg-pink/5"
-          aria-hidden="true"
-        />
-        <span
-          className="absolute bottom-2 right-16 hidden text-pink/20 sm:block"
-          aria-hidden="true"
-        >
-          <Sparkles size={24} />
-        </span>
-
-        <span className="relative flex shrink-0 -space-x-2">
-          {birthdays.slice(0, 3).map(({ character }) => (
-            <CharacterAvatar key={character.id} character={character} size="xs" />
-          ))}
-        </span>
-
-        <span className="relative min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-pink px-2.5 py-1 text-[9px] font-black tracking-[0.08em] text-white">
-              <CakeSlice size={11} aria-hidden="true" />
-              BIRTHDAY
-            </span>
-            <span className={`rounded-full px-2.5 py-1 text-[9px] font-black ${daysUntil === 0 ? "bg-[#f6b83f]/20 text-[#9a6512]" : "bg-lavender/10 text-lavender"}`}>
-              {timing}
-            </span>
-          </span>
-          <span className="mt-1.5 block text-[13px] font-black leading-5 text-ink sm:text-[15px]">
-            {message}
-          </span>
-          <span className="mt-0.5 block text-[10px] font-bold text-ink/45">
-            {formatCharacterBirthday(birthday)}
-          </span>
-        </span>
-
-        <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-pink shadow-soft transition-transform group-hover:translate-x-0.5">
-          <ArrowRight size={16} aria-hidden="true" />
-        </span>
-      </Link>
+      <SectionHeading
+        eyebrow="UPCOMING BIRTHDAYS"
+        title="30日以内の誕生日"
+        href="/characters"
+        linkLabel="キャラクターを見る"
+      />
+      <ul className="grid grid-cols-2 gap-x-3 gap-y-3 rounded-[20px] border border-pink/10 bg-white px-4 py-4 shadow-soft sm:gap-x-6 sm:px-5 lg:grid-cols-4 lg:gap-x-8">
+        {birthdays.map(({ character, birthday, date }) => (
+          <li key={character.id}>
+            <Link
+              href={`/characters#character-${encodeURIComponent(character.slug)}`}
+              className="group grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2 rounded-xl px-1 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink/40"
+              aria-label={`${character.name}の誕生日は${formatCharacterBirthday(birthday)}`}
+            >
+              <span
+                className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: character.themeColor }}
+                aria-hidden="true"
+              />
+              <span className="min-w-0">
+                <span className="block truncate text-[11px] font-black leading-5 text-ink transition-colors group-hover:text-pink sm:text-[12px]">
+                  {character.name}
+                </span>
+                <time
+                  dateTime={date}
+                  className="mt-0.5 block text-[10px] font-bold leading-4 text-ink/45 sm:text-[11px]"
+                >
+                  {formatCharacterBirthday(birthday)}
+                </time>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
