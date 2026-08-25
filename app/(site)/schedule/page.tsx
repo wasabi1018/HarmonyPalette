@@ -1,26 +1,79 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cache } from "react";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { OfficialNotice } from "@/components/official-notice";
 import { ScheduleBrowser } from "@/components/schedule-browser";
+import { getCharacterBirthdaysInRange } from "@/lib/character-birthday";
 import { getInitialCharacterData, getInitialParkOperatingDayData, getInitialScheduleData } from "@/lib/supabase/initial-data";
 
-export const metadata: Metadata = {
-  title: "グリーティング・イベントスケジュール",
-  description: "日付、キャラクター、イベント種別、開催場所から、ハーモニーランドの予定を探せます。",
-  alternates: { canonical: "/schedule" },
+type ScheduleSearchParams = {
+  character?: string | string[];
+  event?: string | string[];
+  from?: string | string[];
+  to?: string | string[];
+  view?: string | string[];
+  [key: string]: string | string[] | undefined;
 };
+
+function todayInJapan() {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
+}
+
+function addDays(date: string, days: number) {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+const getSchedulePageData = cache(() => Promise.all([
+  getInitialScheduleData(),
+  getInitialCharacterData(),
+  getInitialParkOperatingDayData(),
+]));
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<ScheduleSearchParams>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const hasSearchConditions = Object.values(params).some((value) => (
+    Array.isArray(value) ? value.length > 0 : typeof value === "string"
+  ));
+  let hasNoResults = false;
+
+  if (!hasSearchConditions) {
+    const [scheduleData, characterData] = await getSchedulePageData();
+    if (scheduleData.status === "success" && characterData.status === "success") {
+      const fromDate = todayInJapan();
+      const toDate = addDays(fromDate, 13);
+      const hasScheduleResults = scheduleData.entries.some((entry) => (
+        entry.date <= toDate && (entry.endDate ?? entry.date) >= fromDate
+      ));
+      const hasBirthdayResults = getCharacterBirthdaysInRange(
+        characterData.characters,
+        fromDate,
+        toDate,
+      ).length > 0;
+      hasNoResults = !hasScheduleResults && !hasBirthdayResults;
+    }
+  }
+
+  return {
+    title: "グリーティング・イベントスケジュール",
+    description: "日付、キャラクター、イベント種別、開催場所から、ハーモニーランドの予定を探せます。",
+    alternates: { canonical: "/schedule" },
+    robots: hasSearchConditions || hasNoResults
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
+  };
+}
 
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    character?: string | string[];
-    event?: string | string[];
-    from?: string | string[];
-    to?: string | string[];
-    view?: string | string[];
-  }>;
+  searchParams: Promise<ScheduleSearchParams>;
 }) {
   const params = await searchParams;
   const requestedCharacters = Array.isArray(params.character)
@@ -43,11 +96,7 @@ export default async function SchedulePage({
   const initialToDate = dateParam(params.to);
   const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
   const initialView = requestedView === "list" ? "list" : "calendar";
-  const [initialScheduleData, initialCharacterData, initialOperatingDayData] = await Promise.all([
-    getInitialScheduleData(),
-    getInitialCharacterData(),
-    getInitialParkOperatingDayData(),
-  ]);
+  const [initialScheduleData, initialCharacterData, initialOperatingDayData] = await getSchedulePageData();
 
   return (
     <div className="mx-auto max-w-[1360px] px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">

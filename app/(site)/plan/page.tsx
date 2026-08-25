@@ -7,7 +7,8 @@ import { getPublicPlanOptions } from "@/lib/supabase/plan-options-repository";
 export const metadata: Metadata = {
   title: "マイプラン",
   description: "公式スケジュールと自由予定を組み合わせて、自分だけの一日プランを作成できます。",
-  robots: { index: false, follow: false },
+  alternates: { canonical: "/plan" },
+  robots: { index: false, follow: true },
 };
 
 function todayInJapan() {

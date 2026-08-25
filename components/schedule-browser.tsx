@@ -78,6 +78,7 @@ export function ScheduleBrowser({
   const [viewMode, setViewMode] = useState<ViewMode>(initialView);
   const [calendarDialogDate, setCalendarDialogDate] = useState<string | null>(null);
   const [activePeriod, setActivePeriod] = useState<Period | "custom">(hasInitialDateRange ? "custom" : "14");
+  const [keepInitialDateRangeInUrl, setKeepInitialDateRangeInUrl] = useState(hasInitialDateRange);
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
   const closeCalendarDialog = useCallback(() => setCalendarDialogDate(null), []);
 
@@ -122,12 +123,22 @@ export function ScheduleBrowser({
     selectedCharacters.forEach((name) => url.searchParams.append("character", name));
     url.searchParams.delete("event");
     selectedEvents.forEach((name) => url.searchParams.append("event", name));
-    url.searchParams.set("from", fromDate);
-    url.searchParams.set("to", toDate);
+    const hasNonDefaultSearch = selectedCharacters.length > 0
+      || selectedEvents.length > 0
+      || fromDate !== today
+      || toDate !== addDays(today, 13)
+      || viewMode === "list";
+    if (keepInitialDateRangeInUrl || hasNonDefaultSearch) {
+      url.searchParams.set("from", fromDate);
+      url.searchParams.set("to", toDate);
+    } else {
+      url.searchParams.delete("from");
+      url.searchParams.delete("to");
+    }
     if (viewMode === "list") url.searchParams.set("view", "list");
     else url.searchParams.delete("view");
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-  }, [fromDate, selectedCharacters, selectedEvents, toDate, viewMode]);
+  }, [fromDate, keepInitialDateRangeInUrl, selectedCharacters, selectedEvents, toDate, today, viewMode]);
 
   useEffect(() => {
     if (calendarDialogDate && (calendarDialogDate < fromDate || calendarDialogDate > toDate)) {
@@ -236,6 +247,7 @@ export function ScheduleBrowser({
     setSortAscending(true);
     setCalendarDialogDate(null);
     setActivePeriod("14");
+    setKeepInitialDateRangeInUrl(false);
     setAdvancedFiltersOpen(false);
   };
   const applyPeriod = (period: Period) => {
