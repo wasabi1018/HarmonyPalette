@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getRegisteredCharacters } from "@/lib/supabase/character-repository";
 import { getSupabaseConfigStatus } from "@/lib/supabase/server";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
+export const revalidate = 300;
 
 export async function GET() {
   const config = getSupabaseConfigStatus();

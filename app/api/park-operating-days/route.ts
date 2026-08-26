@@ -3,7 +3,9 @@ import { addDays } from "@/lib/official-import/utils";
 import { getPublishedParkOperatingDays } from "@/lib/supabase/schedule-repository";
 import { getSupabaseConfigStatus } from "@/lib/supabase/server";
 
-export const dynamic = "force-dynamic";
+const cacheHeaders = {
+  "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+};
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -26,7 +28,7 @@ export async function GET(request: Request) {
       officialUrl: row.official_url,
       updatedAt: row.updated_at,
     }));
-    return NextResponse.json({ configured: true, operatingDays });
+    return NextResponse.json({ configured: true, operatingDays }, { headers: cacheHeaders });
   } catch (error) {
     return NextResponse.json({
       configured: true,

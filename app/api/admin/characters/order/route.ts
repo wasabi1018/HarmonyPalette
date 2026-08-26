@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCharacterThemeColor } from "@/lib/character-theme-colors";
+import { revalidatePublicCharacterData } from "@/lib/public-cache";
 import { assertImportAuthorization, getSupabaseAdminClient } from "@/lib/supabase/server";
 
 type OrderUpdate = {
@@ -65,6 +66,7 @@ export async function PATCH(request: Request) {
       }
     }
 
+    revalidatePublicCharacterData();
     return NextResponse.json({ ok: true, updated: orders.length });
   } catch (error) {
     return NextResponse.json(

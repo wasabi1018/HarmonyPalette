@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getPublicPlanOptions } from "@/lib/supabase/plan-options-repository";
 import { getSupabaseConfigStatus } from "@/lib/supabase/server";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
+export const revalidate = 300;
 
 export async function GET() {
   if (!getSupabaseConfigStatus().canRead) {

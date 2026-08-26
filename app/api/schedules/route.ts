@@ -3,7 +3,9 @@ import { addDays } from "@/lib/official-import/utils";
 import { getPublishedSchedules } from "@/lib/supabase/schedule-repository";
 import { getSupabaseConfigStatus } from "@/lib/supabase/server";
 
-export const dynamic = "force-dynamic";
+const cacheHeaders = {
+  "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+};
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -42,7 +44,7 @@ export async function GET(request: Request) {
         verificationStatus: row.verification_status,
       };
     });
-    return NextResponse.json({ configured: true, entries });
+    return NextResponse.json({ configured: true, entries }, { headers: cacheHeaders });
   } catch (error) {
     return NextResponse.json({ configured: true, entries: [], error: error instanceof Error ? error.message : "読込に失敗しました。" }, { status: 500 });
   }

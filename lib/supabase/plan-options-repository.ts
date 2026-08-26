@@ -1,6 +1,11 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import type { PlanAttraction, PlanFacility, PlanOptions } from "@/lib/plan-options";
+import {
+  PUBLIC_CACHE_REVALIDATE_SECONDS,
+  PUBLIC_CACHE_TAGS,
+} from "@/lib/public-cache";
 import { getSupabaseAdminClient, getSupabaseReadClient } from "@/lib/supabase/server";
 
 type PlanOptionRow = {
@@ -78,9 +83,22 @@ async function readPlanOptions(
   };
 }
 
-export async function getPublicPlanOptions(): Promise<PlanOptions | null> {
+async function readPublicPlanOptions(): Promise<PlanOptions | null> {
   const client = getSupabaseReadClient();
   return client ? readPlanOptions(client, true) : null;
+}
+
+const getCachedPublicPlanOptions = unstable_cache(
+  readPublicPlanOptions,
+  [PUBLIC_CACHE_TAGS.planOptions],
+  {
+    revalidate: PUBLIC_CACHE_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.planOptions],
+  },
+);
+
+export async function getPublicPlanOptions(): Promise<PlanOptions | null> {
+  return getCachedPublicPlanOptions();
 }
 
 export async function getAdminPlanOptions(): Promise<PlanOptions | null> {

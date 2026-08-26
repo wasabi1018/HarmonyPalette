@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isValidBirthday } from "@/lib/character-birthday";
 import { getCharacterThemeColor } from "@/lib/character-theme-colors";
+import { revalidatePublicCharacterData } from "@/lib/public-cache";
 import { assertImportAuthorization, getSupabaseAdminClient } from "@/lib/supabase/server";
 
 type CharacterInput = {
@@ -139,6 +140,7 @@ export async function POST(request: Request) {
     const id = character.slug;
     const { data, error } = await client.from("characters").insert({ ...character, id }).select("*").single();
     if (error) throw new Error(error.message);
+    revalidatePublicCharacterData();
     return NextResponse.json({ ok: true, character: data }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "登録に失敗しました。" }, { status: 400 });
@@ -158,6 +160,7 @@ export async function PATCH(request: Request) {
     const { data, error } = await client.from("characters").update(updates).eq("id", id).select("*").maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) return NextResponse.json({ error: "編集対象のキャラクターが見つかりません。" }, { status: 404 });
+    revalidatePublicCharacterData();
     return NextResponse.json({ ok: true, character: data });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "編集に失敗しました。" }, { status: 400 });

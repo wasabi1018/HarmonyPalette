@@ -3,6 +3,7 @@ import {
   bulkReplacePublishedSchedules,
   type PublishedScheduleBulkReplacement,
 } from "@/lib/supabase/schedule-repository";
+import { revalidatePublicScheduleData } from "@/lib/public-cache";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
   try {
     const replacement = parseReplacement(await request.json());
     const result = await bulkReplacePublishedSchedules(replacement);
+    revalidatePublicScheduleData();
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     return NextResponse.json({

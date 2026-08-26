@@ -4,7 +4,7 @@ import { OfficialNotice } from "@/components/official-notice";
 import { PageIntro } from "@/components/page-intro";
 import { getInitialCharacterData, getInitialScheduleData } from "@/lib/supabase/initial-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "キャラクター一覧",

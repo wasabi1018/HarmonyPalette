@@ -4,6 +4,7 @@ import {
   withdrawPublishedSchedule,
   type PublishedScheduleEdit,
 } from "@/lib/supabase/schedule-repository";
+import { revalidatePublicScheduleData } from "@/lib/public-cache";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -80,6 +81,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "予定IDが正しくありません。" }, { status: 400 });
     const edit = parseEdit(await request.json());
     await updatePublishedSchedule(id, edit);
+    revalidatePublicScheduleData();
     return NextResponse.json({ ok: true, id });
   } catch (error) {
     const message = error instanceof Error ? error.message : "予定の更新に失敗しました。";
@@ -96,6 +98,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const { id } = await params;
     if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "予定IDが正しくありません。" }, { status: 400 });
     await withdrawPublishedSchedule(id);
+    revalidatePublicScheduleData();
     return NextResponse.json({ withdrawn: true, id });
   } catch (error) {
     const message = error instanceof Error ? error.message : "予定の削除に失敗しました。";

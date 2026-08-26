@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePublicCharacterData } from "@/lib/public-cache";
 import { assertImportAuthorization, getSupabaseAdminClient } from "@/lib/supabase/server";
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -14,6 +15,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     const { data, error } = await client.from("characters").delete().eq("id", characterId).select("id, name").maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) return NextResponse.json({ error: "削除対象のキャラクターが見つかりません。" }, { status: 404 });
+    revalidatePublicCharacterData();
     return NextResponse.json({ ok: true, deleted: data });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "削除に失敗しました。" }, { status: 400 });

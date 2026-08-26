@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePublicPlanOptions } from "@/lib/public-cache";
 import { getAdminPlanOptions } from "@/lib/supabase/plan-options-repository";
 import { assertImportAuthorization, getSupabaseAdminClient } from "@/lib/supabase/server";
 
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
     const input = parseInput(await request.json() as PlanOptionInput, false);
     const { data, error } = await client.from(tableFor(input.type)).insert(toRow(input)).select("*").single();
     if (error) throw new Error(error.code === "23505" ? "同じ名称がすでに登録されています。" : error.message);
+    revalidatePublicPlanOptions();
     return NextResponse.json({ ok: true, option: data }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
@@ -121,6 +123,7 @@ export async function PATCH(request: Request) {
       .maybeSingle();
     if (error) throw new Error(error.code === "23505" ? "同じ名称がすでに登録されています。" : error.message);
     if (!data) return NextResponse.json({ error: "編集対象が見つかりません。" }, { status: 404 });
+    revalidatePublicPlanOptions();
     return NextResponse.json({ ok: true, option: data });
   } catch (error) {
     return NextResponse.json(

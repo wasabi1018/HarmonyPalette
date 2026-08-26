@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { markEventIgnored, resolveOfficialUpdate } from "@/lib/official-monitor/repository";
+import { revalidatePublicScheduleData } from "@/lib/public-cache";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -18,6 +19,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         ? body.selectedDiffIds.map(String).filter((value) => /^[0-9a-f-]{36}$/i.test(value))
         : [];
       await resolveOfficialUpdate(id, selected);
+      revalidatePublicScheduleData();
     }
     return NextResponse.json({ reviewed: true });
   } catch (error) {

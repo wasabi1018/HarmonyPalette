@@ -6,6 +6,7 @@ import {
   type ParkOperatingDayDraftEdit,
   type ScheduleDraftEdit,
 } from "@/lib/supabase/schedule-repository";
+import { revalidatePublicScheduleData } from "@/lib/public-cache";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -133,6 +134,7 @@ export async function POST(request: Request) {
       Array.isArray(body.operationKeys) ? body.operationKeys : undefined,
       selectedOperatingDayKeys,
     );
+    revalidatePublicScheduleData();
     return NextResponse.json({ published: true, runId: body.runId });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "公開処理に失敗しました。" }, { status: 500 });

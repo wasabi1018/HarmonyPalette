@@ -7,7 +7,7 @@ import { PageIntro } from "@/components/page-intro";
 import { listPublishedArticles } from "@/lib/articles/repository";
 import { publicArticleImageUrl } from "@/lib/articles/media-url";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const loadPublishedGuides = cache(async () => {
   try {

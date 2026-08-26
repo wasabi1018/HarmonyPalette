@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { getPublishedOperations } from "@/lib/supabase/schedule-repository";
 import { getSupabaseConfigStatus } from "@/lib/supabase/server";
 
-export const dynamic = "force-dynamic";
+const cacheHeaders = {
+  "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+};
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -23,9 +25,8 @@ export async function GET(request: Request) {
       officialUrl: row.official_url,
       updatedAt: row.updated_at,
     }));
-    return NextResponse.json({ configured: true, date, operations });
+    return NextResponse.json({ configured: true, date, operations }, { headers: cacheHeaders });
   } catch (error) {
     return NextResponse.json({ configured: true, date, operations: [], error: error instanceof Error ? error.message : "読込に失敗しました。" }, { status: 500 });
   }
 }
-

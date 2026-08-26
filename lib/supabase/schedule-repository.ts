@@ -1,5 +1,10 @@
 import { createHash } from "node:crypto";
+import { unstable_cache } from "next/cache";
 import type { ImportPreview, SourceDocument } from "@/lib/official-import/types";
+import {
+  PUBLIC_CACHE_REVALIDATE_SECONDS,
+  PUBLIC_CACHE_TAGS,
+} from "@/lib/public-cache";
 import { getSupabaseAdminClient, getSupabaseReadClient } from "@/lib/supabase/server";
 
 export type ScheduleDraftEdit = {
@@ -598,7 +603,7 @@ export async function bulkReplacePublishedSchedules(replacement: PublishedSchedu
   return { updatedCount: publishedScheduleIds.length };
 }
 
-export async function getPublishedSchedules(from: string, to: string) {
+async function readPublishedSchedules(from: string, to: string) {
   const client = getSupabaseReadClient();
   if (!client) return null;
 
@@ -631,7 +636,20 @@ export async function getPublishedSchedules(from: string, to: string) {
   return rows;
 }
 
-export async function getPublishedOperations(date: string) {
+const getCachedPublishedSchedules = unstable_cache(
+  readPublishedSchedules,
+  [PUBLIC_CACHE_TAGS.schedules],
+  {
+    revalidate: PUBLIC_CACHE_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.schedules],
+  },
+);
+
+export async function getPublishedSchedules(from: string, to: string) {
+  return getCachedPublishedSchedules(from, to);
+}
+
+async function readPublishedOperations(date: string) {
   const client = getSupabaseReadClient();
   if (!client) return null;
   const { data, error } = await client
@@ -645,7 +663,20 @@ export async function getPublishedOperations(date: string) {
   return data ?? [];
 }
 
-export async function getPublishedParkOperatingDays(from: string, to: string) {
+const getCachedPublishedOperations = unstable_cache(
+  readPublishedOperations,
+  [PUBLIC_CACHE_TAGS.schedules, "operations"],
+  {
+    revalidate: PUBLIC_CACHE_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.schedules],
+  },
+);
+
+export async function getPublishedOperations(date: string) {
+  return getCachedPublishedOperations(date);
+}
+
+async function readPublishedParkOperatingDays(from: string, to: string) {
   const client = getSupabaseReadClient();
   if (!client) return null;
   const { data, error } = await client
@@ -659,4 +690,17 @@ export async function getPublishedParkOperatingDays(from: string, to: string) {
     .order("operation_date", { ascending: true });
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+const getCachedPublishedParkOperatingDays = unstable_cache(
+  readPublishedParkOperatingDays,
+  [PUBLIC_CACHE_TAGS.operatingDays],
+  {
+    revalidate: PUBLIC_CACHE_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.operatingDays],
+  },
+);
+
+export async function getPublishedParkOperatingDays(from: string, to: string) {
+  return getCachedPublishedParkOperatingDays(from, to);
 }

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const internalLinks = [
   {
