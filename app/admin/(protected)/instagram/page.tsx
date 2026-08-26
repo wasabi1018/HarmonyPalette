@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, Instagram, Sparkles } from "lucide-react";
 import { InstagramEmbedSettingsForm } from "@/components/admin/instagram-embed-settings-form";
+import { CharacterRecommendationStudio } from "@/components/admin/character-recommendation-studio";
 import { InstagramScheduleStudio } from "@/components/admin/instagram-schedule-studio";
 import { defaultInstagramPostUrls } from "@/data/instagram-posts";
 import { getInstagramEmbedSettings } from "@/lib/instagram-settings";
@@ -13,7 +14,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Instagram画像作成",
-  description: "全体予定とファンスタジオの週間・日別予定をInstagram投稿画像にまとめます。",
+  description: "推しキャラおすすめ日、全体予定、ファンスタジオの週間・日別予定をInstagram画像にまとめます。",
 };
 
 export default async function AdminInstagramPage() {
@@ -56,7 +57,7 @@ export default async function AdminInstagramPage() {
               Instagram画像作成
             </h1>
             <p className="mt-2 max-w-[720px] text-[13px] font-bold leading-6 text-ink/55">
-              管理中の予定から、全体スケジュールとファンスタジオの週間・日別投稿画像を自動作成します。1か月分も週ごとにまとめて保存できます。
+              管理中の予定から、推しキャラおすすめ日の返信画像、全体スケジュール、ファンスタジオの週間・日別投稿画像を自動作成します。
             </p>
           </div>
           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-[10px] font-black text-lavender shadow-sm">
@@ -69,6 +70,11 @@ export default async function AdminInstagramPage() {
       <InstagramEmbedSettingsForm
         initialPostUrls={postUrls}
         setupError={setupError}
+      />
+      <CharacterRecommendationStudio
+        initialScheduleData={initialScheduleData}
+        initialCharacterData={initialCharacterData}
+        initialParkOperatingDayData={initialParkOperatingDayData}
       />
       <InstagramScheduleStudio
         initialScheduleData={initialScheduleData}
