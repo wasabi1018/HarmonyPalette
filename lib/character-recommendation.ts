@@ -15,6 +15,11 @@ export type CharacterRecommendationDay = {
   appearances: CharacterRecommendationAppearance[];
 };
 
+export type CharacterRecommendationTitleGroup = {
+  title: string;
+  count: number;
+};
+
 function dateFromIso(value: string) {
   return new Date(`${value}T00:00:00Z`);
 }
@@ -113,4 +118,16 @@ export function recommendationRank(days: CharacterRecommendationDay[], index: nu
   return days.slice(0, index).filter((day, dayIndex) => (
     dayIndex === 0 || day.count !== days[dayIndex - 1].count
   )).length + (index > 0 && days[index].count === days[index - 1].count ? 0 : 1);
+}
+
+export function groupRecommendationTitles(
+  appearances: CharacterRecommendationAppearance[],
+): CharacterRecommendationTitleGroup[] {
+  const groups = new Map<string, CharacterRecommendationTitleGroup>();
+  appearances.forEach((appearance) => {
+    const title = appearance.title.trim() || "登場予定";
+    const current = groups.get(title);
+    groups.set(title, { title, count: (current?.count ?? 0) + 1 });
+  });
+  return Array.from(groups.values());
 }

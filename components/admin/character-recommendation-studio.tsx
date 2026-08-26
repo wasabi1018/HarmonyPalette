@@ -16,6 +16,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/data/types";
 import {
   buildCharacterRecommendations,
+  groupRecommendationTitles,
   recommendationRank,
   type CharacterRecommendationDay,
 } from "@/lib/character-recommendation";
@@ -159,66 +160,112 @@ function RankingDate({
   featured?: boolean;
 }) {
   const parts = dateParts(day.date);
+  const scheduleGroups = featured ? groupRecommendationTitles(day.appearances) : [];
   return (
     <div
       style={{
-        display: "flex",
+        display: featured ? "block" : "flex",
         minWidth: 0,
-        alignItems: "center",
+        alignItems: featured ? undefined : "center",
         justifyContent: "space-between",
         gap: 22,
         border: featured ? `4px solid ${accent}` : `2px solid ${accent}2e`,
         borderRadius: featured ? 34 : 24,
         background: "#fff",
-        padding: featured ? "28px 36px" : "22px 28px",
+        padding: featured ? "26px 34px 30px" : "22px 28px",
         boxShadow: featured ? `0 18px 44px ${accent}22` : "0 8px 22px rgba(87,66,80,0.06)",
       }}
     >
-      <div style={{ display: "flex", minWidth: 0, alignItems: "center", gap: featured ? 26 : 18 }}>
-        <span
-          style={{
-            display: "grid",
-            width: featured ? 82 : 60,
-            height: featured ? 82 : 60,
-            flex: "0 0 auto",
-            placeItems: "center",
-            borderRadius: 999,
-            background: rank === 1 ? accent : `${accent}18`,
-            color: rank === 1 ? "#fff" : accent,
-            fontSize: featured ? 31 : 23,
-            fontWeight: 900,
-          }}
-        >
-          {rank}
-        </span>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 9, whiteSpace: "nowrap" }}>
-          <strong style={{ fontSize: featured ? 78 : 50, fontWeight: 900, letterSpacing: "-0.055em" }}>
-            {parts.month}/{parts.day}
-          </strong>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 22 }}>
+        <div style={{ display: "flex", minWidth: 0, alignItems: "center", gap: featured ? 24 : 18 }}>
           <span
             style={{
-              color: parts.weekend ? accent : "#817681",
-              fontSize: featured ? 31 : 24,
+              display: "grid",
+              width: featured ? 76 : 60,
+              height: featured ? 76 : 60,
+              flex: "0 0 auto",
+              placeItems: "center",
+              borderRadius: 999,
+              background: rank === 1 ? accent : `${accent}18`,
+              color: rank === 1 ? "#fff" : accent,
+              fontSize: featured ? 29 : 23,
               fontWeight: 900,
             }}
           >
-            ({parts.weekday})
+            {rank}
           </span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 9, whiteSpace: "nowrap" }}>
+            <strong style={{ fontSize: featured ? 68 : 50, fontWeight: 900, letterSpacing: "-0.055em" }}>
+              {parts.month}/{parts.day}
+            </strong>
+            <span
+              style={{
+                color: parts.weekend ? accent : "#817681",
+                fontSize: featured ? 28 : 24,
+                fontWeight: 900,
+              }}
+            >
+              ({parts.weekday})
+            </span>
+          </div>
         </div>
+        <span
+          style={{
+            flex: "0 0 auto",
+            borderRadius: 999,
+            background: `${accent}15`,
+            color: accent,
+            padding: featured ? "13px 21px" : "11px 18px",
+            fontSize: featured ? 24 : 21,
+            fontWeight: 900,
+          }}
+        >
+          予定 {day.count}件
+        </span>
       </div>
-      <span
-        style={{
-          flex: "0 0 auto",
-          borderRadius: 999,
-          background: `${accent}15`,
-          color: accent,
-          padding: featured ? "15px 23px" : "11px 18px",
-          fontSize: featured ? 27 : 21,
-          fontWeight: 900,
-        }}
-      >
-        予定 {day.count}件
-      </span>
+
+      {featured && scheduleGroups.length > 0 && (
+        <div
+          style={{
+            marginTop: 23,
+            borderTop: `2px solid ${accent}24`,
+            paddingTop: 19,
+          }}
+        >
+          <p style={{ margin: 0, color: accent, fontSize: 17, fontWeight: 900, letterSpacing: "0.08em" }}>
+            この日のスケジュール
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: scheduleGroups.length >= 5 ? "1fr 1fr" : "1fr",
+              gap: scheduleGroups.length >= 5 ? "10px 28px" : 10,
+              marginTop: 13,
+            }}
+          >
+            {scheduleGroups.map((group) => (
+              <div
+                key={group.title}
+                style={{
+                  display: "flex",
+                  minWidth: 0,
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  gap: 18,
+                  fontSize: scheduleGroups.length >= 5 ? 18 : 21,
+                  fontWeight: 900,
+                  lineHeight: 1.45,
+                }}
+              >
+                <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>・{group.title}</span>
+                <span style={{ flex: "0 0 auto", color: accent, fontSize: scheduleGroups.length >= 5 ? 17 : 19 }}>
+                  {group.count}件
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -237,8 +284,6 @@ export function CharacterRecommendationCard({
   const topDays = days.slice(0, 3);
   const bestCount = days[0]?.count ?? 0;
   const tiedBestCount = days.filter((day) => day.count === bestCount).length;
-  const primaryAppearances = days[0]?.appearances.slice(0, 4) ?? [];
-  const hiddenAppearanceCount = Math.max(0, (days[0]?.appearances.length ?? 0) - primaryAppearances.length);
 
   return (
     <article
@@ -311,7 +356,7 @@ export function CharacterRecommendationCard({
         <h1
           style={{
             margin: "10px 0 0",
-            fontSize: (character?.name.length ?? 0) >= 9 ? 55 : 66,
+            fontSize: (character?.name.length ?? 0) >= 9 ? 42 : 50,
             fontWeight: 900,
             letterSpacing: "-0.045em",
             lineHeight: 1.15,
@@ -319,13 +364,13 @@ export function CharacterRecommendationCard({
         >
           {character ? `${character.name}推しさんへ` : "キャラクターを選択"}
         </h1>
-        <p style={{ margin: "10px 0 0", fontSize: 38, fontWeight: 900, letterSpacing: "-0.03em" }}>
+        <p style={{ margin: "8px 0 0", fontSize: 28, fontWeight: 900, letterSpacing: "-0.02em" }}>
           行くならこの日！
         </p>
 
         {topDays.length > 0 ? (
           <>
-            <div style={{ marginTop: 34 }}>
+            <div style={{ marginTop: 28 }}>
               <RankingDate day={topDays[0]} rank={1} accent={accent} featured />
               {tiedBestCount > 1 && (
                 <p style={{ margin: "12px 6px 0", color: accent, fontSize: 18, fontWeight: 900 }}>
@@ -347,51 +392,6 @@ export function CharacterRecommendationCard({
               </div>
             )}
 
-            <section
-              style={{
-                marginTop: 30,
-                borderRadius: 28,
-                background: "rgba(255,255,255,0.82)",
-                padding: "24px 30px",
-                boxShadow: "0 10px 28px rgba(87,66,80,0.055)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20 }}>
-                <h2 style={{ margin: 0, fontSize: 25, fontWeight: 900 }}>
-                  {formatShortDate(days[0].date)} の予定
-                </h2>
-                <span style={{ color: accent, fontSize: 17, fontWeight: 900 }}>PICK UP</span>
-              </div>
-              <div style={{ display: "grid", gap: 10, marginTop: 17 }}>
-                {primaryAppearances.map((appearance) => (
-                  <div
-                    key={appearance.key}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "94px minmax(0,1fr)",
-                      alignItems: "center",
-                      gap: 16,
-                      minHeight: 53,
-                    }}
-                  >
-                    <time style={{ color: accent, fontSize: 21, fontWeight: 900 }}>{appearance.time}</time>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 20, fontWeight: 900 }}>
-                        {appearance.title}
-                      </p>
-                      <p style={{ margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#8b8189", fontSize: 15, fontWeight: 800 }}>
-                        {appearance.location}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                {hiddenAppearanceCount > 0 && (
-                  <p style={{ margin: "2px 0 0 110px", color: accent, fontSize: 17, fontWeight: 900 }}>
-                    ほか{hiddenAppearanceCount}件
-                  </p>
-                )}
-              </div>
-            </section>
           </>
         ) : (
           <div

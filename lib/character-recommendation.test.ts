@@ -3,6 +3,7 @@ import test from "node:test";
 import type { Character } from "@/data/types";
 import {
   buildCharacterRecommendations,
+  groupRecommendationTitles,
   recommendationRank,
 } from "@/lib/character-recommendation";
 import type { ScheduleEntry } from "@/lib/schedule-store";
@@ -98,4 +99,17 @@ test("同数の日は同順位として扱う", () => {
   ]);
 
   assert.deepEqual(days.map((_, index) => recommendationRank(days, index)), [1, 2, 2]);
+});
+
+test("同じタイトルの予定を出現順のまま件数へまとめる", () => {
+  const days = buildCharacterRecommendations("2026-09", character(), [
+    entry("one", "2026-09-12", { title: "お出迎えグリーティング", startTime: "10:00" }),
+    entry("two", "2026-09-12", { title: "ハイタッチグリーティング", startTime: "12:00" }),
+    entry("three", "2026-09-12", { title: "お出迎えグリーティング", startTime: "15:00" }),
+  ]);
+
+  assert.deepEqual(groupRecommendationTitles(days[0].appearances), [
+    { title: "お出迎えグリーティング", count: 2 },
+    { title: "ハイタッチグリーティング", count: 1 },
+  ]);
 });
