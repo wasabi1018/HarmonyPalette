@@ -47,7 +47,7 @@ function entry(id: string, date: string, overrides: Partial<ScheduleEntry> = {})
   };
 }
 
-test("対象月の登場予定を日別件数の多い順に集計する", () => {
+test("対象月の登場予定を日別のイベント数と総件数で集計する", () => {
   const result = buildCharacterRecommendations("2026-09", character(), [
     entry("one", "2026-09-03"),
     entry("two", "2026-09-02", { startTime: "11:00" }),
@@ -56,9 +56,9 @@ test("対象月の登場予定を日別件数の多い順に集計する", () =>
     entry("other", "2026-09-01", { characterIds: ["other"], characterNames: ["別キャラ"] }),
   ]);
 
-  assert.deepEqual(result.map((day) => [day.date, day.count]), [
-    ["2026-09-02", 2],
-    ["2026-09-03", 1],
+  assert.deepEqual(result.map((day) => [day.date, day.eventCount, day.count]), [
+    ["2026-09-02", 1, 2],
+    ["2026-09-03", 1, 1],
   ]);
 });
 
@@ -120,6 +120,30 @@ test("同数の日は同順位として扱う", () => {
   assert.deepEqual(days.map((_, index) => recommendationRank(days, index)), [1, 2, 2]);
 });
 
+test("イベント種類数を優先し、次に総件数で順位付けする", () => {
+  const days = buildCharacterRecommendations("2026-09", character(), [
+    entry("a-one", "2026-09-01", { title: "Event A", startTime: "10:00" }),
+    entry("a-two", "2026-09-01", { title: "Event B", startTime: "11:00" }),
+    entry("a-three", "2026-09-01", { title: "Event C", startTime: "12:00" }),
+    entry("b-one", "2026-09-02", { title: "Event A", startTime: "10:00" }),
+    entry("b-two", "2026-09-02", { title: "Event A", startTime: "11:00" }),
+    entry("b-three", "2026-09-02", { title: "Event A", startTime: "12:00" }),
+    entry("b-four", "2026-09-02", { title: "Event B", startTime: "13:00" }),
+    entry("b-five", "2026-09-02", { title: "Event B", startTime: "14:00" }),
+    entry("c-one", "2026-09-03", { title: "Event A", startTime: "10:00" }),
+    entry("c-two", "2026-09-03", { title: "Event A", startTime: "11:00" }),
+    entry("c-three", "2026-09-03", { title: "Event B", startTime: "12:00" }),
+    entry("c-four", "2026-09-03", { title: "Event B", startTime: "13:00" }),
+  ]);
+
+  assert.deepEqual(days.map((day) => [day.date, day.eventCount, day.count]), [
+    ["2026-09-01", 3, 3],
+    ["2026-09-02", 2, 5],
+    ["2026-09-03", 2, 4],
+  ]);
+  assert.deepEqual(days.map((_, index) => recommendationRank(days, index)), [1, 2, 3]);
+});
+
 test("同じタイトルの予定を出現順のまま件数へまとめる", () => {
   const days = buildCharacterRecommendations("2026-09", character(), [
     entry("one", "2026-09-12", { title: "お出迎えグリーティング", startTime: "10:00" }),
@@ -167,9 +191,9 @@ test("DM文章をおすすめ日と詳細URLだけの簡潔な形式で作成す
     month: "2026-09",
     characterName: "シナモロール",
     days: [
-      { date: "2026-09-21", count: 3, appearances: [] },
-      { date: "2026-09-22", count: 3, appearances: [] },
-      { date: "2026-09-23", count: 2, appearances: [] },
+      { date: "2026-09-21", eventCount: 2, count: 3, appearances: [] },
+      { date: "2026-09-22", eventCount: 2, count: 3, appearances: [] },
+      { date: "2026-09-23", eventCount: 2, count: 2, appearances: [] },
     ],
     detailsUrl,
   });

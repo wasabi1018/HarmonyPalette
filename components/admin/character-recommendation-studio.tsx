@@ -195,7 +195,7 @@ function RankingDate({
             fontWeight: 900,
           }}
         >
-          予定 {day.count}件
+          {day.eventCount}イベント・{day.count}件
         </span>
       </div>
 
@@ -257,8 +257,10 @@ export function CharacterRecommendationCard({
   const accent = validAccent(character?.themeColor ?? "");
   const [year, monthNumber] = month.split("-").map(Number);
   const topDays = days.slice(0, 3);
-  const bestCount = days[0]?.count ?? 0;
-  const tiedBestCount = days.filter((day) => day.count === bestCount).length;
+  const bestDay = days[0];
+  const tiedBestCount = days.filter((day) => (
+    day.eventCount === bestDay?.eventCount && day.count === bestDay?.count
+  )).length;
 
   return (
     <article
@@ -581,7 +583,9 @@ export function CharacterRecommendationStudio({
                   <div key={day.date} className="rounded-xl border border-pink/10 bg-[#fffafd] px-2 py-2.5 text-center">
                     <p className="text-[9px] font-black text-pink">{recommendationRank(recommendations, index)}位</p>
                     <p className="mt-1 text-[11px] font-black text-ink">{formatShortDate(day.date)}</p>
-                    <p className="mt-0.5 text-[9px] font-bold text-ink/40">{day.count}件</p>
+                    <p className="mt-0.5 text-[9px] font-bold text-ink/40">
+                      {day.eventCount}イベント・{day.count}件
+                    </p>
                   </div>
                 ))}
               </div>

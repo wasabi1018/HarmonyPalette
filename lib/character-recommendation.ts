@@ -11,6 +11,7 @@ export type CharacterRecommendationAppearance = {
 
 export type CharacterRecommendationDay = {
   date: string;
+  eventCount: number;
   count: number;
   appearances: CharacterRecommendationAppearance[];
 };
@@ -115,17 +116,29 @@ export function buildCharacterRecommendations(
 
     return [{
       date,
+      eventCount: groupRecommendationTitles(dailyAppearances).length,
       count: dailyAppearances.length,
       appearances: dailyAppearances,
     }];
-  }).sort((left, right) => right.count - left.count || left.date.localeCompare(right.date));
+  }).sort((left, right) => (
+    right.eventCount - left.eventCount
+    || right.count - left.count
+    || left.date.localeCompare(right.date)
+  ));
+}
+
+function hasSameRecommendationScore(
+  left: CharacterRecommendationDay,
+  right: CharacterRecommendationDay,
+) {
+  return left.eventCount === right.eventCount && left.count === right.count;
 }
 
 export function recommendationRank(days: CharacterRecommendationDay[], index: number) {
   if (!days[index]) return 0;
   return days.slice(0, index).filter((day, dayIndex) => (
-    dayIndex === 0 || day.count !== days[dayIndex - 1].count
-  )).length + (index > 0 && days[index].count === days[index - 1].count ? 0 : 1);
+    dayIndex === 0 || !hasSameRecommendationScore(day, days[dayIndex - 1])
+  )).length + (index > 0 && hasSameRecommendationScore(days[index], days[index - 1]) ? 0 : 1);
 }
 
 export function groupRecommendationTitles(
@@ -161,8 +174,7 @@ export function buildCharacterRecommendationMessage({
     const date = new Date(`${value}T00:00:00Z`);
     return `${date.getUTCMonth() + 1}/${date.getUTCDate()}(${weekdays[date.getUTCDay()]})`;
   };
-  const bestCount = days[0].count;
-  const bestDays = days.filter((day) => day.count === bestCount);
+  const bestDays = days.filter((day) => hasSameRecommendationScore(day, days[0]));
   const bestDateText = bestDays.slice(0, 3).map((day) => formatDate(day.date)).join("・");
   const moreBestDays = bestDays.length > 3 ? `・ほか${bestDays.length - 3}日` : "";
 
