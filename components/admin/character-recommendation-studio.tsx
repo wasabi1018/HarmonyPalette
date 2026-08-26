@@ -17,8 +17,8 @@ import type { Character } from "@/data/types";
 import {
   buildCharacterRecommendationMessage,
   buildCharacterRecommendations,
+  groupRecommendationRankingDays,
   groupRecommendationTitles,
-  recommendationRank,
   type CharacterRecommendationDay,
 } from "@/lib/character-recommendation";
 import { type InitialCharacterData, useCharacters } from "@/lib/character-store";
@@ -124,64 +124,77 @@ function usePreviewScale() {
 }
 
 function RankingDate({
-  day,
+  days,
   rank,
   accent,
   featured = false,
 }: {
-  day: CharacterRecommendationDay;
+  days: CharacterRecommendationDay[];
   rank: number;
   accent: string;
   featured?: boolean;
 }) {
-  const parts = dateParts(day.date);
-  const scheduleGroups = featured ? groupRecommendationTitles(day.appearances) : [];
+  const day = days[0];
+  const scheduleGroups = groupRecommendationTitles(day.appearances);
+  const displayedDays = days.slice(0, featured ? 4 : 3);
+  const remainingDayCount = days.length - displayedDays.length;
+  const dateFontSize = featured ? (days.length > 1 ? 48 : 68) : (days.length > 1 ? 32 : 40);
+  const weekdayFontSize = featured ? (days.length > 1 ? 22 : 28) : 18;
   return (
     <div
       style={{
-        display: featured ? "block" : "flex",
+        display: "block",
         minWidth: 0,
-        alignItems: featured ? undefined : "center",
-        justifyContent: "space-between",
-        gap: 22,
         border: featured ? `4px solid ${accent}` : `2px solid ${accent}2e`,
         borderRadius: featured ? 34 : 24,
         background: "#fff",
-        padding: featured ? "26px 34px 30px" : "22px 28px",
+        padding: featured ? "26px 34px 30px" : "19px 22px 22px",
         boxShadow: featured ? `0 18px 44px ${accent}22` : "0 8px 22px rgba(87,66,80,0.06)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 22 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: featured ? 22 : 14 }}>
         <div style={{ display: "flex", minWidth: 0, alignItems: "center", gap: featured ? 24 : 18 }}>
           <span
             style={{
               display: "grid",
-              width: featured ? 76 : 60,
-              height: featured ? 76 : 60,
+              width: featured ? 76 : 52,
+              height: featured ? 76 : 52,
               flex: "0 0 auto",
               placeItems: "center",
               borderRadius: 999,
               background: rank === 1 ? accent : `${accent}18`,
               color: rank === 1 ? "#fff" : accent,
-              fontSize: featured ? 29 : 23,
+              fontSize: featured ? 29 : 20,
               fontWeight: 900,
             }}
           >
             {rank}
           </span>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 9, whiteSpace: "nowrap" }}>
-            <strong style={{ fontSize: featured ? 68 : 50, fontWeight: 900, letterSpacing: "-0.055em" }}>
-              {parts.month}/{parts.day}
-            </strong>
-            <span
-              style={{
-                color: parts.weekend ? accent : "#817681",
-                fontSize: featured ? 28 : 24,
-                fontWeight: 900,
-              }}
-            >
-              ({parts.weekday})
-            </span>
+          <div style={{ display: "flex", minWidth: 0, flexWrap: "wrap", alignItems: "baseline", gap: featured ? "4px 16px" : "3px 11px" }}>
+            {displayedDays.map((displayedDay) => {
+              const parts = dateParts(displayedDay.date);
+              return (
+                <div key={displayedDay.date} style={{ display: "flex", alignItems: "baseline", gap: featured ? 8 : 5, whiteSpace: "nowrap" }}>
+                  <strong style={{ fontSize: dateFontSize, fontWeight: 900, letterSpacing: "-0.055em" }}>
+                    {parts.month}/{parts.day}
+                  </strong>
+                  <span
+                    style={{
+                      color: parts.weekend ? accent : "#817681",
+                      fontSize: weekdayFontSize,
+                      fontWeight: 900,
+                    }}
+                  >
+                    ({parts.weekday})
+                  </span>
+                </div>
+              );
+            })}
+            {remainingDayCount > 0 && (
+              <span style={{ color: accent, fontSize: featured ? 20 : 15, fontWeight: 900 }}>
+                ほか{remainingDayCount}日
+              </span>
+            )}
           </div>
         </div>
         <span
@@ -190,32 +203,33 @@ function RankingDate({
             borderRadius: 999,
             background: `${accent}15`,
             color: accent,
-            padding: featured ? "13px 21px" : "11px 18px",
-            fontSize: featured ? 24 : 21,
+            padding: featured ? "13px 21px" : "9px 13px",
+            fontSize: featured ? 24 : 15,
             fontWeight: 900,
+            whiteSpace: "nowrap",
           }}
         >
           {day.eventCount}イベント・{day.count}件
         </span>
       </div>
 
-      {featured && scheduleGroups.length > 0 && (
+      {scheduleGroups.length > 0 && (
         <div
           style={{
-            marginTop: 23,
+            marginTop: featured ? 23 : 16,
             borderTop: `2px solid ${accent}24`,
-            paddingTop: 19,
+            paddingTop: featured ? 19 : 13,
           }}
         >
-          <p style={{ margin: 0, color: accent, fontSize: 17, fontWeight: 900, letterSpacing: "0.08em" }}>
+          <p style={{ margin: 0, color: accent, fontSize: featured ? 17 : 13, fontWeight: 900, letterSpacing: "0.08em" }}>
             この日の登場スケジュール
           </p>
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "1fr",
-              gap: 10,
-              marginTop: 13,
+              gap: featured ? 10 : 6,
+              marginTop: featured ? 13 : 9,
             }}
           >
             {scheduleGroups.map((group) => (
@@ -226,14 +240,14 @@ function RankingDate({
                   minWidth: 0,
                   alignItems: "baseline",
                   justifyContent: "space-between",
-                  gap: 18,
-                  fontSize: scheduleGroups.length >= 8 ? 18 : 21,
+                  gap: featured ? 18 : 10,
+                  fontSize: featured ? (scheduleGroups.length >= 8 ? 18 : 21) : (scheduleGroups.length >= 8 ? 14 : 16),
                   fontWeight: 900,
-                  lineHeight: 1.45,
+                  lineHeight: featured ? 1.45 : 1.35,
                 }}
               >
                 <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>・{group.title}</span>
-                <span style={{ flex: "0 0 auto", color: accent, fontSize: scheduleGroups.length >= 8 ? 17 : 19 }}>
+                <span style={{ flex: "0 0 auto", color: accent, fontSize: featured ? (scheduleGroups.length >= 8 ? 17 : 19) : 14 }}>
                   {group.count}件
                 </span>
               </div>
@@ -256,11 +270,7 @@ export function CharacterRecommendationCard({
 }) {
   const accent = validAccent(character?.themeColor ?? "");
   const [year, monthNumber] = month.split("-").map(Number);
-  const topDays = days.slice(0, 3);
-  const bestDay = days[0];
-  const tiedBestCount = days.filter((day) => (
-    day.eventCount === bestDay?.eventCount && day.count === bestDay?.count
-  )).length;
+  const topRankingGroups = groupRecommendationRankingDays(days).slice(0, 3);
 
   return (
     <article
@@ -345,24 +355,24 @@ export function CharacterRecommendationCard({
           行くならこの日！
         </p>
 
-        {topDays.length > 0 ? (
+        {topRankingGroups.length > 0 ? (
           <>
             <div style={{ marginTop: 28 }}>
-              <RankingDate day={topDays[0]} rank={1} accent={accent} featured />
-              {tiedBestCount > 1 && (
-                <p style={{ margin: "12px 6px 0", color: accent, fontSize: 18, fontWeight: 900 }}>
-                  同率1位が{tiedBestCount}日あります
-                </p>
-              )}
+              <RankingDate
+                days={topRankingGroups[0].days}
+                rank={topRankingGroups[0].rank}
+                accent={accent}
+                featured
+              />
             </div>
 
-            {topDays.length > 1 && (
+            {topRankingGroups.length > 1 && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 18 }}>
-                {topDays.slice(1).map((day, index) => (
+                {topRankingGroups.slice(1).map((group) => (
                   <RankingDate
-                    key={day.date}
-                    day={day}
-                    rank={recommendationRank(days, index + 1)}
+                    key={`${group.rank}-${group.days[0].date}`}
+                    days={group.days}
+                    rank={group.rank}
                     accent={accent}
                   />
                 ))}
@@ -452,6 +462,10 @@ export function CharacterRecommendationStudio({
       ? buildCharacterRecommendations(selectedMonth, character, scheduleState.entries, closedDates)
       : [],
     [character, closedDates, scheduleState.entries, selectedMonth],
+  );
+  const rankingGroups = useMemo(
+    () => groupRecommendationRankingDays(recommendations),
+    [recommendations],
   );
   const message = useMemo(
     () => buildCharacterRecommendationMessage({
@@ -577,14 +591,17 @@ export function CharacterRecommendationStudio({
                 ? `${recommendations.length}日分の登場予定から、おすすめ日を作成しました。`
                 : "この条件で掲載中の登場予定はありません。"}
             </div>
-            {recommendations[0] && (
+            {rankingGroups[0] && (
               <div className="mt-3 grid grid-cols-3 gap-2">
-                {recommendations.slice(0, 3).map((day, index) => (
-                  <div key={day.date} className="rounded-xl border border-pink/10 bg-[#fffafd] px-2 py-2.5 text-center">
-                    <p className="text-[9px] font-black text-pink">{recommendationRank(recommendations, index)}位</p>
-                    <p className="mt-1 text-[11px] font-black text-ink">{formatShortDate(day.date)}</p>
+                {rankingGroups.slice(0, 3).map((group) => (
+                  <div key={`${group.rank}-${group.days[0].date}`} className="rounded-xl border border-pink/10 bg-[#fffafd] px-2 py-2.5 text-center">
+                    <p className="text-[9px] font-black text-pink">{group.rank}位</p>
+                    <p className="mt-1 text-[11px] font-black text-ink">
+                      {formatShortDate(group.days[0].date)}
+                      {group.days.length > 1 ? `ほか${group.days.length - 1}日` : ""}
+                    </p>
                     <p className="mt-0.5 text-[9px] font-bold text-ink/40">
-                      {day.eventCount}イベント・{day.count}件
+                      {group.days[0].eventCount}イベント・{group.days[0].count}件
                     </p>
                   </div>
                 ))}

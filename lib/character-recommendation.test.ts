@@ -4,6 +4,7 @@ import type { Character } from "@/data/types";
 import {
   buildCharacterRecommendationMessage,
   buildCharacterRecommendations,
+  groupRecommendationRankingDays,
   groupRecommendationTitles,
   recommendationRank,
 } from "@/lib/character-recommendation";
@@ -142,6 +143,30 @@ test("イベント種類数を優先し、次に総件数で順位付けする",
     ["2026-09-03", 2, 4],
   ]);
   assert.deepEqual(days.map((_, index) => recommendationRank(days, index)), [1, 2, 3]);
+});
+
+test("同順位でイベント内容と件数が同じ日を1つの表示グループにまとめる", () => {
+  const days = buildCharacterRecommendations("2026-09", character(), [
+    entry("a-one", "2026-09-01", { title: "Event A", startTime: "10:00" }),
+    entry("a-two", "2026-09-01", { title: "Event A", startTime: "11:00" }),
+    entry("a-three", "2026-09-01", { title: "Event B", startTime: "12:00" }),
+    entry("b-one", "2026-09-02", { title: "Event A", startTime: "10:00" }),
+    entry("b-two", "2026-09-02", { title: "Event A", startTime: "11:00" }),
+    entry("b-three", "2026-09-02", { title: "Event B", startTime: "12:00" }),
+    entry("c-one", "2026-09-03", { title: "Event A", startTime: "10:00" }),
+    entry("c-two", "2026-09-03", { title: "Event B", startTime: "11:00" }),
+    entry("c-three", "2026-09-03", { title: "Event B", startTime: "12:00" }),
+  ]);
+
+  const groups = groupRecommendationRankingDays(days);
+
+  assert.deepEqual(groups.map((group) => ({
+    rank: group.rank,
+    dates: group.days.map((day) => day.date),
+  })), [
+    { rank: 1, dates: ["2026-09-01", "2026-09-02"] },
+    { rank: 1, dates: ["2026-09-03"] },
+  ]);
 });
 
 test("同じタイトルの予定を出現順のまま件数へまとめる", () => {

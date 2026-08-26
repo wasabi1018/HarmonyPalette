@@ -21,6 +21,11 @@ export type CharacterRecommendationTitleGroup = {
   count: number;
 };
 
+export type CharacterRecommendationRankingGroup = {
+  rank: number;
+  days: CharacterRecommendationDay[];
+};
+
 function dateFromIso(value: string) {
   return new Date(`${value}T00:00:00Z`);
 }
@@ -154,6 +159,33 @@ export function groupRecommendationTitles(
     groups.set(title, { title, count: (current?.count ?? 0) + 1 });
   });
   return Array.from(groups.values());
+}
+
+function recommendationScheduleSignature(day: CharacterRecommendationDay) {
+  return JSON.stringify(
+    groupRecommendationTitles(day.appearances)
+      .map((group) => [group.title, group.count] as const)
+      .sort(([leftTitle], [rightTitle]) => leftTitle.localeCompare(rightTitle, "ja")),
+  );
+}
+
+export function groupRecommendationRankingDays(
+  days: CharacterRecommendationDay[],
+): CharacterRecommendationRankingGroup[] {
+  const groups: Array<CharacterRecommendationRankingGroup & { signature: string }> = [];
+
+  days.forEach((day, index) => {
+    const rank = recommendationRank(days, index);
+    const signature = recommendationScheduleSignature(day);
+    const existing = groups.find((group) => group.rank === rank && group.signature === signature);
+    if (existing) {
+      existing.days.push(day);
+      return;
+    }
+    groups.push({ rank, days: [day], signature });
+  });
+
+  return groups.map(({ rank, days: groupedDays }) => ({ rank, days: groupedDays }));
 }
 
 export function buildCharacterRecommendationMessage({
