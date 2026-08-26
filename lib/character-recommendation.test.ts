@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { Character } from "@/data/types";
 import {
+  buildCharacterRecommendationMessage,
   buildCharacterRecommendations,
   groupRecommendationTitles,
   recommendationRank,
@@ -90,6 +91,24 @@ test("毎日会えるキャラクターは休園日以外にファンスタジ�
   assert.equal(result.find((day) => day.date === "2026-09-01")?.appearances[0].isRegularFanStudio, true);
 });
 
+test("毎日会えるキャラクターに明示的なファンスタジオ予定がある日は補完分を加算しない", () => {
+  const result = buildCharacterRecommendations(
+    "2026-09",
+    character({ isFanStudioRegular: true }),
+    [entry("fan-studio", "2026-09-03", {
+      title: "シナモロール ファンスタジオグリーティング",
+      scheduleType: "ファンスタジオグリーティング",
+      location: "ファンスタジオ101号室",
+    })],
+  );
+  const targetDay = result.find((day) => day.date === "2026-09-03");
+
+  assert.equal(targetDay?.count, 1);
+  assert.deepEqual(groupRecommendationTitles(targetDay?.appearances ?? []), [
+    { title: "ファンスタジオ", count: 1 },
+  ]);
+});
+
 test("同数の日は同順位として扱う", () => {
   const days = buildCharacterRecommendations("2026-09", character(), [
     entry("one", "2026-09-01"),
@@ -140,4 +159,24 @@ test("キャラクター名付きのファンスタジオ予定をファンス�
   ]), [
     { title: "ファンスタジオ", count: 3 },
   ]);
+});
+
+test("DM文章をおすすめ日と詳細URLだけの簡潔な形式で作成する", () => {
+  const detailsUrl = "https://harmonypalette.jp/schedule?character=%E3%82%B7%E3%83%8A%E3%83%A2%E3%83%AD%E3%83%BC%E3%83%AB&from=2026-09-01&to=2026-09-30&view=calendar#schedule-results";
+  const message = buildCharacterRecommendationMessage({
+    month: "2026-09",
+    characterName: "シナモロール",
+    days: [
+      { date: "2026-09-21", count: 3, appearances: [] },
+      { date: "2026-09-22", count: 3, appearances: [] },
+      { date: "2026-09-23", count: 2, appearances: [] },
+    ],
+    detailsUrl,
+  });
+
+  assert.equal(message, `シナモロール推しさんへ🩷
+9月のおすすめ日は9/21(月)・9/22(火)！
+詳しい時間・場所はこちら👇
+${detailsUrl}
+※掲載予定は変更になる場合があります。お出かけ前に公式サイトの最新情報もご確認ください。`);
 });

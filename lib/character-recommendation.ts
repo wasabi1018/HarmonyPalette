@@ -57,6 +57,13 @@ function appearanceKey(entry: ScheduleEntry) {
   return [sourceKey, entry.startTime, entry.location, entry.title].join("|");
 }
 
+function isFanStudioEntry(entry: ScheduleEntry) {
+  return [entry.title, entry.scheduleType, entry.location]
+    .join(" ")
+    .normalize("NFKC")
+    .includes("ファンスタジオ");
+}
+
 export function buildCharacterRecommendations(
   month: string,
   character: Character,
@@ -74,8 +81,11 @@ export function buildCharacterRecommendations(
   return datesInMonth(month).flatMap((date) => {
     if (closedDates.has(date)) return [];
 
+    const dailyEntries = matchingEntries.filter(
+      (entry) => entry.date <= date && (entry.endDate ?? entry.date) >= date,
+    );
     const appearances = new Map<string, CharacterRecommendationAppearance>();
-    if (character.isFanStudioRegular) {
+    if (character.isFanStudioRegular && !dailyEntries.some(isFanStudioEntry)) {
       appearances.set("regular-fan-studio", {
         key: "regular-fan-studio",
         time: "毎日",
@@ -85,9 +95,7 @@ export function buildCharacterRecommendations(
       });
     }
 
-    matchingEntries
-      .filter((entry) => entry.date <= date && (entry.endDate ?? entry.date) >= date)
-      .forEach((entry) => {
+    dailyEntries.forEach((entry) => {
         const key = appearanceKey(entry);
         appearances.set(key, {
           key,
@@ -96,7 +104,7 @@ export function buildCharacterRecommendations(
           location: entry.location,
           isRegularFanStudio: false,
         });
-      });
+    });
 
     const dailyAppearances = Array.from(appearances.values()).sort((left, right) => (
       left.time.localeCompare(right.time, "ja")
@@ -133,4 +141,34 @@ export function groupRecommendationTitles(
     groups.set(title, { title, count: (current?.count ?? 0) + 1 });
   });
   return Array.from(groups.values());
+}
+
+export function buildCharacterRecommendationMessage({
+  month,
+  characterName,
+  days,
+  detailsUrl,
+}: {
+  month: string;
+  characterName: string;
+  days: CharacterRecommendationDay[];
+  detailsUrl: string;
+}) {
+  if (!characterName || days.length === 0) return "対象月に掲載中の登場予定がありません。";
+  const [, monthNumber] = month.split("-").map(Number);
+  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+  const formatDate = (value: string) => {
+    const date = new Date(`${value}T00:00:00Z`);
+    return `${date.getUTCMonth() + 1}/${date.getUTCDate()}(${weekdays[date.getUTCDay()]})`;
+  };
+  const bestCount = days[0].count;
+  const bestDays = days.filter((day) => day.count === bestCount);
+  const bestDateText = bestDays.slice(0, 3).map((day) => formatDate(day.date)).join("・");
+  const moreBestDays = bestDays.length > 3 ? `・ほか${bestDays.length - 3}日` : "";
+
+  return `${characterName}推しさんへ🩷
+${monthNumber}月のおすすめ日は${bestDateText}${moreBestDays}！
+詳しい時間・場所はこちら👇
+${detailsUrl}
+※掲載予定は変更になる場合があります。お出かけ前に公式サイトの最新情報もご確認ください。`;
 }

@@ -15,7 +15,7 @@ const character: Character = {
   image: "",
   description: "",
   officialUrl: "",
-  isFanStudioRegular: false,
+  isFanStudioRegular: true,
   themeColor: "#68acd3",
   birthdayMonth: 3,
   birthdayDay: 6,

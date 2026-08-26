@@ -15,6 +15,7 @@ import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Character } from "@/data/types";
 import {
+  buildCharacterRecommendationMessage,
   buildCharacterRecommendations,
   groupRecommendationTitles,
   recommendationRank,
@@ -69,32 +70,6 @@ function scheduleUrl(month: string, characterName: string) {
     view: "calendar",
   });
   return siteUrl(`/schedule?${params.toString()}#schedule-results`);
-}
-
-function recommendationMessage(
-  month: string,
-  character: Character | undefined,
-  days: CharacterRecommendationDay[],
-) {
-  if (!character || days.length === 0) return "対象月に掲載中の登場予定がありません。";
-  const [, monthNumber] = month.split("-").map(Number);
-  const bestCount = days[0].count;
-  const bestDays = days.filter((day) => day.count === bestCount);
-  const bestDateText = bestDays.slice(0, 3).map((day) => formatShortDate(day.date)).join("・");
-  const moreBestDays = bestDays.length > 3 ? `ほか${bestDays.length - 3}日` : "";
-  const next = days.find((day) => day.count < bestCount);
-  const nextLine = next
-    ? `\n次点は${formatShortDate(next.date)}（${next.count}件）です。`
-    : "";
-
-  return `${character.name}推しさんへ🩷
-${monthNumber}月のおすすめ日は${bestDateText}${moreBestDays ? `・${moreBestDays}` : ""}！
-公開中の登場予定は${bestCount}件で、対象月最多です。${nextLine}
-
-詳しい時間・場所はこちら👇
-${scheduleUrl(month, character.name)}
-
-※掲載予定は変更になる場合があります。お出かけ前に公式サイトの最新情報もご確認ください。`;
 }
 
 function downloadBlob(blob: Blob, fileName: string) {
@@ -233,7 +208,7 @@ function RankingDate({
           }}
         >
           <p style={{ margin: 0, color: accent, fontSize: 17, fontWeight: 900, letterSpacing: "0.08em" }}>
-            この日のスケジュール
+            この日の登場スケジュール
           </p>
           <div
             style={{
@@ -477,7 +452,12 @@ export function CharacterRecommendationStudio({
     [character, closedDates, scheduleState.entries, selectedMonth],
   );
   const message = useMemo(
-    () => recommendationMessage(selectedMonth, character, recommendations),
+    () => buildCharacterRecommendationMessage({
+      month: selectedMonth,
+      characterName: character?.name ?? "",
+      days: recommendations,
+      detailsUrl: character ? scheduleUrl(selectedMonth, character.name) : "",
+    }),
     [character, recommendations, selectedMonth],
   );
   const isBusy = isDownloading || isDisplaying;
