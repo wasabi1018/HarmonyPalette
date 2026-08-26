@@ -238,8 +238,8 @@ function RankingDate({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: scheduleGroups.length >= 5 ? "1fr 1fr" : "1fr",
-              gap: scheduleGroups.length >= 5 ? "10px 28px" : 10,
+              gridTemplateColumns: "1fr",
+              gap: 10,
               marginTop: 13,
             }}
           >
@@ -252,13 +252,13 @@ function RankingDate({
                   alignItems: "baseline",
                   justifyContent: "space-between",
                   gap: 18,
-                  fontSize: scheduleGroups.length >= 5 ? 18 : 21,
+                  fontSize: scheduleGroups.length >= 8 ? 18 : 21,
                   fontWeight: 900,
                   lineHeight: 1.45,
                 }}
               >
                 <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>・{group.title}</span>
-                <span style={{ flex: "0 0 auto", color: accent, fontSize: scheduleGroups.length >= 5 ? 17 : 19 }}>
+                <span style={{ flex: "0 0 auto", color: accent, fontSize: scheduleGroups.length >= 8 ? 17 : 19 }}>
                   {group.count}件
                 </span>
               </div>

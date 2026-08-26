@@ -113,3 +113,31 @@ test("同じタイトルの予定を出現順のまま件数へまとめる", ()
     { title: "ハイタッチグリーティング", count: 1 },
   ]);
 });
+
+test("キャラクター名付きのファンスタジオ予定をファンスタジオへ統合する", () => {
+  assert.deepEqual(groupRecommendationTitles([
+    {
+      key: "regular",
+      time: "毎日",
+      title: "ファンスタジオ",
+      location: "ファンスタジオ",
+      isRegularFanStudio: true,
+    },
+    {
+      key: "cinnamon",
+      time: "10:00",
+      title: "シナモロール ファンスタジオグリーティング",
+      location: "ファンスタジオ101号室",
+      isRegularFanStudio: false,
+    },
+    {
+      key: "melody",
+      time: "11:00",
+      title: "マイメロディ　ファンスタジオグリーティング",
+      location: "ファンスタジオ102号室",
+      isRegularFanStudio: false,
+    },
+  ]), [
+    { title: "ファンスタジオ", count: 3 },
+  ]);
+});

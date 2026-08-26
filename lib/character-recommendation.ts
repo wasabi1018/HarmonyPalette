@@ -125,7 +125,10 @@ export function groupRecommendationTitles(
 ): CharacterRecommendationTitleGroup[] {
   const groups = new Map<string, CharacterRecommendationTitleGroup>();
   appearances.forEach((appearance) => {
-    const title = appearance.title.trim() || "登場予定";
+    const originalTitle = appearance.title.normalize("NFKC").trim();
+    const title = appearance.isRegularFanStudio || originalTitle.includes("ファンスタジオ")
+      ? "ファンスタジオ"
+      : originalTitle || "登場予定";
     const current = groups.get(title);
     groups.set(title, { title, count: (current?.count ?? 0) + 1 });
   });
