@@ -73,6 +73,7 @@ const IMPORT_TARGET_OPTIONS = [
   { value: "dailySchedules", label: "日別スケジュール", description: "日別PDFから予定と運行情報を取得します。" },
   { value: "fanStudio", label: "ファンスタジオスケジュール", description: "ファンスタジオ画像をOCRして取得します。" },
 ];
+const JAPANESE_NAME_COLLATOR = new Intl.Collator("ja", { numeric: true, sensitivity: "base" });
 
 function parseCharacterNames(value: string) {
   return [...new Set(value.split(/[・,、]/).map((name) => name.trim()).filter(Boolean))];
@@ -336,15 +337,36 @@ function CandidateList({ title, entries, selected, edited, onToggle, onChange }:
   onChange: (key: string, patch: Partial<PreviewSchedule>) => void;
 }) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<"original" | "character">("original");
+  const displayedEntries = useMemo(() => {
+    if (sortMode === "original") return entries;
+    return entries
+      .map((entry, originalIndex) => ({ entry, originalIndex }))
+      .sort((left, right) => {
+        const leftName = left.entry.characters[0]?.name.trim() || "";
+        const rightName = right.entry.characters[0]?.name.trim() || "";
+        if (!leftName && rightName) return 1;
+        if (leftName && !rightName) return -1;
+        const compared = JAPANESE_NAME_COLLATOR.compare(leftName, rightName);
+        return compared || left.originalIndex - right.originalIndex;
+      })
+      .map(({ entry }) => entry);
+  }, [entries, sortMode]);
   if (entries.length === 0) return null;
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-[13px] font-black text-ink">{title}</h3>
-        <span className="text-[10px] font-bold text-ink/40">選択中 {selected.length}/{entries.length}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-bold text-ink/40">選択中 {selected.length}/{entries.length}</span>
+          <div role="group" aria-label="予定候補の並び順" className="inline-flex rounded-lg border border-ink/10 bg-white p-0.5">
+            <button type="button" aria-pressed={sortMode === "original"} onClick={() => setSortMode("original")} className={`min-h-8 rounded-md px-2.5 text-[9px] font-black transition-colors ${sortMode === "original" ? "bg-pink text-white" : "text-ink/45 hover:text-pink"}`}>現在の順序</button>
+            <button type="button" aria-pressed={sortMode === "character"} onClick={() => setSortMode("character")} className={`min-h-8 rounded-md px-2.5 text-[9px] font-black transition-colors ${sortMode === "character" ? "bg-pink text-white" : "text-ink/45 hover:text-pink"}`}>キャラクター名</button>
+          </div>
+        </div>
       </div>
       <div className="grid max-h-[620px] gap-2 overflow-y-auto pr-1 md:grid-cols-2">
-        {entries.map((entry) => {
+        {displayedEntries.map((entry) => {
           const isSelected = selected.includes(entry.externalKey);
           const isEditing = editingKey === entry.externalKey;
           return (
