@@ -15,20 +15,35 @@ export async function POST(request: Request) {
     const body = await request.json() as {
       from?: string;
       to?: string;
+      includeOperatingDays?: boolean;
+      includeDailySchedules?: boolean;
       includeFanStudio?: boolean;
       importMode?: "all" | "operating-days-only" | "exclude-operating-days";
     };
+    const hasExplicitTargets = typeof body.includeOperatingDays === "boolean"
+      || typeof body.includeDailySchedules === "boolean";
     const importMode = body.importMode || "all";
-    if (!("all" === importMode || "operating-days-only" === importMode || "exclude-operating-days" === importMode)) {
+    if (!hasExplicitTargets && !("all" === importMode || "operating-days-only" === importMode || "exclude-operating-days" === importMode)) {
       return NextResponse.json({ error: "取込対象が正しくありません。" }, { status: 400 });
     }
-    const includeSchedules = importMode !== "operating-days-only";
+    const includeSchedules = hasExplicitTargets
+      ? body.includeDailySchedules === true
+      : importMode !== "operating-days-only";
+    const includeParkOperatingDays = hasExplicitTargets
+      ? body.includeOperatingDays === true
+      : importMode !== "exclude-operating-days";
+    const includeFanStudio = hasExplicitTargets
+      ? body.includeFanStudio === true
+      : includeSchedules && body.includeFanStudio !== false;
+    if (!includeSchedules && !includeParkOperatingDays && !includeFanStudio) {
+      return NextResponse.json({ error: "取込対象を1つ以上選択してください。" }, { status: 400 });
+    }
     const preview = await importHarmonylandOfficialSchedules({
       from: body.from || "",
       to: body.to || "",
       includeSchedules,
-      includeParkOperatingDays: importMode !== "exclude-operating-days",
-      includeFanStudio: includeSchedules && body.includeFanStudio !== false,
+      includeParkOperatingDays,
+      includeFanStudio,
     });
     const config = getSupabaseConfigStatus();
     let persisted = false;

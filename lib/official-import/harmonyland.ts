@@ -38,84 +38,85 @@ export async function importHarmonylandOfficialSchedules(options: OfficialImport
   const operatingDays: ImportPreview["operatingDays"] = [];
   const documents: SourceDocument[] = [];
   const warnings: string[] = [];
-  const apiUrl = `${CALENDAR_API}&from=${options.from}&to=${options.to}`;
-  options.onProgress?.("公式カレンダーを取得しています。");
-  const response = await fetch(apiUrl, { headers: { "user-agent": USER_AGENT }, cache: "no-store" });
-  if (!response.ok) throw new Error(`公式カレンダーAPIの取得に失敗しました: ${response.status}`);
-  const rawJson = await response.text();
-  const jsonBytes = new TextEncoder().encode(rawJson);
-  let calendar: CalendarResponse;
-  try {
-    calendar = JSON.parse(rawJson) as CalendarResponse;
-  } catch {
-    throw new Error("公式カレンダーAPIから有効なJSONが返されませんでした。");
-  }
-  documents.push({
-    sourceId: "harmonyland-calendar",
-    sourceUrl: apiUrl,
-    contentType: "application/json",
-    sha256: sha256(jsonBytes),
-    bytes: jsonBytes,
-    metadata: { role: "calendar-api", from: options.from, to: options.to },
-  });
-
   const includeSchedules = options.includeSchedules !== false;
   const includeParkOperatingDays = options.includeParkOperatingDays !== false;
-  const seenDates = new Set(Object.keys(calendar));
-
-  if (includeParkOperatingDays) {
-    for (let date = options.from; date <= options.to; date = addDays(date, 1)) {
-      if (!seenDates.has(date)) warnings.push(`${date}: 公式カレンダーに営業情報がありません。`);
-    }
-  }
-
-  for (const [date, records] of Object.entries(calendar).sort(([a], [b]) => a.localeCompare(b))) {
-    const operatingDay = normalizeParkOperatingDay(date, records, apiUrl);
-    if (includeParkOperatingDays) {
-      operatingDays.push(operatingDay);
-      if (operatingDay.verificationStatus !== "verified") {
-        warnings.push(`${date}: ${operatingDay.notes}`);
-      }
-    }
-
-    if (!includeSchedules) continue;
-    const pdf = records.find((record) => record.event_link?.toLocaleLowerCase().includes(".pdf"));
-    if (!pdf?.event_link) {
-      if (operatingDay.operatingStatus !== "closed") {
-        warnings.push(`${date}: 日別スケジュールPDFが登録されていません。`);
-      }
-      continue;
-    }
-    options.onProgress?.(`${date}の公式PDFを解析しています。`);
+  if (includeSchedules || includeParkOperatingDays) {
+    const apiUrl = `${CALENDAR_API}&from=${options.from}&to=${options.to}`;
+    options.onProgress?.("公式カレンダーを取得しています。");
+    const response = await fetch(apiUrl, { headers: { "user-agent": USER_AGENT }, cache: "no-store" });
+    if (!response.ok) throw new Error(`公式カレンダーAPIの取得に失敗しました: ${response.status}`);
+    const rawJson = await response.text();
+    const jsonBytes = new TextEncoder().encode(rawJson);
+    let calendar: CalendarResponse;
     try {
-      const pdfResponse = await fetch(pdf.event_link, { headers: { "user-agent": USER_AGENT }, cache: "no-store" });
-      if (!pdfResponse.ok) throw new Error(`HTTP ${pdfResponse.status}`);
-      const bytes = new Uint8Array(await pdfResponse.arrayBuffer());
-      documents.push({
-        sourceId: "harmonyland-calendar",
-        sourceUrl: pdf.event_link,
-        documentDate: date,
-        contentType: pdfResponse.headers.get("content-type") || "application/pdf",
-        sha256: sha256(bytes),
-        bytes,
-        metadata: {
-          role: "daily-schedule",
-          calendarTitle: pdf.event_title || "",
-          openingTime: pdf.event_time || "",
-          closingTime: pdf.event_endtime || "",
-        },
-      });
-      const parsed = await parseHarmonylandDailyPdf(date, pdf.event_link, bytes);
-      schedules.push(...parsed.schedules);
-      operations.push(...parsed.operations);
-      if (parsed.schedules.length === 0) warnings.push(`${date}: PDFからイベント／グリーティングを抽出できませんでした。`);
-      if (parsed.operations.length === 0) warnings.push(`${date}: PDFからアトラクション運行情報を抽出できませんでした。`);
-    } catch (error) {
-      warnings.push(`${date}: PDF解析に失敗しました（${error instanceof Error ? error.message : String(error)}）。`);
+      calendar = JSON.parse(rawJson) as CalendarResponse;
+    } catch {
+      throw new Error("公式カレンダーAPIから有効なJSONが返されませんでした。");
+    }
+    documents.push({
+      sourceId: "harmonyland-calendar",
+      sourceUrl: apiUrl,
+      contentType: "application/json",
+      sha256: sha256(jsonBytes),
+      bytes: jsonBytes,
+      metadata: { role: "calendar-api", from: options.from, to: options.to },
+    });
+    const seenDates = new Set(Object.keys(calendar));
+
+    if (includeParkOperatingDays) {
+      for (let date = options.from; date <= options.to; date = addDays(date, 1)) {
+        if (!seenDates.has(date)) warnings.push(`${date}: 公式カレンダーに営業情報がありません。`);
+      }
+    }
+
+    for (const [date, records] of Object.entries(calendar).sort(([a], [b]) => a.localeCompare(b))) {
+      const operatingDay = normalizeParkOperatingDay(date, records, apiUrl);
+      if (includeParkOperatingDays) {
+        operatingDays.push(operatingDay);
+        if (operatingDay.verificationStatus !== "verified") {
+          warnings.push(`${date}: ${operatingDay.notes}`);
+        }
+      }
+
+      if (!includeSchedules) continue;
+      const pdf = records.find((record) => record.event_link?.toLocaleLowerCase().includes(".pdf"));
+      if (!pdf?.event_link) {
+        if (operatingDay.operatingStatus !== "closed") {
+          warnings.push(`${date}: 日別スケジュールPDFが登録されていません。`);
+        }
+        continue;
+      }
+      options.onProgress?.(`${date}の公式PDFを解析しています。`);
+      try {
+        const pdfResponse = await fetch(pdf.event_link, { headers: { "user-agent": USER_AGENT }, cache: "no-store" });
+        if (!pdfResponse.ok) throw new Error(`HTTP ${pdfResponse.status}`);
+        const bytes = new Uint8Array(await pdfResponse.arrayBuffer());
+        documents.push({
+          sourceId: "harmonyland-calendar",
+          sourceUrl: pdf.event_link,
+          documentDate: date,
+          contentType: pdfResponse.headers.get("content-type") || "application/pdf",
+          sha256: sha256(bytes),
+          bytes,
+          metadata: {
+            role: "daily-schedule",
+            calendarTitle: pdf.event_title || "",
+            openingTime: pdf.event_time || "",
+            closingTime: pdf.event_endtime || "",
+          },
+        });
+        const parsed = await parseHarmonylandDailyPdf(date, pdf.event_link, bytes);
+        schedules.push(...parsed.schedules);
+        operations.push(...parsed.operations);
+        if (parsed.schedules.length === 0) warnings.push(`${date}: PDFからイベント／グリーティングを抽出できませんでした。`);
+        if (parsed.operations.length === 0) warnings.push(`${date}: PDFからアトラクション運行情報を抽出できませんでした。`);
+      } catch (error) {
+        warnings.push(`${date}: PDF解析に失敗しました（${error instanceof Error ? error.message : String(error)}）。`);
+      }
     }
   }
 
-  if (includeSchedules && options.includeFanStudio) {
+  if (options.includeFanStudio) {
     options.onProgress?.("ファンスタジオ予定表を取得しています。");
     try {
       const fanStudio = await importFanStudioSchedules(options.from, options.to, options.onProgress);

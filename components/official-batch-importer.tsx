@@ -39,8 +39,6 @@ type PreviewOperatingDay = {
   confidence: number;
 };
 
-type ImportMode = "all" | "operating-days-only" | "exclude-operating-days";
-
 type ImportResult = {
   runId: string;
   rangeStart: string;
@@ -70,10 +68,10 @@ function todayInJapan() {
 
 const inputClass = "min-h-11 w-full rounded-xl border border-ink/10 bg-white px-3 text-[13px] font-bold text-ink outline-none focus:border-pink focus:ring-4 focus:ring-pink/10";
 const editInputClass = "min-h-10 w-full min-w-0 rounded-lg border border-ink/10 bg-white px-2.5 text-[11px] font-bold text-ink outline-none focus:border-pink focus:ring-2 focus:ring-pink/10";
-const IMPORT_MODE_OPTIONS: Array<{ value: ImportMode; label: string; description: string }> = [
-  { value: "all", label: "すべて取り込む", description: "営業情報と日別PDFを取得します。" },
-  { value: "operating-days-only", label: "営業情報のみ", description: "開園・閉園・休園のみ取得し、PDFやOCRは実行しません。" },
-  { value: "exclude-operating-days", label: "営業情報を除外", description: "日別PDFを解析し、営業情報候補は作成しません。" },
+const IMPORT_TARGET_OPTIONS = [
+  { value: "operatingDays", label: "営業情報", description: "開園・閉園・休園を取得します。" },
+  { value: "dailySchedules", label: "日別スケジュール", description: "日別PDFから予定と運行情報を取得します。" },
+  { value: "fanStudio", label: "ファンスタジオスケジュール", description: "ファンスタジオ画像をOCRして取得します。" },
 ];
 
 function parseCharacterNames(value: string) {
@@ -84,8 +82,9 @@ export function OfficialBatchImporter({ config }: Props) {
   const today = useMemo(todayInJapan, []);
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
-  const [includeFanStudio, setIncludeFanStudio] = useState(true);
-  const [importMode, setImportMode] = useState<ImportMode>("all");
+  const [includeOperatingDays, setIncludeOperatingDays] = useState(false);
+  const [includeDailySchedules, setIncludeDailySchedules] = useState(true);
+  const [includeFanStudio, setIncludeFanStudio] = useState(false);
   const [loading, setLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
@@ -110,8 +109,9 @@ export function OfficialBatchImporter({ config }: Props) {
         body: JSON.stringify({
           from,
           to,
-          importMode,
-          includeFanStudio: importMode === "operating-days-only" ? false : includeFanStudio,
+          includeOperatingDays,
+          includeDailySchedules,
+          includeFanStudio,
         }),
       });
       const body = await response.json();
@@ -249,25 +249,36 @@ export function OfficialBatchImporter({ config }: Props) {
       <fieldset className="mt-4">
         <legend className="mb-2 text-[11px] font-black text-ink/55">取込対象</legend>
         <div className="grid gap-2 md:grid-cols-3">
-          {IMPORT_MODE_OPTIONS.map((option) => (
-            <label key={option.value} className={`cursor-pointer rounded-xl border p-3 transition-colors ${importMode === option.value ? "border-sky bg-sky/5" : "border-ink/10 bg-white"}`}>
-              <span className="flex items-start gap-2">
-                <input type="radio" name="official-import-mode" value={option.value} checked={importMode === option.value} onChange={() => setImportMode(option.value)} className="mt-0.5 h-4 w-4 shrink-0 accent-sky" />
-                <span>
-                  <span className="block text-[12px] font-black text-ink">{option.label}</span>
-                  <span className="mt-1 block text-[10px] font-bold leading-5 text-ink/45">{option.description}</span>
+          {IMPORT_TARGET_OPTIONS.map((option) => {
+            const checked = option.value === "operatingDays"
+              ? includeOperatingDays
+              : option.value === "dailySchedules"
+                ? includeDailySchedules
+                : includeFanStudio;
+            const onChange = option.value === "operatingDays"
+              ? setIncludeOperatingDays
+              : option.value === "dailySchedules"
+                ? setIncludeDailySchedules
+                : setIncludeFanStudio;
+            return (
+              <label key={option.value} className={`cursor-pointer rounded-xl border p-3 transition-colors ${checked ? "border-sky bg-sky/5" : "border-ink/10 bg-white"}`}>
+                <span className="flex items-start gap-2">
+                  <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-sky" />
+                  <span>
+                    <span className="block text-[12px] font-black text-ink">{option.label}</span>
+                    <span className="mt-1 block text-[10px] font-bold leading-5 text-ink/45">{option.description}</span>
+                  </span>
                 </span>
-              </span>
-            </label>
-          ))}
+              </label>
+            );
+          })}
         </div>
       </fieldset>
 
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <label className={`flex min-h-11 items-center gap-2 rounded-xl border border-ink/10 bg-white px-3 text-[12px] font-bold text-ink/65 ${importMode === "operating-days-only" ? "cursor-not-allowed opacity-45" : "cursor-pointer"}`}><input type="checkbox" checked={includeFanStudio && importMode !== "operating-days-only"} disabled={importMode === "operating-days-only"} onChange={(event) => setIncludeFanStudio(event.target.checked)} className="h-4 w-4 accent-pink" />ファンスタジオ画像もOCRする</label>
-        <button type="button" onClick={runImport} disabled={loading || !from || !to} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky px-5 text-[12px] font-black text-white disabled:cursor-not-allowed disabled:opacity-40">{loading ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <CloudDownload size={16} aria-hidden="true" />}{loading ? "公式データを解析中…" : "確認待ちデータを取得"}</button>
+      <div className="mt-3 flex justify-end">
+        <button type="button" onClick={runImport} disabled={loading || !from || !to || !(includeOperatingDays || includeDailySchedules || includeFanStudio)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky px-5 text-[12px] font-black text-white disabled:cursor-not-allowed disabled:opacity-40">{loading ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <CloudDownload size={16} aria-hidden="true" />}{loading ? "公式データを解析中…" : "確認待ちデータを取得"}</button>
       </div>
-      {includeFanStudio && importMode !== "operating-days-only" && <p className="mt-2 text-[10px] font-bold leading-5 text-ink/40">OCRは時間がかかるため、最初は1日単位での取得をおすすめします。</p>}
+      {includeFanStudio && <p className="mt-2 text-[10px] font-bold leading-5 text-ink/40">ファンスタジオのOCRは時間がかかるため、最初は1日単位での取得をおすすめします。</p>}
 
       {error && <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2.5 text-[11px] font-bold text-red-600">{error}</p>}
       {feedback && <p role="status" className="mt-3 rounded-xl bg-mint/10 px-3 py-2.5 text-[11px] font-bold text-[#35745f]">{feedback}</p>}

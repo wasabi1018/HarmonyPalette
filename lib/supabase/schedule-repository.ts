@@ -82,7 +82,26 @@ type PublishedScheduleRow = {
   }>;
 };
 
-const PUBLISHED_SCHEDULE_PAGE_SIZE = 1000;
+const PUBLISHED_SCHEDULE_PAGE_SIZE = 250;
+const PUBLISHED_SCHEDULE_SELECT = [
+  "id",
+  "external_key",
+  "source_id",
+  "source_reference",
+  "kind",
+  "title",
+  "event_date",
+  "end_date",
+  "start_time",
+  "end_time",
+  "schedule_type",
+  "location",
+  "description",
+  "official_url",
+  "updated_at",
+  "verification_status",
+  "schedule_characters(character_id, character_name)",
+].join(",");
 
 function storageExtension(document: SourceDocument) {
   if (document.contentType.includes("pdf")) return "pdf";
@@ -603,42 +622,31 @@ export async function bulkReplacePublishedSchedules(replacement: PublishedSchedu
   return { updatedCount: publishedScheduleIds.length };
 }
 
-async function readPublishedSchedules(from: string, to: string) {
+async function readPublishedSchedulePage(from: string, to: string, offset: number) {
   const client = getSupabaseReadClient();
   if (!client) return null;
 
-  const rows: PublishedScheduleRow[] = [];
-  let offset = 0;
-  let totalCount: number | null = null;
+  const { data, error, count } = await client
+    .from("schedule_items")
+    .select(PUBLISHED_SCHEDULE_SELECT, { count: "exact" })
+    .eq("publication_status", "published")
+    .lte("event_date", to)
+    .or(`and(end_date.is.null,event_date.gte.${from}),end_date.gte.${from}`)
+    .order("event_date", { ascending: true })
+    .order("start_time", { ascending: true })
+    .order("id", { ascending: true })
+    .range(offset, offset + PUBLISHED_SCHEDULE_PAGE_SIZE - 1);
+  if (error) throw new Error(error.message);
 
-  do {
-    const { data, error, count } = await client
-      .from("schedule_items")
-      .select("*, schedule_characters(character_id, character_name)", { count: "exact" })
-      .eq("publication_status", "published")
-      .lte("event_date", to)
-      .or(`and(end_date.is.null,event_date.gte.${from}),end_date.gte.${from}`)
-      .order("event_date", { ascending: true })
-      .order("start_time", { ascending: true })
-      .order("id", { ascending: true })
-      .range(offset, offset + PUBLISHED_SCHEDULE_PAGE_SIZE - 1);
-    if (error) throw new Error(error.message);
-
-    const page = (data ?? []) as PublishedScheduleRow[];
-    rows.push(...page);
-    offset += page.length;
-    totalCount = count;
-
-    if (page.length === 0) break;
-    if (totalCount === null && page.length < PUBLISHED_SCHEDULE_PAGE_SIZE) break;
-  } while (totalCount === null || offset < totalCount);
-
-  return rows;
+  return {
+    rows: (data ?? []) as PublishedScheduleRow[],
+    totalCount: count,
+  };
 }
 
-const getCachedPublishedSchedules = unstable_cache(
-  readPublishedSchedules,
-  [PUBLIC_CACHE_TAGS.schedules],
+const getCachedPublishedSchedulePage = unstable_cache(
+  readPublishedSchedulePage,
+  [PUBLIC_CACHE_TAGS.schedules, "page"],
   {
     revalidate: PUBLIC_CACHE_REVALIDATE_SECONDS,
     tags: [PUBLIC_CACHE_TAGS.schedules],
@@ -646,7 +654,23 @@ const getCachedPublishedSchedules = unstable_cache(
 );
 
 export async function getPublishedSchedules(from: string, to: string) {
-  return getCachedPublishedSchedules(from, to);
+  const rows: PublishedScheduleRow[] = [];
+  let offset = 0;
+  let totalCount: number | null = null;
+
+  do {
+    const page = await getCachedPublishedSchedulePage(from, to, offset);
+    if (!page) return null;
+
+    rows.push(...page.rows);
+    offset += page.rows.length;
+    totalCount = page.totalCount;
+
+    if (page.rows.length === 0) break;
+    if (totalCount === null && page.rows.length < PUBLISHED_SCHEDULE_PAGE_SIZE) break;
+  } while (totalCount === null || offset < totalCount);
+
+  return rows;
 }
 
 async function readPublishedOperations(date: string) {
