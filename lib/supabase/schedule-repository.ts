@@ -83,25 +83,8 @@ type PublishedScheduleRow = {
 };
 
 const PUBLISHED_SCHEDULE_PAGE_SIZE = 250;
-const PUBLISHED_SCHEDULE_SELECT = [
-  "id",
-  "external_key",
-  "source_id",
-  "source_reference",
-  "kind",
-  "title",
-  "event_date",
-  "end_date",
-  "start_time",
-  "end_time",
-  "schedule_type",
-  "location",
-  "description",
-  "official_url",
-  "updated_at",
-  "verification_status",
-  "schedule_characters(character_id, character_name)",
-].join(",");
+const PUBLISHED_SCHEDULE_SELECT =
+  "id,external_key,source_id,source_reference,kind,title,event_date,end_date,start_time,end_time,schedule_type,location,description,official_url,updated_at,verification_status,schedule_characters(character_id,character_name)" as const;
 
 function storageExtension(document: SourceDocument) {
   if (document.contentType.includes("pdf")) return "pdf";
