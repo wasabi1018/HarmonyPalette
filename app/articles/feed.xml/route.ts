@@ -14,7 +14,7 @@ function escapeXml(value: string) {
 }
 
 export async function GET() {
-  const articles = await listPublishedArticles({ destination: "articles", limit: 50 });
+  const articles = await listPublishedArticles({ limit: 50 });
   const items = articles.map((article) => {
     const url = `${SITE_URL}/articles/${encodeURIComponent(article.slug)}`;
     const publishedAt = article.publishedAt || article.updatedAt;

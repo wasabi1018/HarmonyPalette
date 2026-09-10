@@ -14,7 +14,6 @@ import type { InitialParkOperatingDayData } from "@/lib/park-operating-day-store
 import type { InitialScheduleData } from "@/lib/schedule-store";
 import { HomeBirthdayRibbon } from "./home-birthday-ribbon";
 import { HomeTodaySections } from "./home-today-sections";
-import { FirstVisitGuideLink } from "./first-visit-guide-link";
 import { InstagramEmbedSection } from "./instagram-embed-section";
 import { SectionHeading } from "./section-heading";
 
@@ -90,9 +89,7 @@ function JournalSection({
 }) {
   return (
     <section className="mx-auto max-w-[1200px] px-4 pb-4 pt-12 sm:px-6 lg:px-8">
-      <FirstVisitGuideLink />
-
-      <div className="mt-10">
+      <div>
         <SectionHeading
           eyebrow="LATEST ARTICLES"
           title="最新記事"

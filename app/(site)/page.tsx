@@ -33,7 +33,6 @@ export default async function HomePage() {
   try {
     const [articles, instagramSettings] = await Promise.all([
       listPublishedArticles({
-        destination: "articles",
         limit: 3,
       }).catch(() => []),
       getInstagramEmbedSettings().catch(() => ({

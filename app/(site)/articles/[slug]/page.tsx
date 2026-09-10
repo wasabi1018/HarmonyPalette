@@ -88,7 +88,6 @@ export default async function ArticleDetailPage({
         article.id,
         article.tags.map((tag) => tag.id),
         3,
-        article.destination,
       ),
       getPublishedArticleSeriesContext(article.id).catch(() => null),
     ]);
@@ -99,8 +98,8 @@ export default async function ArticleDetailPage({
   const articleUrl = siteUrl(`/articles/${article.slug}`);
   const coverImageUrl = publicArticleImageUrl(article.coverImageUrl);
   const preparedContent = prepareArticleContent(article.contentHtml);
-  const listingUrl = siteUrl(article.destination === "guide" ? "/guide" : "/articles");
-  const listingName = article.destination === "guide" ? "初めての方へ" : "記事";
+  const listingUrl = siteUrl("/articles");
+  const listingName = "記事";
   const breadcrumbItems = [
     { name: "ホーム", url: siteUrl("/") },
     { name: listingName, url: listingUrl },
@@ -273,11 +272,11 @@ export default async function ArticleDetailPage({
         )}
         <OfficialNotice />
         <Link
-          href={article.destination === "guide" ? "/guide" : "/articles"}
+          href="/articles"
           className="mt-7 inline-flex items-center gap-2 text-[12px] font-black text-pink hover:underline"
         >
           <ArrowLeft size={15} />
-          {article.destination === "guide" ? "初めての方へ戻る" : "記事一覧へ戻る"}
+          記事一覧へ戻る
         </Link>
       </div>
     </>

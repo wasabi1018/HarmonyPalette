@@ -21,16 +21,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       listPublishedArticles(),
       listPublishedArticleSeries().catch(() => []),
     ]);
-    const contentRoutes = [
-      articles.some((article) => article.destination === "guide") ? "/guide" : null,
-      articles.some((article) => article.destination === "articles") ? "/articles" : null,
-    ]
-      .filter((route): route is string => Boolean(route))
-      .map((route) => ({
-        url: siteUrl(route),
-        changeFrequency: "daily" as const,
-        priority: 0.8,
-      }));
+    const contentRoutes = articles.length > 0 ? [{
+      url: siteUrl("/articles"),
+      changeFrequency: "daily" as const,
+      priority: 0.8,
+    }] : [];
 
     return [
       ...staticRoutes,

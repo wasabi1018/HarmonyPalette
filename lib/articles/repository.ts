@@ -79,15 +79,13 @@ function mapRecord(row: Row): ArticleRecord {
   };
 }
 
-const articleSelection = `
+const articleSummarySelection = `
   id,
   title,
   slug,
   excerpt,
   seo_title,
   seo_description,
-  content_json,
-  content_html,
   cover_image_url,
   status,
   destination,
@@ -103,6 +101,12 @@ const articleSelection = `
       color
     )
   )
+`;
+
+const articleSelection = `
+  ${articleSummarySelection},
+  content_json,
+  content_html
 `;
 
 function requireAdminClient() {
@@ -191,7 +195,7 @@ export async function listAdminArticles() {
   const client = requireAdminClient();
   const { data, error } = await client
     .from("articles")
-    .select(articleSelection)
+    .select(articleSummarySelection)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
   if (error) throw new Error(error.message);
@@ -401,7 +405,7 @@ export async function listTrashedArticles() {
   const client = requireAdminClient();
   const { data, error } = await client
     .from("articles")
-    .select(articleSelection)
+    .select(articleSummarySelection)
     .not("deleted_at", "is", null)
     .order("deleted_at", { ascending: false });
   if (error) throw new Error(error.message);
@@ -544,7 +548,7 @@ export async function listPublishedArticles({
 
   let query = client
     .from("articles")
-    .select(articleSelection)
+    .select(articleSummarySelection)
     .eq("status", "published")
     .is("deleted_at", null)
     .lte("published_at", new Date().toISOString())
@@ -609,7 +613,7 @@ export async function searchPublishedArticles({
 
   const { data, error } = await client
     .from("articles")
-    .select(articleSelection)
+    .select(articleSummarySelection)
     .in("id", ids)
     .eq("status", "published")
     .eq("destination", destination)
@@ -634,9 +638,9 @@ export async function listRelatedArticles(
   articleId: string,
   tagIds: string[],
   limit = 3,
-  destination: ArticleDestination = "articles",
+  destination?: ArticleDestination,
 ) {
-  const articles = await listPublishedArticles({ destination });
+  const articles = await listPublishedArticles(destination ? { destination } : undefined);
   const selectedTagIds = new Set(tagIds);
   return articles
     .filter((article) => article.id !== articleId)

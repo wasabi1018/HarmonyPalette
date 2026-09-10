@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Home,
   ShoppingBag,
-  Sparkles,
 } from "lucide-react";
 import { getLinkPageSettings } from "@/lib/link-page-settings";
 
@@ -30,16 +29,9 @@ const internalLinks = [
     primary: true,
   },
   {
-    href: "/guide",
-    label: "初めての方へ",
-    detail: "ハーモニーランドを楽しむ準備",
-    icon: Sparkles,
-    primary: false,
-  },
-  {
     href: "/articles",
-    label: "最新記事を見る",
-    detail: "おでかけに役立つ情報をチェック",
+    label: "記事・初めての方向けガイド",
+    detail: "準備から最新情報までまとめてチェック",
     icon: BookOpen,
     primary: false,
   },

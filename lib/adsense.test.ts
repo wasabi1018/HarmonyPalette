@@ -5,7 +5,6 @@ import { isAdSenseEligiblePage } from "./adsense";
 test("content pages and the base schedule page are eligible for Auto Ads", () => {
   assert.equal(isAdSenseEligiblePage("/", new URLSearchParams()), true);
   assert.equal(isAdSenseEligiblePage("/articles/example", new URLSearchParams()), true);
-  assert.equal(isAdSenseEligiblePage("/guide", new URLSearchParams()), true);
   assert.equal(isAdSenseEligiblePage("/characters", new URLSearchParams()), true);
   assert.equal(isAdSenseEligiblePage("/schedule", new URLSearchParams()), true);
 });
