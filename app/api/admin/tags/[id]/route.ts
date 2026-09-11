@@ -4,6 +4,7 @@ import {
   updateTag,
 } from "@/lib/articles/repository";
 import { isUuid, parseTagInput } from "@/lib/articles/validation";
+import { revalidatePublicArticleData } from "@/lib/public-cache";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export async function PATCH(
 
   try {
     const tag = await updateTag(id, parseTagInput(await request.json()));
+    if (tag) revalidatePublicArticleData();
     return tag
       ? NextResponse.json({ ok: true, tag })
       : NextResponse.json({ error: "タグが見つかりません。" }, { status: 404 });
@@ -56,9 +58,12 @@ export async function DELETE(
   if (!isUuid(id)) return NextResponse.json({ error: "タグIDが正しくありません。" }, { status: 400 });
 
   try {
-    return await deleteTag(id)
-      ? NextResponse.json({ ok: true })
-      : NextResponse.json({ error: "タグが見つかりません。" }, { status: 404 });
+    const deleted = await deleteTag(id);
+    if (!deleted) {
+      return NextResponse.json({ error: "タグが見つかりません。" }, { status: 404 });
+    }
+    revalidatePublicArticleData();
+    return NextResponse.json({ ok: true });
   } catch (error) {
     return errorResponse(error, "タグの削除に失敗しました。");
   }

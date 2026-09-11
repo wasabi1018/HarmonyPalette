@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { restoreArticleRevision } from "@/lib/articles/repository";
 import { isUuid } from "@/lib/articles/validation";
+import { revalidatePublicArticleData } from "@/lib/public-cache";
 import { getAdminAccess } from "@/lib/supabase/auth-server";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
@@ -29,6 +30,7 @@ export async function POST(
       revisionId,
       access.ok ? access.user.id : null,
     );
+    if (article) revalidatePublicArticleData(article.slug);
     return article
       ? NextResponse.json({ ok: true, article })
       : NextResponse.json({ error: "変更履歴が見つかりません。" }, { status: 404 });

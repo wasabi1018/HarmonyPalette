@@ -4,6 +4,7 @@ import {
   listAdminArticles,
 } from "@/lib/articles/repository";
 import { parseArticleInput } from "@/lib/articles/validation";
+import { revalidatePublicArticleData } from "@/lib/public-cache";
 import { getAdminAccess } from "@/lib/supabase/auth-server";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       parseArticleInput(await request.json()),
       access.ok ? access.user.id : null,
     );
+    if (article) revalidatePublicArticleData(article.slug);
     return NextResponse.json({ ok: true, article }, { status: 201 });
   } catch (error) {
     return errorResponse(error, "記事の作成に失敗しました。");

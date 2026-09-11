@@ -5,6 +5,7 @@ import {
   updateArticle,
 } from "@/lib/articles/repository";
 import { isUuid, parseArticleInput } from "@/lib/articles/validation";
+import { revalidatePublicArticleData } from "@/lib/public-cache";
 import { getAdminAccess } from "@/lib/supabase/auth-server";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
@@ -68,6 +69,7 @@ export async function PATCH(
       parseArticleInput(await request.json()),
       access.ok ? access.user.id : null,
     );
+    if (article) revalidatePublicArticleData(article.slug);
     return article
       ? NextResponse.json({ ok: true, article })
       : NextResponse.json({ error: "記事が見つかりません。" }, { status: 404 });
@@ -92,9 +94,12 @@ export async function DELETE(
 
   try {
     const access = await getAdminAccess();
-    return await trashArticle(id, access.ok ? access.user.id : null)
-      ? NextResponse.json({ ok: true })
-      : NextResponse.json({ error: "記事が見つかりません。" }, { status: 404 });
+    const trashed = await trashArticle(id, access.ok ? access.user.id : null);
+    if (!trashed) {
+      return NextResponse.json({ error: "記事が見つかりません。" }, { status: 404 });
+    }
+    revalidatePublicArticleData();
+    return NextResponse.json({ ok: true });
   } catch (error) {
     return errorResponse(error, "記事をゴミ箱へ移動できませんでした。");
   }

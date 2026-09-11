@@ -5,8 +5,12 @@ import { OfficialNotice } from "@/components/official-notice";
 import { PageIntro } from "@/components/page-intro";
 import { listPublishedArticles } from "@/lib/articles/repository";
 import { listPublishedArticleSeries } from "@/lib/articles/series-repository";
+import {
+  PUBLIC_ARTICLE_CACHE_REVALIDATE_SECONDS,
+  PUBLIC_CACHE_TAGS,
+} from "@/lib/public-cache";
 
-export const revalidate = 300;
+export const revalidate = 86_400;
 
 const loadArticleIndexData = unstable_cache(
   () => Promise.all([
@@ -14,7 +18,10 @@ const loadArticleIndexData = unstable_cache(
     listPublishedArticleSeries().catch(() => []),
   ]),
   ["article-index-v2"],
-  { revalidate: 300 },
+  {
+    revalidate: PUBLIC_ARTICLE_CACHE_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.articles],
+  },
 );
 
 export async function generateMetadata({ searchParams }: {

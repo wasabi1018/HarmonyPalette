@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { restoreTrashedArticle } from "@/lib/articles/repository";
 import { isUuid } from "@/lib/articles/validation";
+import { revalidatePublicArticleData } from "@/lib/public-cache";
 import { getAdminAccess } from "@/lib/supabase/auth-server";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
@@ -22,6 +23,7 @@ export async function POST(
   try {
     const access = await getAdminAccess();
     const article = await restoreTrashedArticle(id, access.ok ? access.user.id : null);
+    if (article) revalidatePublicArticleData(article.slug);
     return article
       ? NextResponse.json({ ok: true, article })
       : NextResponse.json({ error: "ゴミ箱の記事が見つかりません。" }, { status: 404 });

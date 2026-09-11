@@ -4,6 +4,7 @@ import {
   listArticleSeries,
 } from "@/lib/articles/series-repository";
 import { parseSeriesInput } from "@/lib/articles/validation";
+import { revalidatePublicArticleData } from "@/lib/public-cache";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -35,8 +36,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: authorization.message }, { status: authorization.status });
   }
   try {
+    const series = await createArticleSeries(parseSeriesInput(await request.json()));
+    revalidatePublicArticleData();
     return NextResponse.json(
-      { ok: true, series: await createArticleSeries(parseSeriesInput(await request.json())) },
+      { ok: true, series },
       { status: 201 },
     );
   } catch (error) {

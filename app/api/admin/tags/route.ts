@@ -4,6 +4,7 @@ import {
   listTags,
 } from "@/lib/articles/repository";
 import { parseTagInput } from "@/lib/articles/validation";
+import { revalidatePublicArticleData } from "@/lib/public-cache";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -41,8 +42,10 @@ export async function POST(request: Request) {
     );
   }
   try {
+    const tag = await createTag(parseTagInput(await request.json()));
+    revalidatePublicArticleData();
     return NextResponse.json(
-      { ok: true, tag: await createTag(parseTagInput(await request.json())) },
+      { ok: true, tag },
       { status: 201 },
     );
   } catch (error) {

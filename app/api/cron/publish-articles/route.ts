@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { publishDueArticles } from "@/lib/articles/repository";
+import { revalidatePublicArticleData } from "@/lib/public-cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +12,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "定期バッチの認証に失敗しました。" }, { status: 401 });
   }
   try {
-    return NextResponse.json({ ok: true, ...(await publishDueArticles()) });
+    const result = await publishDueArticles();
+    if (result.publishedCount > 0) revalidatePublicArticleData();
+    return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "予約記事の公開に失敗しました。" },

@@ -4,6 +4,7 @@ import {
   updateArticleSeries,
 } from "@/lib/articles/series-repository";
 import { isUuid, parseSeriesInput } from "@/lib/articles/validation";
+import { revalidatePublicArticleData } from "@/lib/public-cache";
 import { assertImportAuthorization } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export async function PATCH(
   if (!isUuid(id)) return NextResponse.json({ error: "シリーズIDが正しくありません。" }, { status: 400 });
   try {
     const series = await updateArticleSeries(id, parseSeriesInput(await request.json()));
+    if (series) revalidatePublicArticleData();
     return series
       ? NextResponse.json({ ok: true, series })
       : NextResponse.json({ error: "シリーズが見つかりません。" }, { status: 404 });
@@ -48,9 +50,12 @@ export async function DELETE(
   const { id } = await params;
   if (!isUuid(id)) return NextResponse.json({ error: "シリーズIDが正しくありません。" }, { status: 400 });
   try {
-    return await deleteArticleSeries(id)
-      ? NextResponse.json({ ok: true })
-      : NextResponse.json({ error: "シリーズが見つかりません。" }, { status: 404 });
+    const deleted = await deleteArticleSeries(id);
+    if (!deleted) {
+      return NextResponse.json({ error: "シリーズが見つかりません。" }, { status: 404 });
+    }
+    revalidatePublicArticleData();
+    return NextResponse.json({ ok: true });
   } catch (error) {
     return errorResponse(error, "シリーズの削除に失敗しました。");
   }
