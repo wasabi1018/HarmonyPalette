@@ -14,10 +14,10 @@ export const revalidate = 86_400;
 
 const loadArticleIndexData = unstable_cache(
   () => Promise.all([
-    listPublishedArticles().catch(() => []),
-    listPublishedArticleSeries().catch(() => []),
+    listPublishedArticles(),
+    listPublishedArticleSeries(),
   ]),
-  ["article-index-v2"],
+  ["article-index-v3"],
   {
     revalidate: PUBLIC_ARTICLE_CACHE_REVALIDATE_SECONDS,
     tags: [PUBLIC_CACHE_TAGS.articles],
