@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, BookCopy, BookOpen } from "lucide-react";
@@ -13,6 +14,10 @@ import { prepareArticleContent } from "@/lib/articles/publishing";
 import { publicArticleImageUrl } from "@/lib/articles/media-url";
 import { getPublishedArticleSeriesContext } from "@/lib/articles/series-repository";
 import {
+  PUBLIC_ARTICLE_CACHE_REVALIDATE_SECONDS,
+  PUBLIC_CACHE_TAGS,
+} from "@/lib/public-cache";
+import {
   SITE_NAME,
   SITE_ORGANIZATION_ID,
   SITE_URL,
@@ -20,7 +25,31 @@ import {
   siteUrl,
 } from "@/lib/site-config";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 86_400;
+
+const loadPublishedArticle = unstable_cache(
+  (slug: string) => getPublishedArticle(slug),
+  ["published-article-detail-v1"],
+  {
+    revalidate: PUBLIC_ARTICLE_CACHE_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.articles],
+  },
+);
+
+const loadArticleSupportingData = unstable_cache(
+  async (articleId: string, tagIds: string[]) => {
+    const [relatedArticles, seriesContext] = await Promise.all([
+      listRelatedArticles(articleId, tagIds, 3),
+      getPublishedArticleSeriesContext(articleId),
+    ]);
+    return { relatedArticles, seriesContext };
+  },
+  ["published-article-supporting-data-v1"],
+  {
+    revalidate: PUBLIC_ARTICLE_CACHE_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.articles],
+  },
+);
 
 export async function generateMetadata({
   params,
@@ -28,43 +57,39 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  try {
-    const article = await getPublishedArticle(slug);
-    if (!article) return { title: "記事が見つかりません" };
-    const title = article.seoTitle || article.title;
-    const description = article.seoDescription || article.excerpt || `${article.title}の記事です。`;
-    const url = `/articles/${article.slug}`;
-    const coverImageUrl = publicArticleImageUrl(article.coverImageUrl);
-    return {
+  const article = await loadPublishedArticle(slug);
+  if (!article) return { title: "記事が見つかりません" };
+  const title = article.seoTitle || article.title;
+  const description = article.seoDescription || article.excerpt || `${article.title}の記事です。`;
+  const url = `/articles/${article.slug}`;
+  const coverImageUrl = publicArticleImageUrl(article.coverImageUrl);
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+      types: {
+        "application/rss+xml": "/articles/feed.xml",
+        "application/feed+json": "/articles/feed.json",
+      },
+    },
+    openGraph: {
+      type: "article",
       title,
       description,
-      alternates: {
-        canonical: url,
-        types: {
-          "application/rss+xml": "/articles/feed.xml",
-          "application/feed+json": "/articles/feed.json",
-        },
-      },
-      openGraph: {
-        type: "article",
-        title,
-        description,
-        url,
-        publishedTime: article.publishedAt || undefined,
-        modifiedTime: article.updatedAt,
-        tags: article.tags.map((tag) => tag.name),
-        images: coverImageUrl ? [coverImageUrl] : undefined,
-      },
-      twitter: {
-        card: article.coverImageUrl ? "summary_large_image" : "summary",
-        title,
-        description,
-        images: coverImageUrl ? [coverImageUrl] : undefined,
-      },
-    };
-  } catch {
-    return { title: "記事" };
-  }
+      url,
+      publishedTime: article.publishedAt || undefined,
+      modifiedTime: article.updatedAt,
+      tags: article.tags.map((tag) => tag.name),
+      images: coverImageUrl ? [coverImageUrl] : undefined,
+    },
+    twitter: {
+      card: article.coverImageUrl ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: coverImageUrl ? [coverImageUrl] : undefined,
+    },
+  };
 }
 
 export default async function ArticleDetailPage({
@@ -73,28 +98,12 @@ export default async function ArticleDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  let article = null;
-  try {
-    article = await getPublishedArticle(slug);
-  } catch {
-    article = null;
-  }
+  const article = await loadPublishedArticle(slug);
   if (!article) notFound();
-  let relatedArticles: Awaited<ReturnType<typeof listRelatedArticles>> = [];
-  let seriesContext: Awaited<ReturnType<typeof getPublishedArticleSeriesContext>> = null;
-  try {
-    [relatedArticles, seriesContext] = await Promise.all([
-      listRelatedArticles(
-        article.id,
-        article.tags.map((tag) => tag.id),
-        3,
-      ),
-      getPublishedArticleSeriesContext(article.id).catch(() => null),
-    ]);
-  } catch {
-    relatedArticles = [];
-    seriesContext = null;
-  }
+  const { relatedArticles, seriesContext } = await loadArticleSupportingData(
+    article.id,
+    article.tags.map((tag) => tag.id),
+  );
   const articleUrl = siteUrl(`/articles/${article.slug}`);
   const coverImageUrl = publicArticleImageUrl(article.coverImageUrl);
   const preparedContent = prepareArticleContent(article.contentHtml);
