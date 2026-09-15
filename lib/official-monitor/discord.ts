@@ -2,6 +2,12 @@ import "server-only";
 
 import type { MonitorEvent } from "@/lib/official-monitor/types";
 import { getDiscordWebhookUrl, recordNotification } from "@/lib/official-monitor/repository";
+import {
+  officialUpdateCountsText,
+  officialUpdateDatesText,
+  officialUpdateSectionLabel,
+  readOfficialUpdateSections,
+} from "@/lib/official-monitor/summary";
 import { SITE_URL } from "@/lib/site-config";
 
 export function isDiscordWebhookUrl(value: string) {
@@ -21,6 +27,20 @@ function countsText(counts: Record<string, number>) {
   return values.length ? values.join(" / ") : "内容差分なし（原本のみ変更）";
 }
 
+function sectionFields(event: MonitorEvent) {
+  const sections = readOfficialUpdateSections(event.metadata);
+  if (sections.length === 0) return [
+    { name: "対象", value: event.entityKey, inline: true },
+    { name: "差分", value: countsText(event.diffCounts), inline: true },
+  ];
+  return sections.map((section) => {
+    const values = [officialUpdateCountsText(section.diffCounts)];
+    if (section.dates.length > 0) values.push(`対象日: ${officialUpdateDatesText(section.dates)}`);
+    if (section.highlights.length > 0) values.push(...section.highlights.map((item) => item.url ? `[${item.label}](${item.url})` : item.label));
+    return { name: officialUpdateSectionLabel(section.key), value: values.join("\n").slice(0, 1024), inline: false };
+  });
+}
+
 export async function sendDiscordUpdate(event: MonitorEvent, test = false) {
   const webhook = await getDiscordWebhookUrl();
   if (!webhook) throw new Error("Discord Webhookが設定されていません。");
@@ -34,13 +54,12 @@ export async function sendDiscordUpdate(event: MonitorEvent, test = false) {
       username: "Harmony Palette 更新監視",
       allowed_mentions: { parse: [] },
       embeds: [{
-        title: test ? "Discord通知テスト" : event.eventType === "news" ? "公式サイトのお知らせ更新" : "公式データの更新を検出",
+        title: test ? "Discord通知テスト" : event.eventType === "news" ? "公式サイトのお知らせ更新" : "公式サイトの更新を検出",
         description: test ? "Harmony Paletteの公式更新監視から正常に通知できました。" : event.summary,
         url: reviewUrl,
         color: event.eventType === "import-failed" ? 0xdc2626 : 0xef8099,
         fields: test ? [] : [
-          { name: "対象", value: event.entityKey, inline: true },
-          { name: "差分", value: countsText(event.diffCounts), inline: true },
+          ...sectionFields(event),
           { name: "公開状態", value: event.importRunId ? "確認待ち（自動公開されていません）" : "通知のみ", inline: false },
         ],
         timestamp: new Date().toISOString(),

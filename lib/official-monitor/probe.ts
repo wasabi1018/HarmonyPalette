@@ -144,7 +144,7 @@ export async function probeOfficialSources(from: string, to: string): Promise<So
     rawSha256: hash(newsDocument.bytes),
     normalizedSha256: hash(newsBytes),
     bytes: newsDocument.bytes,
-    metadata: { role: "news-index", entries: newsEntries.slice(0, 20) },
+    metadata: { role: "news-index", entries: newsEntries },
   });
 
   return fingerprints;

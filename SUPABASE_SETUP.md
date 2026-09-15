@@ -132,8 +132,10 @@ After applying the articles migration, sign in and open `/admin/articles`.
 The old schedule-import Cron has been removed. Open
 `/admin/official-updates`, save a Discord Incoming Webhook, select a time in
 15-minute increments, and enable monitoring. The first run records a baseline
-without sending a notification. Later source changes are hashed and recorded in
-the update history, then sent to Discord. Detected schedule changes are not
+without sending a notification. Later source changes are grouped as official
+news, Harmonyland schedules, and Fan Studio schedules, recorded as one update
+history entry per monitor run, then sent to Discord as one summary. Detected
+schedule changes are not
 imported or published automatically; use the manual schedule import screen when
 data needs to be updated.
 Archived official source originals are retained for 45 days by default.

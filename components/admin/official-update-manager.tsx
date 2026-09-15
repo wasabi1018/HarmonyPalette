@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BellRing, Check, Clock3, ExternalLink, Loader2, Play, RefreshCw, Save, Send, ShieldCheck, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import {
+  officialUpdateCountsText,
+  officialUpdateDatesText,
+  officialUpdateSectionLabel,
+  readOfficialUpdateSections,
+} from "@/lib/official-monitor/summary";
 import { isNotificationOnlyEvent, type MonitorEvent, type OfficialMonitorSettings } from "@/lib/official-monitor/types";
 
 type DiffRow = {
@@ -41,6 +47,12 @@ function primaryLabel(row: DiffRow) {
   return String(data.operation_date || "営業情報");
 }
 
+function eventTitle(event: MonitorEvent) {
+  const sections = readOfficialUpdateSections(event.metadata);
+  if (sections.length > 0) return sections.map((section) => officialUpdateSectionLabel(section.key)).join("・");
+  return event.entityKey === "index" ? "公式お知らせ" : event.entityKey;
+}
+
 const changeLabels = { added: "追加", modified: "変更", removed: "削除候補", unchanged: "変更なし", uncertain: "対応不明" } as const;
 const entityLabels = { schedule: "予定", operation: "運行", "operating-day": "営業" } as const;
 
@@ -58,6 +70,7 @@ export function OfficialUpdateManager({ settings: initialSettings, events, detai
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const defaultSelection = useMemo(() => detail?.diffs.filter((diff) => ["added", "modified", "removed"].includes(diff.change_type)).map((diff) => diff.id) ?? [], [detail]);
+  const detailSections = useMemo(() => detail ? readOfficialUpdateSections(detail.event.metadata) : [], [detail]);
   const [selected, setSelected] = useState(defaultSelection);
   const canDismiss = Boolean(detail?.event.importRunId)
     || Boolean(detail && isNotificationOnlyEvent(detail.event))
@@ -123,15 +136,19 @@ export function OfficialUpdateManager({ settings: initialSettings, events, detai
           <div className="mt-4 space-y-2">
             {events.length === 0 && <p className="rounded-xl bg-ink/[0.025] p-5 text-center text-[12px] font-bold text-ink/40">まだ更新は検出されていません。</p>}
             {events.map((event) => { const status = eventStatus(event); return <Link key={event.id} href={`/admin/official-updates?event=${event.id}`} className={`block rounded-xl border p-3 transition hover:border-pink/25 ${detail?.event.id === event.id ? "border-pink/30 bg-pink/[0.025]" : "border-ink/5"}`}>
-              <div className="flex items-start gap-3"><Clock3 size={15} className="mt-0.5 shrink-0 text-ink/30" /><span className="min-w-0 flex-1"><span className="block text-[11px] font-black text-ink">{event.entityKey === "index" ? "公式お知らせ" : event.entityKey}</span><span className="mt-1 line-clamp-2 block text-[10px] font-bold leading-5 text-ink/45">{event.summary}</span><span className="mt-1 block text-[9px] font-bold text-ink/30">{new Date(event.createdAt).toLocaleString("ja-JP")}</span></span><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black ${status.className}`}>{status.label}</span></div>
+              <div className="flex items-start gap-3"><Clock3 size={15} className="mt-0.5 shrink-0 text-ink/30" /><span className="min-w-0 flex-1"><span className="block text-[11px] font-black text-ink">{eventTitle(event)}</span><span className="mt-1 line-clamp-2 block text-[10px] font-bold leading-5 text-ink/45">{event.summary}</span><span className="mt-1 block text-[9px] font-bold text-ink/30">{new Date(event.createdAt).toLocaleString("ja-JP")}</span></span><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black ${status.className}`}>{status.label}</span></div>
             </Link>; })}
           </div>
         </section>
 
         <section className="rounded-[24px] border border-pink/10 bg-white p-5 sm:p-6">
           {!detail ? <div className="grid min-h-56 place-items-center text-center"><div><ExternalLink className="mx-auto text-ink/20" size={28} /><p className="mt-3 text-[12px] font-bold text-ink/40">左の更新履歴を選ぶと、変更内容を確認できます。</p></div></div> : <>
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-black tracking-[0.15em] text-pink">UPDATE REVIEW</p><h2 className="mt-1 text-lg font-black text-ink">{detail.event.entityKey === "index" ? "公式お知らせの更新" : `${detail.event.entityKey} の変更`}</h2><p className="mt-1 text-[11px] font-bold text-ink/45">{detail.event.summary}</p></div><span className={`rounded-full px-3 py-1.5 text-[10px] font-black ${eventStatus(detail.event).className}`}>{eventStatus(detail.event).label}</span></div>
-            {detail.diffs.length > 0 ? <div className="mt-5 space-y-2">{detail.diffs.map((row) => {
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-black tracking-[0.15em] text-pink">UPDATE REVIEW</p><h2 className="mt-1 text-lg font-black text-ink">{detailSections.length > 0 ? "公式サイトの更新" : detail.event.entityKey === "index" ? "公式お知らせの更新" : `${detail.event.entityKey} の変更`}</h2><p className="mt-1 text-[11px] font-bold text-ink/45">{detail.event.summary}</p></div><span className={`rounded-full px-3 py-1.5 text-[10px] font-black ${eventStatus(detail.event).className}`}>{eventStatus(detail.event).label}</span></div>
+            {detailSections.length > 0 ? <div className="mt-5 space-y-3">{detailSections.map((section) => <section key={section.key} className="rounded-xl border border-ink/5 bg-ink/[0.015] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-[12px] font-black text-ink">{officialUpdateSectionLabel(section.key)}</h3><span className="rounded-full bg-pink/10 px-2.5 py-1 text-[9px] font-black text-pink">{officialUpdateCountsText(section.diffCounts)}</span></div>
+              {section.dates.length > 0 && <p className="mt-2 text-[10px] font-bold text-ink/45">対象日: {officialUpdateDatesText(section.dates)}</p>}
+              {section.highlights.length > 0 && <ul className="mt-3 space-y-1.5">{section.highlights.map((item, index) => <li key={`${item.label}-${index}`} className="text-[10px] font-bold leading-5 text-ink/55">{item.url ? <a href={item.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-pink hover:underline">{item.label}<ExternalLink size={11} /></a> : item.label}</li>)}</ul>}
+            </section>)}</div> : detail.diffs.length > 0 ? <div className="mt-5 space-y-2">{detail.diffs.map((row) => {
               const selectable = row.change_type !== "unchanged" && detail.event.reviewStatus === "pending";
               return <label key={row.id} className={`block rounded-xl border p-3 ${selected.includes(row.id) ? "border-pink/25 bg-[#fffafd]" : "border-ink/5"}`}><div className="flex items-start gap-3"><input type="checkbox" disabled={!selectable} checked={selected.includes(row.id)} onChange={() => setSelected((current) => current.includes(row.id) ? current.filter((id) => id !== row.id) : [...current, row.id])} className="mt-1 h-4 w-4 accent-pink" /><span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2"><strong className="text-[12px] text-ink">{primaryLabel(row)}</strong><span className="rounded-full bg-ink/5 px-2 py-0.5 text-[9px] font-black text-ink/45">{entityLabels[row.entity_type]}</span><span className="rounded-full bg-pink/10 px-2 py-0.5 text-[9px] font-black text-pink">{changeLabels[row.change_type]}</span>{row.change_type === "uncertain" && <span className="text-[9px] font-black text-[#9a6620]">対応付けを目視確認してください</span>}</span>{Object.entries(row.field_changes || {}).length > 0 && <span className="mt-2 block space-y-1">{Object.entries(row.field_changes).map(([field, values]) => <span key={field} className="block text-[10px] font-bold text-ink/45"><span className="text-ink/60">{field}</span>: {String(values.before ?? "なし")} → <span className="text-pink">{String(values.after ?? "なし")}</span></span>)}</span>}</span></div></label>;
             })}</div> : <p className="mt-5 rounded-xl bg-ink/[0.025] p-5 text-[12px] font-bold text-ink/45">この更新は通知のみです。内容は公式サイトで確認してください。</p>}

@@ -46,6 +46,20 @@ export type MonitorEvent = {
   reviewedAt: string | null;
 };
 
+export type OfficialUpdateSectionKey = "news" | "harmonyland-schedule" | "funstudio-schedule";
+
+export type OfficialUpdateHighlight = {
+  label: string;
+  url?: string;
+};
+
+export type OfficialUpdateSection = {
+  key: OfficialUpdateSectionKey;
+  dates: string[];
+  diffCounts: Record<string, number>;
+  highlights: OfficialUpdateHighlight[];
+};
+
 export function isNotificationOnlyEvent(event: Pick<MonitorEvent, "eventType" | "importRunId" | "metadata">) {
   return !event.importRunId && (event.eventType === "news" || event.metadata.notificationOnly === true);
 }

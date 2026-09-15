@@ -5,6 +5,12 @@ import { countSemanticDiffs, createSemanticDiff, importPreviewData, meaningfulSe
 import { probeOfficialSources } from "@/lib/official-monitor/probe";
 import { nextRunAt } from "@/lib/official-monitor/schedule";
 import {
+  buildOfficialUpdateSummary,
+  diffNewsMetadata,
+  mergeOfficialUpdateSection,
+  totalOfficialUpdateCounts,
+} from "@/lib/official-monitor/summary";
+import {
   createUpdateEvent,
   getOfficialMonitorSettings,
   getPublishedDataForDate,
@@ -15,7 +21,7 @@ import {
   removeSourceState,
   saveSourceFingerprint,
 } from "@/lib/official-monitor/repository";
-import type { MonitorRunResult } from "@/lib/official-monitor/types";
+import type { MonitorRunResult, OfficialUpdateSection, OfficialUpdateSectionKey, SemanticDiff } from "@/lib/official-monitor/types";
 import { importFanStudioSchedules } from "@/lib/official-import/funstudio";
 import { importHarmonylandOfficialSchedules } from "@/lib/official-import/harmonyland";
 import type { ImportPreview } from "@/lib/official-import/types";
@@ -25,7 +31,15 @@ function todayInJapan() {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
 
-type ChangedDate = { calendar: boolean; fanstudio: boolean; hashes: string[] };
+type ChangedDate = { calendar: boolean; fanstudio: boolean };
+
+function diffSourceId(diff: SemanticDiff) {
+  return String(diff.afterData?.source_id ?? diff.beforeData?.source_id ?? "");
+}
+
+function sectionForDiff(diff: SemanticDiff): OfficialUpdateSectionKey {
+  return diffSourceId(diff) === "harmonyland-funstudio" ? "funstudio-schedule" : "harmonyland-schedule";
+}
 
 function filterPublishedSources(data: Awaited<ReturnType<typeof getPublishedDataForDate>>, group: ChangedDate) {
   const scheduleSources = new Set<string>();
@@ -83,6 +97,8 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
       const [states, fingerprints] = await Promise.all([getSourceStates(), probeOfficialSources(from, to)]);
       baseline = states.size === 0;
       const changedByDate = new Map<string, ChangedDate>();
+      const sections: OfficialUpdateSection[] = [];
+      const detectedHashes: string[] = [];
       const currentKeys = new Set(fingerprints.map((fingerprint) => `${fingerprint.sourceKey}:${fingerprint.entityKey}`));
 
       for (const fingerprint of fingerprints) {
@@ -94,27 +110,24 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
         await saveSourceFingerprint(fingerprint, detected, detected);
         if (!detected) continue;
         changedSources += 1;
+        detectedHashes.push(fingerprint.normalizedSha256);
 
         if (fingerprint.sourceKey === "news") {
-          const event = await createUpdateEvent({
-            sourceKey: "news",
-            entityKey: "index",
-            eventType: "news",
-            summary: "ハーモニーランド公式サイトのお知らせ一覧が更新されました。",
-            previousSha256: previous?.normalizedSha256,
-            currentSha256: fingerprint.normalizedSha256,
-            metadata: fingerprint.metadata,
+          const newsDiff = diffNewsMetadata(previous?.metadata, fingerprint.metadata);
+          mergeOfficialUpdateSection(sections, {
+            key: "news",
+            dates: [],
+            diffCounts: newsDiff.diffCounts,
+            highlights: newsDiff.highlights,
           });
-          await sendDiscordUpdate(event).catch(() => undefined);
           continue;
         }
 
         const date = fingerprint.documentDate;
         if (!date) continue;
-        const group = changedByDate.get(date) ?? { calendar: false, fanstudio: false, hashes: [] };
+        const group = changedByDate.get(date) ?? { calendar: false, fanstudio: false };
         group.calendar ||= fingerprint.sourceKey === "calendar" || fingerprint.sourceKey === "daily-pdf";
         group.fanstudio ||= fingerprint.sourceKey === "funstudio";
-        group.hashes.push(fingerprint.normalizedSha256);
         changedByDate.set(date, group);
       }
 
@@ -124,10 +137,10 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
           if (previous.sourceKey !== "daily-pdf" && previous.sourceKey !== "funstudio") continue;
           await removeSourceState(previous.sourceKey, previous.entityKey);
           changedSources += 1;
-          const group = changedByDate.get(previous.documentDate) ?? { calendar: false, fanstudio: false, hashes: [] };
+          const group = changedByDate.get(previous.documentDate) ?? { calendar: false, fanstudio: false };
           group.calendar ||= previous.sourceKey === "daily-pdf";
           group.fanstudio ||= previous.sourceKey === "funstudio";
-          group.hashes.push(`removed-${previous.normalizedSha256}`);
+          detectedHashes.push(`removed-${previous.normalizedSha256}`);
           changedByDate.set(previous.documentDate, group);
         }
       }
@@ -142,15 +155,33 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
           importPreviewData(preview),
         ));
         if (diffs.length === 0) continue;
-        const diffCounts = countSemanticDiffs(diffs);
+        for (const key of ["harmonyland-schedule", "funstudio-schedule"] as const) {
+          const sectionDiffs = diffs.filter((diff) => sectionForDiff(diff) === key);
+          if (sectionDiffs.length === 0) continue;
+          mergeOfficialUpdateSection(sections, {
+            key,
+            dates: [date],
+            diffCounts: countSemanticDiffs(sectionDiffs),
+            highlights: [],
+          });
+        }
+      }
+
+      if (sections.length > 0) {
+        const diffCounts = totalOfficialUpdateCounts(sections);
         const event = await createUpdateEvent({
-          sourceKey: "structured-schedule",
-          entityKey: date,
+          sourceKey: "official-site",
+          entityKey: "summary",
           eventType: "source-modified",
-          summary: `${date} の公式予定データが更新されました。公式サイトで内容を確認してください。`,
-          currentSha256: group.hashes.join(":"),
+          summary: buildOfficialUpdateSummary(sections),
+          currentSha256: detectedHashes.join(":"),
           diffCounts,
-          metadata: { includeCalendar: group.calendar, includeFanStudio: group.fanstudio, notificationOnly: true, semanticDiffCount: diffs.length },
+          metadata: {
+            notificationOnly: true,
+            changedSections: sections.map((section) => section.key),
+            sections,
+            semanticDiffCount: Object.values(diffCounts).reduce((total, count) => total + count, 0),
+          },
         });
         await sendDiscordUpdate(event).catch(() => undefined);
       }
