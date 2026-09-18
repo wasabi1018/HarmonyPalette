@@ -20,7 +20,16 @@ test("detected schedule changes are notification-only", () => {
 test("official monitor runner does not enqueue or persist automatic imports", () => {
   const source = readFileSync("lib/official-monitor/runner.ts", "utf8");
   assert.doesNotMatch(source, /enqueueImportJob|claimNextImportJob|persistImportPreview/);
+  assert.doesNotMatch(source, /importFanStudioSchedules\(date, date\)/);
+  assert.match(source, /await importFanStudioSchedulesForDates\(fanStudioDates\)/);
+  assert.match(source, /diffCounts: \{ uncertain: fanStudioDates\.length \}/);
   assert.match(source, /if \(diffs\.length === 0\) continue/);
   assert.match(source, /sourceKey: "official-site"/);
   assert.match(source, /buildOfficialUpdateSummary\(sections\)/);
+});
+
+test("official update functions include the Tesseract runtime assets", () => {
+  const source = readFileSync("next.config.mjs", "utf8");
+  assert.match(source, /\.\/node_modules\/tesseract\.js-core\/\*\.wasm/);
+  assert.match(source, /"\/api\/cron\/official-updates": tesseractRuntimeAssets/);
 });

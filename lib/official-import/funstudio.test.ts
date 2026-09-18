@@ -4,7 +4,7 @@ import {
   canonicalCharacters,
   normalizeCharacterNamesInText,
 } from "@/lib/official-import/character-name-normalizer";
-import { buildFanStudioExternalKey } from "@/lib/official-import/funstudio";
+import { buildFanStudioExternalKey, normalizeFanStudioImportDates } from "@/lib/official-import/funstudio";
 import { buildExternalKey } from "@/lib/official-import/utils";
 
 function names(value: string) {
@@ -16,6 +16,13 @@ test("ファンスタジオの識別キーはキャラクター変更で変わ�
   assert.equal(stableKey, buildExternalKey(["2026-08-17", "ファンスタジオ101号室", "11:00"]));
   assert.notEqual(stableKey, buildExternalKey(["2026-08-17", "ファンスタジオ101号室", "11:00", "クロミ"]));
   assert.notEqual(stableKey, buildExternalKey(["2026-08-17", "ファンスタジオ101号室", "11:00", "あひるのペックル"]));
+});
+
+test("通知監視用の日付は重複と不正値を除いて1回のOCR対象へまとめる", () => {
+  assert.deepEqual(
+    normalizeFanStudioImportDates(["2026-10-08", "invalid", "2026-10-01", "2026-10-08"]),
+    ["2026-10-01", "2026-10-08"],
+  );
 });
 
 test("マイスウィートピアノの表記揺れを正規化する", () => {

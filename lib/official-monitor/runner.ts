@@ -22,7 +22,7 @@ import {
   saveSourceFingerprint,
 } from "@/lib/official-monitor/repository";
 import type { MonitorRunResult, OfficialUpdateSection, OfficialUpdateSectionKey, SemanticDiff } from "@/lib/official-monitor/types";
-import { importFanStudioSchedules } from "@/lib/official-import/funstudio";
+import { importFanStudioSchedulesForDates } from "@/lib/official-import/funstudio";
 import { importHarmonylandOfficialSchedules } from "@/lib/official-import/harmonyland";
 import type { ImportPreview } from "@/lib/official-import/types";
 import { addDays, createRunId } from "@/lib/official-import/utils";
@@ -52,8 +52,8 @@ function filterPublishedSources(data: Awaited<ReturnType<typeof getPublishedData
   };
 }
 
-async function previewChangedDate(date: string, group: ChangedDate): Promise<ImportPreview> {
-  let preview: ImportPreview = {
+function emptyPreview(date: string): ImportPreview {
+  return {
     runId: createRunId(),
     generatedAt: new Date().toISOString(),
     rangeStart: date,
@@ -64,22 +64,16 @@ async function previewChangedDate(date: string, group: ChangedDate): Promise<Imp
     documents: [],
     warnings: [],
   };
-  if (group.calendar) {
-    preview = await importHarmonylandOfficialSchedules({
-      from: date,
-      to: date,
-      includeSchedules: true,
-      includeParkOperatingDays: true,
-      includeFanStudio: false,
-    });
-  }
-  if (group.fanstudio) {
-    const fanStudio = await importFanStudioSchedules(date, date);
-    preview.schedules.push(...fanStudio.schedules);
-    preview.documents.push(...fanStudio.documents);
-    preview.warnings.push(...fanStudio.warnings);
-  }
-  return preview;
+}
+
+async function previewChangedCalendarDate(date: string): Promise<ImportPreview> {
+  return importHarmonylandOfficialSchedules({
+    from: date,
+    to: date,
+    includeSchedules: true,
+    includeParkOperatingDays: true,
+    includeFanStudio: false,
+  });
 }
 
 export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRunResult> {
@@ -145,13 +139,40 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
         }
       }
 
+      const fanStudioDates = Array.from(changedByDate)
+        .filter(([, group]) => group.fanstudio)
+        .map(([date]) => date)
+        .sort();
+      let fanStudioSchedules: ImportPreview["schedules"] = [];
+      let fanStudioError: Error | null = null;
+      if (fanStudioDates.length > 0) {
+        try {
+          const fanStudio = await importFanStudioSchedulesForDates(fanStudioDates);
+          fanStudioSchedules = fanStudio.schedules;
+        } catch (error) {
+          fanStudioError = error instanceof Error ? error : new Error(String(error));
+          mergeOfficialUpdateSection(sections, {
+            key: "funstudio-schedule",
+            dates: fanStudioDates,
+            diffCounts: { uncertain: fanStudioDates.length },
+            highlights: [],
+          });
+        }
+      }
+
       for (const [date, group] of changedByDate) {
-        const [published, preview] = await Promise.all([
+        const comparisonGroup = { calendar: group.calendar, fanstudio: group.fanstudio && !fanStudioError };
+        if (!comparisonGroup.calendar && !comparisonGroup.fanstudio) continue;
+        const [published, calendarPreview] = await Promise.all([
           getPublishedDataForDate(date),
-          previewChangedDate(date, group),
+          comparisonGroup.calendar ? previewChangedCalendarDate(date) : Promise.resolve(emptyPreview(date)),
         ]);
+        const preview = calendarPreview;
+        if (comparisonGroup.fanstudio) {
+          preview.schedules.push(...fanStudioSchedules.filter((schedule) => schedule.date === date));
+        }
         const diffs = meaningfulSemanticDiffs(createSemanticDiff(
-          filterPublishedSources(published, group),
+          filterPublishedSources(published, comparisonGroup),
           importPreviewData(preview),
         ));
         if (diffs.length === 0) continue;
@@ -181,11 +202,13 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
             changedSections: sections.map((section) => section.key),
             sections,
             semanticDiffCount: Object.values(diffCounts).reduce((total, count) => total + count, 0),
+            ...(fanStudioError ? { monitorWarnings: [fanStudioError.message] } : {}),
           },
         });
         await sendDiscordUpdate(event).catch(() => undefined);
       }
       await pruneOfficialMonitorHistory(settings.retentionDays);
+      if (fanStudioError) throw fanStudioError;
       await markMonitorFinished();
     } catch (error) {
       await markMonitorFinished(error instanceof Error ? error.message : String(error));

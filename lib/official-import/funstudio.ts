@@ -181,9 +181,12 @@ function parseOcrRows(text: string) {
   return rows;
 }
 
-export async function importFanStudioSchedules(
-  from: string,
-  to: string,
+export function normalizeFanStudioImportDates(dates: string[]) {
+  return Array.from(new Set(dates.filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)))).sort();
+}
+
+async function importFanStudioSchedulesForDateList(
+  dates: string[],
   onProgress?: (message: string) => void,
 ): Promise<Pick<ImportPreview, "schedules" | "documents" | "warnings">> {
   const response = await fetch(FUN_STUDIO_URL, { headers: { "user-agent": USER_AGENT }, cache: "no-store" });
@@ -200,7 +203,6 @@ export async function importFanStudioSchedules(
   }];
   const warnings: string[] = [];
   const schedules: ImportedScheduleCandidate[] = [];
-  const dates = dateRange(from, to);
   const datesByMonthDay = new Map(dates.map((date) => [date.slice(5).replace("-", ""), date]));
   const targets = discoverImages(html).filter((image) => datesByMonthDay.has(image.monthDay));
   if (targets.length === 0) {
@@ -392,4 +394,19 @@ export async function importFanStudioSchedules(
   }
 
   return { schedules, documents, warnings };
+}
+
+export function importFanStudioSchedules(
+  from: string,
+  to: string,
+  onProgress?: (message: string) => void,
+) {
+  return importFanStudioSchedulesForDateList(dateRange(from, to), onProgress);
+}
+
+export function importFanStudioSchedulesForDates(
+  dates: string[],
+  onProgress?: (message: string) => void,
+) {
+  return importFanStudioSchedulesForDateList(normalizeFanStudioImportDates(dates), onProgress);
 }
