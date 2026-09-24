@@ -65,6 +65,13 @@ export function ArticleIndex({ articles, series, initialQuery, initialTag, initi
     return () => window.removeEventListener("popstate", syncFromHistory);
   }, []);
 
+  useEffect(() => {
+    setQueryInput(initialQuery);
+    setQuery(initialQuery);
+    setTag(initialTag);
+    setPage(initialPage);
+  }, [initialPage, initialQuery, initialTag]);
+
   const tags = useMemo(() => Array.from(new Map(
     articles.flatMap((article) => article.tags).map((item) => [item.slug, item]),
   ).values()), [articles]);
@@ -159,9 +166,9 @@ export function ArticleIndex({ articles, series, initialQuery, initialTag, initi
     </div>}
 
     {totalPages > 1 && <nav aria-label="記事一覧のページ" className="mt-8 flex items-center justify-center gap-3">
-      {safePage > 1 ? <button type="button" onClick={() => updateFilters({ page: safePage - 1 })} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-pink/15 bg-white px-4 text-[10px] font-black text-ink/50 hover:text-pink"><ArrowLeft size={13} aria-hidden="true" />前へ</button> : <span className="w-[76px]" />}
+      {safePage > 1 ? <Link href={articleIndexUrl(query, tag, safePage - 1)} rel="prev" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-pink/15 bg-white px-4 text-[10px] font-black text-ink/50 hover:text-pink"><ArrowLeft size={13} aria-hidden="true" />前へ</Link> : <span className="w-[76px]" />}
       <span className="text-[10px] font-black text-ink/40">{safePage} / {totalPages}</span>
-      {safePage < totalPages ? <button type="button" onClick={() => updateFilters({ page: safePage + 1 })} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-pink/15 bg-white px-4 text-[10px] font-black text-ink/50 hover:text-pink">次へ<ArrowRight size={13} aria-hidden="true" /></button> : <span className="w-[76px]" />}
+      {safePage < totalPages ? <Link href={articleIndexUrl(query, tag, safePage + 1)} rel="next" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-pink/15 bg-white px-4 text-[10px] font-black text-ink/50 hover:text-pink">次へ<ArrowRight size={13} aria-hidden="true" /></Link> : <span className="w-[76px]" />}
     </nav>}
   </>;
 }
