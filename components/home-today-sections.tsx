@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, LoaderCircle, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, LoaderCircle, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
 import type { Character } from "@/data/types";
 import { compareCharacters, type InitialCharacterData, mergeCharactersWithNames, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
@@ -99,10 +99,14 @@ export function HomeTodaySections({
   initialScheduleData,
   initialCharacterData,
   initialOperatingDayData,
+  mode = "home",
+  initialDate,
 }: {
   initialScheduleData: InitialScheduleData;
   initialCharacterData: InitialCharacterData;
   initialOperatingDayData: InitialParkOperatingDayData;
+  mode?: "home" | "search";
+  initialDate?: string;
 }) {
   const scheduleState = useScheduleEntries({ initialData: initialScheduleData });
   const characterState = useCharacters({ initialData: initialCharacterData });
@@ -111,14 +115,15 @@ export function HomeTodaySections({
   const { characters: catalogCharacters } = characterState;
   const [now, setNow] = useState(() => new Date());
   const [isClockReady, setIsClockReady] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(() => japanDate());
+  const [selectedDate, setSelectedDate] = useState(() => initialDate ?? japanDate());
   const today = japanDate(now);
+  const scheduleDate = mode === "home" ? today : selectedDate;
   const currentTime = japanTime(now);
   const todayAppearances = entries
     .filter((entry) => entry.date <= today && (entry.endDate ?? entry.date) >= today)
     .sort((left, right) => `${left.startTime}-${left.title}`.localeCompare(`${right.startTime}-${right.title}`, "ja"));
   const selectedSchedules = entries
-    .filter((entry) => entry.date <= selectedDate && (entry.endDate ?? entry.date) >= selectedDate)
+    .filter((entry) => entry.date <= scheduleDate && (entry.endDate ?? entry.date) >= scheduleDate)
     .sort((left, right) => `${left.startTime}-${left.title}`.localeCompare(`${right.startTime}-${right.title}`, "ja"));
   const eventSchedules = selectedSchedules.filter((entry) => !isFanStudioGreeting(entry));
   const fanStudioSchedules = selectedSchedules.filter(isFanStudioGreeting);
@@ -146,7 +151,7 @@ export function HomeTodaySections({
     }),
   ].join(" ");
   const currentTimeMinutes = timeToMinutes(currentTime);
-  const currentTimelinePosition = isClockReady && selectedDate === today && timelineSegments.length > 0
+  const currentTimelinePosition = isClockReady && scheduleDate === today && timelineSegments.length > 0
     ? (() => {
         const segmentIndex = timelineSegments.findIndex((segment, index) => {
           const segmentStart = timeToMinutes(segment.startTime);
@@ -182,6 +187,17 @@ export function HomeTodaySections({
     const timer = window.setInterval(updateClock, 30_000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (mode !== "search") return;
+    const url = new URL(window.location.href);
+    if (selectedDate === today) {
+      url.searchParams.delete("date");
+    } else {
+      url.searchParams.set("date", selectedDate);
+    }
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [mode, selectedDate, today]);
 
   const characters = mergeCharactersWithNames(
     catalogCharacters,
@@ -230,7 +246,7 @@ export function HomeTodaySections({
 
   return (
     <>
-      <section id="today-characters" className="mx-auto max-w-[1200px] scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8">
+      {mode === "home" && <section id="today-characters" className="mx-auto max-w-[1200px] scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8">
         <SectionHeading
           eyebrow="TODAY'S CHARACTERS"
           title="今日会えるキャラクター"
@@ -271,36 +287,43 @@ export function HomeTodaySections({
             今日の公開済みキャラクター予定はまだありません。
           </p>
         )}
-      </section>
+      </section>}
 
-      <section id="today-schedule" className="mx-auto max-w-[1200px] scroll-mt-20 px-4 pt-12 sm:px-6 lg:px-8">
+      <section id={mode === "home" ? "today-schedule" : "daily-schedule"} className={`mx-auto max-w-[1200px] scroll-mt-20 px-4 sm:px-6 lg:px-8 ${mode === "home" ? "pt-12" : "pt-6 sm:pt-8"}`}>
         <div className="rounded-[26px] border border-pink/10 bg-[#fff6f9] p-3.5 sm:p-6">
-          <SectionHeading
-            eyebrow="TODAY'S SCHEDULE"
-            title={selectedDate === today ? "今日のスケジュール" : `${displayScheduleDate(selectedDate)}のスケジュール`}
-            description={`${displayScheduleDate(selectedDate)}のイベントと、会えるキャラクターを時間順にまとめています。`}
-            href="/schedule"
-            linkLabel="全スケジュール"
-          />
+          {mode === "home" && (
+            <SectionHeading
+              eyebrow="TODAY'S SCHEDULE"
+              title="今日のスケジュール"
+              description={`${displayScheduleDate(today)}のイベントと、会えるキャラクターを時間順にまとめています。`}
+            />
+          )}
           <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-pink/10 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-2 text-[12px] font-black text-ink/60">
                 <span className="grid h-8 w-8 place-items-center rounded-xl bg-pink/10 text-pink"><CalendarDays size={16} aria-hidden="true" /></span>
-                確認したい日を選択
+                {mode === "search" ? "確認したい日を選択" : `${displayScheduleDate(today)}を表示中`}
               </div>
-              <Link href={`/plan?date=${selectedDate}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-[10px] font-black text-white">
+              <Link href={`/plan?date=${scheduleDate}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-[10px] font-black text-white">
                 <ClipboardList size={13} aria-hidden="true" />
-                マイプランを見る
+                {mode === "search" ? "マイプランを見る" : "今日のマイプランを見る"}
               </Link>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={() => setSelectedDate((date) => addDays(date, -1))} aria-label="前日のスケジュール" className="grid h-10 w-10 place-items-center rounded-xl border border-ink/10 bg-white text-ink/60 transition-colors hover:border-pink/30 hover:text-pink"><ChevronLeft size={17} aria-hidden="true" /></button>
-              <label className="relative min-w-[170px] flex-1 sm:flex-none">
-                <span className="sr-only">対象日</span>
-                <input type="date" value={selectedDate} onChange={(event) => event.target.value && setSelectedDate(event.target.value)} className="min-h-10 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[12px] font-black text-ink outline-none focus:border-pink" />
-              </label>
-              <button type="button" onClick={() => setSelectedDate((date) => addDays(date, 1))} aria-label="翌日のスケジュール" className="grid h-10 w-10 place-items-center rounded-xl border border-ink/10 bg-white text-ink/60 transition-colors hover:border-pink/30 hover:text-pink"><ChevronRight size={17} aria-hidden="true" /></button>
-            </div>
+            {mode === "search" ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => setSelectedDate((date) => addDays(date, -1))} aria-label="前日のスケジュール" className="grid h-10 w-10 place-items-center rounded-xl border border-ink/10 bg-white text-ink/60 transition-colors hover:border-pink/30 hover:text-pink"><ChevronLeft size={17} aria-hidden="true" /></button>
+                <label className="relative min-w-[170px] flex-1 sm:flex-none">
+                  <span className="sr-only">対象日</span>
+                  <input type="date" value={selectedDate} onChange={(event) => event.target.value && setSelectedDate(event.target.value)} className="min-h-10 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[12px] font-black text-ink outline-none focus:border-pink" />
+                </label>
+                <button type="button" onClick={() => setSelectedDate((date) => addDays(date, 1))} aria-label="翌日のスケジュール" className="grid h-10 w-10 place-items-center rounded-xl border border-ink/10 bg-white text-ink/60 transition-colors hover:border-pink/30 hover:text-pink"><ChevronRight size={17} aria-hidden="true" /></button>
+              </div>
+            ) : (
+              <Link href="/daily-schedule" className="inline-flex min-h-10 items-center gap-2 rounded-full border border-pink/20 bg-[#fffafd] px-4 text-[11px] font-black text-pink transition-colors hover:border-pink/45 hover:bg-pink/[0.04]">
+                別の日を調べる
+                <ArrowRight size={14} aria-hidden="true" />
+              </Link>
+            )}
           </div>
           {scheduleState.status === "loading" ? (
             <DataStatePanel state="loading" message="スケジュールを読み込んでいます…" />
@@ -315,7 +338,7 @@ export function HomeTodaySections({
           ) : timelineStartTimes.length > 0 ? (
             <div className="overflow-hidden rounded-[18px] border border-pink/10 bg-white shadow-[0_8px_24px_rgba(118,73,86,0.05)]">
               <ParkOperatingInfo
-                date={selectedDate}
+                date={scheduleDate}
                 operatingDays={operatingDayState.operatingDays}
                 className="border-b border-pink/10 px-3 py-3 sm:px-4"
               />
@@ -410,7 +433,7 @@ export function HomeTodaySections({
                                       <PlanToggleSurface
                                         key={entry.id}
                                         entry={entry}
-                                        targetDate={selectedDate}
+                                        targetDate={scheduleDate}
                                         className="group/plan block w-full px-2 py-2 text-left transition-[background-color,box-shadow,transform] hover:bg-[#fff7e9] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#d9912d]/35 sm:px-3 sm:py-2.5"
                                         addedClassName="bg-mint/10"
                                         pressedClassName="scale-[0.99] bg-[#fff0d6] shadow-inner"
@@ -471,7 +494,7 @@ export function HomeTodaySections({
                                       <PlanToggleSurface
                                         key={entry.id}
                                         entry={entry}
-                                        targetDate={selectedDate}
+                                        targetDate={scheduleDate}
                                         className="group/plan block w-full px-2 py-2 text-left transition-[background-color,box-shadow,transform] hover:bg-lavender/5 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lavender/35 sm:px-2.5"
                                         addedClassName="bg-mint/10"
                                         pressedClassName="scale-[0.99] bg-lavender/10 shadow-inner"
@@ -514,12 +537,12 @@ export function HomeTodaySections({
           ) : (
             <div className="overflow-hidden rounded-[18px] border border-pink/10 bg-white shadow-[0_8px_24px_rgba(118,73,86,0.05)]">
               <ParkOperatingInfo
-                date={selectedDate}
+                date={scheduleDate}
                 operatingDays={operatingDayState.operatingDays}
                 className="border-b border-pink/10 px-3 py-3 sm:px-4"
               />
               <p className="px-4 py-7 text-center text-[12px] font-bold text-ink/50">
-                {displayScheduleDate(selectedDate)}の公開済みスケジュールはまだありません。
+                {displayScheduleDate(scheduleDate)}の公開済みスケジュールはまだありません。
               </p>
             </div>
           )}

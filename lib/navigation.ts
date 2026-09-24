@@ -1,5 +1,6 @@
 export const mainNavigation = [
   { label: "キャラ検索", href: "/schedule" },
+  { label: "予定検索", href: "/daily-schedule" },
   { label: "マイプラン", href: "/plan" },
   { label: "キャラクター", href: "/characters" },
   { label: "記事", href: "/articles" },
