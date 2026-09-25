@@ -1,3 +1,5 @@
+import { isUnhelpfulArticleImageAlt } from "@/lib/articles/content-presentation";
+
 export type ArticleQualityTarget =
   | "title"
   | "slug"
@@ -148,7 +150,12 @@ export function assessArticleQuality(input: ArticleQualityInput): ArticleQuality
 
   const images = Array.from(input.contentHtml.matchAll(/<img\b[^>]*>/gi));
   const missingAltCount = images.filter((match) => !attributeValue(match[0], "alt")).length;
+  const unhelpfulAltCount = images.filter((match) => {
+    const alt = attributeValue(match[0], "alt");
+    return Boolean(alt) && isUnhelpfulArticleImageAlt(alt);
+  }).length;
   if (missingAltCount) add("image-alt", "画像の代替テキスト", "error", `${missingAltCount}枚の画像に説明がありません。`, "content");
+  else if (unhelpfulAltCount) add("image-alt", "画像の代替テキスト", "warning", `${unhelpfulAltCount}枚の画像が番号やファイル名だけです。内容が伝わる説明にしてください。`, "content");
   else if (images.length) add("image-alt", "画像の代替テキスト", "pass", `${images.length}枚すべてに説明があります。`, "content");
   else add("image-alt", "画像の代替テキスト", "pass", "本文画像はありません。", "content");
 

@@ -11,6 +11,7 @@ import {
   listRelatedArticles,
 } from "@/lib/articles/repository";
 import { prepareArticleContent } from "@/lib/articles/publishing";
+import { datedArticleStatus, shouldIndexPublishedArticle } from "@/lib/articles/freshness";
 import { publicArticleImageUrl } from "@/lib/articles/media-url";
 import { getPublishedArticleSeriesContext } from "@/lib/articles/series-repository";
 import {
@@ -19,6 +20,8 @@ import {
 } from "@/lib/public-cache";
 import {
   SITE_NAME,
+  SITE_AUTHOR_DESCRIPTION,
+  SITE_AUTHOR_NAME,
   SITE_ORGANIZATION_ID,
   SITE_URL,
   SITE_WEBSITE_ID,
@@ -63,6 +66,7 @@ export async function generateMetadata({
   const description = article.seoDescription || article.excerpt || `${article.title}の記事です。`;
   const url = `/articles/${article.slug}`;
   const coverImageUrl = publicArticleImageUrl(article.coverImageUrl);
+  const isIndexable = shouldIndexPublishedArticle(article.slug);
   return {
     title,
     description,
@@ -89,6 +93,7 @@ export async function generateMetadata({
       description,
       images: coverImageUrl ? [coverImageUrl] : undefined,
     },
+    robots: isIndexable ? undefined : { index: false, follow: true },
   };
 }
 
@@ -106,7 +111,13 @@ export default async function ArticleDetailPage({
   );
   const articleUrl = siteUrl(`/articles/${article.slug}`);
   const coverImageUrl = publicArticleImageUrl(article.coverImageUrl);
-  const preparedContent = prepareArticleContent(article.contentHtml);
+  const preparedContent = prepareArticleContent(article.contentHtml, article.title);
+  const datedStatus = datedArticleStatus(article.slug);
+  const datedContentNotice = datedStatus
+    ? datedStatus.isPast
+      ? `この記事は${datedStatus.year}年${datedStatus.month}月時点の記録です。現在の来園情報としては使用せず、最新記事と公式サイトをご確認ください。`
+      : `この記事は${datedStatus.year}年${datedStatus.month}月の月間情報です。終了した日程を含む場合があります。来園前に最新の予定と公式サイトをご確認ください。`
+    : undefined;
   const listingUrl = siteUrl("/articles");
   const listingName = "記事";
   const breadcrumbItems = [
@@ -138,8 +149,8 @@ export default async function ArticleDetailPage({
         author: {
           "@type": "Organization",
           "@id": SITE_ORGANIZATION_ID,
-          name: SITE_NAME,
-          url: SITE_URL,
+          name: SITE_AUTHOR_NAME,
+          url: siteUrl("/about"),
         },
         publisher: {
           "@type": "Organization",
@@ -189,9 +200,14 @@ export default async function ArticleDetailPage({
         contentHtml={preparedContent.html}
         tags={article.tags}
         publishedAt={article.publishedAt || article.updatedAt}
+        updatedAt={article.updatedAt}
         headings={preparedContent.headings}
         readingTimeMinutes={preparedContent.readingTimeMinutes}
         articleUrl={articleUrl}
+        authorName={SITE_AUTHOR_NAME}
+        authorHref="/about"
+        authorDescription={SITE_AUTHOR_DESCRIPTION}
+        datedContentNotice={datedContentNotice}
       />
       <div className="article-print-hidden mx-auto max-w-[920px] px-4 pb-12 sm:px-7">
         {seriesContext && (

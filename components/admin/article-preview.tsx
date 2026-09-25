@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Clock3, List, X } from "lucide-react";
+import { CalendarDays, Clock3, List, RefreshCw, UserRound, X } from "lucide-react";
 import { ArticleShareActions } from "@/components/article-share-actions";
 import type { ArticleHeading } from "@/lib/articles/publishing";
 import type { ArticleTag } from "@/lib/articles/types";
@@ -12,9 +12,14 @@ type ArticlePreviewProps = {
   contentHtml: string;
   tags: ArticleTag[];
   publishedAt: string;
+  updatedAt?: string;
   headings?: ArticleHeading[];
   readingTimeMinutes?: number;
   articleUrl?: string;
+  authorName?: string;
+  authorHref?: string;
+  authorDescription?: string;
+  datedContentNotice?: string;
   onClose?: () => void;
 };
 
@@ -28,6 +33,11 @@ function formatDate(value: string) {
   }).format(date);
 }
 
+function dateKey(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+}
+
 export function ArticlePreview({
   title,
   excerpt,
@@ -35,11 +45,21 @@ export function ArticlePreview({
   contentHtml,
   tags,
   publishedAt,
+  updatedAt,
   headings = [],
   readingTimeMinutes,
   articleUrl,
+  authorName,
+  authorHref,
+  authorDescription,
+  datedContentNotice,
   onClose,
 }: ArticlePreviewProps) {
+  const showUpdatedAt = Boolean(
+    updatedAt
+    && dateKey(updatedAt) !== dateKey(publishedAt),
+  );
+
   return (
     <article className="min-h-full bg-[#fffafd]">
       {onClose && (
@@ -83,8 +103,23 @@ export function ArticlePreview({
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] font-bold text-ink/35">
             <span className="inline-flex items-center gap-2">
               <CalendarDays size={13} aria-hidden="true" />
-              {formatDate(publishedAt)}
+              公開 {formatDate(publishedAt)}
             </span>
+            {showUpdatedAt && updatedAt && (
+              <span className="inline-flex items-center gap-2">
+                <RefreshCw size={13} aria-hidden="true" />
+                更新 {formatDate(updatedAt)}
+              </span>
+            )}
+            {authorName && (
+              <a
+                href={authorHref || "/about"}
+                className="inline-flex items-center gap-2 transition hover:text-pink"
+              >
+                <UserRound size={13} aria-hidden="true" />
+                取材・執筆 {authorName}
+              </a>
+            )}
             {readingTimeMinutes && (
               <span className="inline-flex items-center gap-2">
                 <Clock3 size={13} aria-hidden="true" />
@@ -106,6 +141,11 @@ export function ArticlePreview({
         )}
 
         <div className="mx-auto max-w-[760px]">
+          {datedContentNotice && (
+            <aside className="mt-8 rounded-2xl border border-[#e9cf9d] bg-[#fffaf0] px-4 py-3 text-[11px] font-bold leading-6 text-ink/65">
+              {datedContentNotice}
+            </aside>
+          )}
           {headings.length >= 2 && (
             <nav
               aria-label="この記事の目次"
@@ -133,6 +173,26 @@ export function ArticlePreview({
             className="article-prose mt-10 scroll-mt-24"
             dangerouslySetInnerHTML={{ __html: contentHtml || "<p></p>" }}
           />
+          {authorName && (
+            <aside className="article-print-hidden mt-10 rounded-2xl border border-pink/15 bg-white p-5 shadow-soft sm:p-6" aria-label="この記事の著者">
+              <p className="text-[9px] font-black tracking-[0.16em] text-pink">AUTHOR</p>
+              <div className="mt-3 flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-pink/[0.08] text-pink">
+                  <UserRound size={18} aria-hidden="true" />
+                </span>
+                <div>
+                  <a href={authorHref || "/about"} className="text-[13px] font-black text-ink hover:text-pink hover:underline">
+                    {authorName}
+                  </a>
+                  {authorDescription && (
+                    <p className="mt-1.5 text-[11px] font-bold leading-6 text-ink/50">
+                      {authorDescription}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </aside>
+          )}
           {articleUrl && (
             <ArticleShareActions title={title} canonicalUrl={articleUrl} />
           )}

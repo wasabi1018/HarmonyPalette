@@ -1,6 +1,7 @@
 import "server-only";
 
 import sanitizeHtml from "sanitize-html";
+import { applyContextualArticleImageAlt } from "@/lib/articles/content-presentation";
 import { proxyArticleImageSources } from "@/lib/articles/media-url";
 
 export type ArticleHeading = {
@@ -29,7 +30,7 @@ function headingId(text: string, index: number) {
   return normalized || `section-${index + 1}`;
 }
 
-export function prepareArticleContent(contentHtml: string) {
+export function prepareArticleContent(contentHtml: string, articleTitle = "") {
   const headings: ArticleHeading[] = [];
   const counts = new Map<string, number>();
   const htmlWithHeadings = contentHtml.replace(
@@ -46,7 +47,9 @@ export function prepareArticleContent(contentHtml: string) {
       return `<h${level} id="${id}">${innerHtml}</h${level}>`;
     },
   );
-  const html = proxyArticleImageSources(htmlWithHeadings);
+  const html = proxyArticleImageSources(
+    applyContextualArticleImageAlt(htmlWithHeadings, articleTitle),
+  );
 
   return {
     html,

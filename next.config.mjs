@@ -5,7 +5,12 @@ const tesseractRuntimeAssets = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async redirects() {
-    return [{ source: "/guide", destination: "/articles", permanent: true }];
+    return [
+      { source: "/guide", destination: "/articles", permanent: true },
+      { source: "/events/:path*", destination: "/articles", permanent: true },
+      { source: "/goods/:path*", destination: "/articles", permanent: true },
+      { source: "/around/:path*", destination: "/articles", permanent: true },
+    ];
   },
   serverExternalPackages: ["@napi-rs/canvas", "pdfjs-dist", "tesseract.js", "sharp"],
   outputFileTracingIncludes: {
