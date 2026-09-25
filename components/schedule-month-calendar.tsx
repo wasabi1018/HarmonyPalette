@@ -258,11 +258,12 @@ export function ScheduleMonthCalendar({
         )}
       </div>
 
-      <div className="lg:hidden">
-        <MonthPanel month={mobileMonth} entries={entries} birthdays={birthdays} operatingDaysByDate={operatingDaysByDate} today={today} onSelectDate={onSelectDate} />
-      </div>
-      <div className="hidden gap-4 lg:grid lg:grid-cols-2">
-        {desktopMonths.map((month) => <MonthPanel key={month.key} month={month} entries={entries} birthdays={birthdays} operatingDaysByDate={operatingDaysByDate} today={today} onSelectDate={onSelectDate} />)}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {desktopMonths.map((month) => (
+          <div key={month.key} className={month.key === mobileMonth.key ? undefined : "hidden lg:block"}>
+            <MonthPanel month={month} entries={entries} birthdays={birthdays} operatingDaysByDate={operatingDaysByDate} today={today} onSelectDate={onSelectDate} />
+          </div>
+        ))}
       </div>
     </div>
   );
