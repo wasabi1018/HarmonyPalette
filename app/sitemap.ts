@@ -2,7 +2,6 @@ import type { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
 import { listPublishedArticles } from "@/lib/articles/repository";
 import { listPublishedArticleSeries } from "@/lib/articles/series-repository";
-import { shouldIndexPublishedArticle } from "@/lib/articles/freshness";
 import {
   PUBLIC_ARTICLE_CACHE_REVALIDATE_SECONDS,
   PUBLIC_CACHE_TAGS,
@@ -36,7 +35,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const [articles, series] = await loadSitemapContent();
-  const indexableArticles = articles.filter((article) => shouldIndexPublishedArticle(article.slug));
   const contentRoutes = articles.length > 0 ? [{
     url: siteUrl("/articles"),
     changeFrequency: "daily" as const,
@@ -46,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticRoutes,
     ...contentRoutes,
-    ...indexableArticles.map((article) => ({
+    ...articles.map((article) => ({
       url: siteUrl(`/articles/${article.slug}`),
       lastModified: new Date(article.updatedAt),
       changeFrequency: "weekly" as const,

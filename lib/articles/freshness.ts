@@ -59,7 +59,3 @@ export function datedArticleStatus(slug: string, now = new Date()) {
     isCurrent: periodValue === currentValue,
   };
 }
-
-export function shouldIndexPublishedArticle(slug: string, now = new Date()) {
-  return datedArticleStatus(slug, now)?.isPast !== true;
-}

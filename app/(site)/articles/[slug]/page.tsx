@@ -11,7 +11,7 @@ import {
   listRelatedArticles,
 } from "@/lib/articles/repository";
 import { prepareArticleContent } from "@/lib/articles/publishing";
-import { datedArticleStatus, shouldIndexPublishedArticle } from "@/lib/articles/freshness";
+import { datedArticleStatus } from "@/lib/articles/freshness";
 import { publicArticleImageUrl } from "@/lib/articles/media-url";
 import { getPublishedArticleSeriesContext } from "@/lib/articles/series-repository";
 import {
@@ -66,7 +66,6 @@ export async function generateMetadata({
   const description = article.seoDescription || article.excerpt || `${article.title}の記事です。`;
   const url = `/articles/${article.slug}`;
   const coverImageUrl = publicArticleImageUrl(article.coverImageUrl);
-  const isIndexable = shouldIndexPublishedArticle(article.slug);
   return {
     title,
     description,
@@ -93,7 +92,6 @@ export async function generateMetadata({
       description,
       images: coverImageUrl ? [coverImageUrl] : undefined,
     },
-    robots: isIndexable ? undefined : { index: false, follow: true },
   };
 }
 
