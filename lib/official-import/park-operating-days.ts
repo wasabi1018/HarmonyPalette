@@ -20,7 +20,7 @@ function isClosedRecord(record: HarmonylandCalendarRecord) {
   return record.category_name?.trim() === "休園日" || record.event_title?.includes("休園日") === true;
 }
 
-function sourceHash(records: HarmonylandCalendarRecord[]) {
+export function hashCalendarRecords(records: readonly unknown[]) {
   return sha256(new TextEncoder().encode(JSON.stringify(records)));
 }
 
@@ -42,7 +42,7 @@ export function normalizeParkOperatingDay(
     externalKey: `harmonyland:park-operating-day:${date}`,
     sourceId: "harmonyland-calendar" as const,
     sourceReference: `${sourceUrl}#${date}`,
-    sourceHash: sourceHash(records),
+    sourceHash: hashCalendarRecords(records),
     date,
     officialUrl: OFFICIAL_CALENDAR_URL,
     rawPayload,

@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
+import { hashCalendarRecords } from "@/lib/official-import/park-operating-days";
 import { addDays } from "@/lib/official-import/utils";
 import type { SourceFingerprint } from "@/lib/official-monitor/types";
 import { SITE_URL } from "@/lib/site-config";
 
 const CALENDAR_API = "https://www.harmonyland.jp/wp/?mc-api=json";
-const FUN_STUDIO_URL = "https://www.harmonyland.jp/sp/funstudio/c_schedule.html";
 const NEWS_URL = "https://www.harmonyland.jp/news/";
 const NEWS_API = "https://www.harmonyland.jp/wp/news/";
 const USER_AGENT = `HarmonyPaletteMonitor/1.0 (+${SITE_URL})`;
@@ -82,6 +82,7 @@ export async function probeOfficialSources(from: string, to: string): Promise<So
   for (const date of dates) {
     const records = calendar[date] ?? [];
     const bytes = encoded(records);
+    const recordsSha256 = hashCalendarRecords(records);
     fingerprints.push({
       sourceKey: "calendar",
       entityKey: date,
@@ -91,7 +92,7 @@ export async function probeOfficialSources(from: string, to: string): Promise<So
       normalizedSha256: hash(bytes),
       documentDate: date,
       bytes,
-      metadata: { role: "calendar-day", recordCount: records.length },
+      metadata: { role: "calendar-day", recordCount: records.length, recordsSha256 },
     });
 
     const pdf = records.find((record) => typeof record.event_link === "string" && record.event_link.toLowerCase().includes(".pdf"));
@@ -107,29 +108,6 @@ export async function probeOfficialSources(from: string, to: string): Promise<So
       documentDate: date,
       bytes: document.bytes,
       metadata: { role: "daily-schedule", title: pdf.event_title ?? "" },
-    });
-  }
-
-  const fanIndex = await fetchBytes(FUN_STUDIO_URL);
-  const fanHtml = new TextDecoder().decode(fanIndex.bytes);
-  const datesByMonthDay = new Map(dates.map((date) => [date.slice(5).replace("-", ""), date]));
-  const fanPattern = /id=["']statusPup([a-z]+)(\d{4})["'][\s\S]{0,1200}?<img[^>]+src=["']([^"']+)["']/gi;
-  for (const match of fanHtml.matchAll(fanPattern)) {
-    const date = datesByMonthDay.get(match[2]);
-    if (!date) continue;
-    const prefix = match[1].slice(0, 1);
-    const url = new URL(match[3], FUN_STUDIO_URL).toString();
-    const document = await fetchBytes(url);
-    fingerprints.push({
-      sourceKey: "funstudio",
-      entityKey: `${date}:${prefix}`,
-      sourceUrl: url,
-      contentType: document.contentType,
-      rawSha256: hash(document.bytes),
-      normalizedSha256: hash(document.bytes),
-      documentDate: date,
-      bytes: document.bytes,
-      metadata: { role: "fanstudio-schedule", prefix },
     });
   }
 

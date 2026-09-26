@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createSemanticDiff, importPreviewData, meaningfulSemanticDiffs } from "@/lib/official-monitor/diff";
+import { createSemanticDiff, importPreviewData, isAlreadyPublishedOfficialSource, meaningfulSemanticDiffs } from "@/lib/official-monitor/diff";
+import type { SourceFingerprint } from "@/lib/official-monitor/types";
 
 test("mutable schedule external keys are matched by stable fields", () => {
   const diffs = createSemanticDiff({
@@ -92,4 +93,51 @@ test("equivalent non-persisted previews do not produce a meaningful diff", () =>
     warnings: [],
   });
   assert.deepEqual(meaningfulSemanticDiffs(createSemanticDiff(before, preview)), []);
+});
+
+test("a published daily PDF suppresses repeated parsing differences but a changed PDF remains detectable", () => {
+  const fingerprint: SourceFingerprint = {
+    sourceKey: "daily-pdf",
+    entityKey: "2026-10-20",
+    sourceUrl: "https://www.harmonyland.jp/schedule.pdf",
+    contentType: "application/pdf",
+    rawSha256: "same-pdf-hash",
+    normalizedSha256: "same-pdf-hash",
+    documentDate: "2026-10-20",
+    bytes: new Uint8Array(),
+    metadata: {},
+  };
+  const data = {
+    schedules: [{ source_id: "harmonyland-calendar", event_date: "2026-10-20", source_reference: fingerprint.sourceUrl, source_hash: "same-pdf-hash" }],
+    operations: [{ source_id: "harmonyland-calendar", operation_date: "2026-10-20", source_reference: fingerprint.sourceUrl, source_hash: "same-pdf-hash" }],
+    operatingDays: [],
+  };
+
+  assert.equal(isAlreadyPublishedOfficialSource(fingerprint, data), true);
+  assert.equal(isAlreadyPublishedOfficialSource({ ...fingerprint, rawSha256: "new-pdf-hash" }, data), false);
+  assert.equal(isAlreadyPublishedOfficialSource(fingerprint, { ...data, operations: [{ ...data.operations[0], source_hash: "older-pdf-hash" }] }), false);
+  assert.equal(isAlreadyPublishedOfficialSource(fingerprint, { ...data, schedules: [], operations: [] }), false);
+});
+
+test("a calendar day uses its original record hash, independent of the API date range", () => {
+  const fingerprint: SourceFingerprint = {
+    sourceKey: "calendar",
+    entityKey: "2026-10-20",
+    sourceUrl: "https://www.harmonyland.jp/wp/?mc-api=json&from=2026-09-20&to=2026-10-20",
+    contentType: "application/json",
+    rawSha256: "normalized-monitor-hash",
+    normalizedSha256: "normalized-monitor-hash",
+    documentDate: "2026-10-20",
+    bytes: new Uint8Array(),
+    metadata: { recordsSha256: "original-calendar-hash" },
+  };
+  const data = {
+    schedules: [],
+    operations: [],
+    operatingDays: [{ source_id: "harmonyland-calendar", operation_date: "2026-10-20", source_hash: "original-calendar-hash" }],
+  };
+
+  assert.equal(isAlreadyPublishedOfficialSource(fingerprint, data), true);
+  assert.equal(isAlreadyPublishedOfficialSource({ ...fingerprint, metadata: { recordsSha256: "new-calendar-hash" } }, data), false);
+  assert.equal(isAlreadyPublishedOfficialSource(fingerprint, { ...data, operatingDays: [] }), false);
 });

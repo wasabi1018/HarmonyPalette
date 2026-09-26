@@ -12,11 +12,11 @@ import type { OfficialUpdateSection } from "@/lib/official-monitor/types";
 test("multiple updated areas are described in one natural Japanese summary", () => {
   const sections: OfficialUpdateSection[] = [
     { key: "news", dates: [], diffCounts: { added: 1 }, highlights: [] },
-    { key: "funstudio-schedule", dates: ["2026-09-20"], diffCounts: { modified: 2 }, highlights: [] },
+    { key: "harmonyland-schedule", dates: ["2026-09-20"], diffCounts: { modified: 2 }, highlights: [] },
   ];
   assert.equal(
     buildOfficialUpdateSummary(sections),
-    "お知らせ一覧とファンスタジオのスケジュールが変更されました。",
+    "お知らせ一覧とハーモニーランドのスケジュールが変更されました。",
   );
 });
 

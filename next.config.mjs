@@ -19,7 +19,6 @@ const nextConfig = {
       ...tesseractRuntimeAssets,
     ],
     "/api/cron/import-schedules": ["./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"],
-    "/api/cron/official-updates": tesseractRuntimeAssets,
   },
   images: {
     unoptimized: true,

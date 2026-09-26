@@ -1,4 +1,4 @@
-import { importHarmonylandOfficialSchedules, summarizeImportPreview } from "@/lib/official-import/harmonyland";
+import { importHarmonylandOfficialSchedules, summarizeImportPreview } from "@/lib/official-import/harmonyland-with-fanstudio";
 import { addDays } from "@/lib/official-import/utils";
 
 function argumentValue(name: string) {

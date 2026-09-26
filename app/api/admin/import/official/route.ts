@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { importHarmonylandOfficialSchedules, summarizeImportPreview } from "@/lib/official-import/harmonyland";
+import { importHarmonylandOfficialSchedules, summarizeImportPreview } from "@/lib/official-import/harmonyland-with-fanstudio";
 import { persistImportPreview } from "@/lib/supabase/schedule-repository";
 import { assertImportAuthorization, getSupabaseConfigStatus } from "@/lib/supabase/server";
 

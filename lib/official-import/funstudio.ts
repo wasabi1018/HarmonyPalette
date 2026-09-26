@@ -181,10 +181,6 @@ function parseOcrRows(text: string) {
   return rows;
 }
 
-export function normalizeFanStudioImportDates(dates: string[]) {
-  return Array.from(new Set(dates.filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)))).sort();
-}
-
 async function importFanStudioSchedulesForDateList(
   dates: string[],
   onProgress?: (message: string) => void,
@@ -402,11 +398,4 @@ export function importFanStudioSchedules(
   onProgress?: (message: string) => void,
 ) {
   return importFanStudioSchedulesForDateList(dateRange(from, to), onProgress);
-}
-
-export function importFanStudioSchedulesForDates(
-  dates: string[],
-  onProgress?: (message: string) => void,
-) {
-  return importFanStudioSchedulesForDateList(normalizeFanStudioImportDates(dates), onProgress);
 }

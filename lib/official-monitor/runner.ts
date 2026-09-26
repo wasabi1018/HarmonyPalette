@@ -1,7 +1,7 @@
 import "server-only";
 
 import { sendDiscordUpdate } from "@/lib/official-monitor/discord";
-import { countSemanticDiffs, createSemanticDiff, importPreviewData, meaningfulSemanticDiffs } from "@/lib/official-monitor/diff";
+import { countSemanticDiffs, createSemanticDiff, importPreviewData, isAlreadyPublishedOfficialSource, meaningfulSemanticDiffs } from "@/lib/official-monitor/diff";
 import { probeOfficialSources } from "@/lib/official-monitor/probe";
 import { nextRunAt } from "@/lib/official-monitor/schedule";
 import {
@@ -21,48 +21,19 @@ import {
   removeSourceState,
   saveSourceFingerprint,
 } from "@/lib/official-monitor/repository";
-import type { MonitorRunResult, OfficialUpdateSection, OfficialUpdateSectionKey, SemanticDiff } from "@/lib/official-monitor/types";
-import { importFanStudioSchedulesForDates } from "@/lib/official-import/funstudio";
+import type { MonitorRunResult, OfficialUpdateSection, PublishedData } from "@/lib/official-monitor/types";
 import { importHarmonylandOfficialSchedules } from "@/lib/official-import/harmonyland";
-import type { ImportPreview } from "@/lib/official-import/types";
-import { addDays, createRunId } from "@/lib/official-import/utils";
+import { addDays } from "@/lib/official-import/utils";
 
 function todayInJapan() {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
 
-type ChangedDate = { calendar: boolean; fanstudio: boolean };
-
-function diffSourceId(diff: SemanticDiff) {
-  return String(diff.afterData?.source_id ?? diff.beforeData?.source_id ?? "");
-}
-
-function sectionForDiff(diff: SemanticDiff): OfficialUpdateSectionKey {
-  return diffSourceId(diff) === "harmonyland-funstudio" ? "funstudio-schedule" : "harmonyland-schedule";
-}
-
-function filterPublishedSources(data: Awaited<ReturnType<typeof getPublishedDataForDate>>, group: ChangedDate) {
-  const scheduleSources = new Set<string>();
-  if (group.calendar) scheduleSources.add("harmonyland-calendar");
-  if (group.fanstudio) scheduleSources.add("harmonyland-funstudio");
+function filterPublishedSources(data: Awaited<ReturnType<typeof getPublishedDataForDate>>) {
   return {
-    schedules: data.schedules.filter((row) => scheduleSources.has(String(row.source_id))),
-    operations: group.calendar ? data.operations.filter((row) => row.source_id === "harmonyland-calendar") : [],
-    operatingDays: group.calendar ? data.operatingDays.filter((row) => row.source_id === "harmonyland-calendar") : [],
-  };
-}
-
-function emptyPreview(date: string): ImportPreview {
-  return {
-    runId: createRunId(),
-    generatedAt: new Date().toISOString(),
-    rangeStart: date,
-    rangeEnd: date,
-    schedules: [],
-    operations: [],
-    operatingDays: [],
-    documents: [],
-    warnings: [],
+    schedules: data.schedules.filter((row) => row.source_id === "harmonyland-calendar"),
+    operations: data.operations.filter((row) => row.source_id === "harmonyland-calendar"),
+    operatingDays: data.operatingDays.filter((row) => row.source_id === "harmonyland-calendar"),
   };
 }
 
@@ -72,7 +43,6 @@ async function previewChangedCalendarDate(date: string): Promise<ImportPreview> 
     to: date,
     includeSchedules: true,
     includeParkOperatingDays: true,
-    includeFanStudio: false,
   });
 }
 
@@ -90,17 +60,30 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
       const to = addDays(from, settings.lookaheadDays - 1);
       const [states, fingerprints] = await Promise.all([getSourceStates(), probeOfficialSources(from, to)]);
       baseline = states.size === 0;
-      const changedByDate = new Map<string, ChangedDate>();
+      const changedDates = new Set<string>();
       const sections: OfficialUpdateSection[] = [];
       const detectedHashes: string[] = [];
       const currentKeys = new Set(fingerprints.map((fingerprint) => `${fingerprint.sourceKey}:${fingerprint.entityKey}`));
+      const publishedByDate = new Map<string, Promise<PublishedData>>();
+      function publishedForDate(date: string) {
+        let request = publishedByDate.get(date);
+        if (!request) {
+          request = getPublishedDataForDate(date);
+          publishedByDate.set(date, request);
+        }
+        return request;
+      }
 
       for (const fingerprint of fingerprints) {
         const key = `${fingerprint.sourceKey}:${fingerprint.entityKey}`;
         const previous = states.get(key);
         const changed = Boolean(previous && previous.normalizedSha256 !== fingerprint.normalizedSha256);
         const newlyMeaningful = !previous && !baseline && !(fingerprint.sourceKey === "calendar" && Number(fingerprint.metadata.recordCount || 0) === 0);
-        const detected = changed || newlyMeaningful;
+        let detected = changed || newlyMeaningful;
+        if (detected && fingerprint.documentDate && fingerprint.sourceKey !== "news") {
+          const published = await publishedForDate(fingerprint.documentDate);
+          detected = !isAlreadyPublishedOfficialSource(fingerprint, published);
+        }
         await saveSourceFingerprint(fingerprint, detected, detected);
         if (!detected) continue;
         changedSources += 1;
@@ -119,73 +102,36 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
 
         const date = fingerprint.documentDate;
         if (!date) continue;
-        const group = changedByDate.get(date) ?? { calendar: false, fanstudio: false };
-        group.calendar ||= fingerprint.sourceKey === "calendar" || fingerprint.sourceKey === "daily-pdf";
-        group.fanstudio ||= fingerprint.sourceKey === "funstudio";
-        changedByDate.set(date, group);
+        if (fingerprint.sourceKey === "calendar" || fingerprint.sourceKey === "daily-pdf") changedDates.add(date);
       }
 
       if (!baseline) {
         for (const [key, previous] of states) {
           if (currentKeys.has(key) || !previous.documentDate || previous.documentDate < from || previous.documentDate > to) continue;
-          if (previous.sourceKey !== "daily-pdf" && previous.sourceKey !== "funstudio") continue;
+          if (previous.sourceKey !== "daily-pdf") continue;
           await removeSourceState(previous.sourceKey, previous.entityKey);
           changedSources += 1;
-          const group = changedByDate.get(previous.documentDate) ?? { calendar: false, fanstudio: false };
-          group.calendar ||= previous.sourceKey === "daily-pdf";
-          group.fanstudio ||= previous.sourceKey === "funstudio";
           detectedHashes.push(`removed-${previous.normalizedSha256}`);
-          changedByDate.set(previous.documentDate, group);
+          changedDates.add(previous.documentDate);
         }
       }
 
-      const fanStudioDates = Array.from(changedByDate)
-        .filter(([, group]) => group.fanstudio)
-        .map(([date]) => date)
-        .sort();
-      let fanStudioSchedules: ImportPreview["schedules"] = [];
-      let fanStudioError: Error | null = null;
-      if (fanStudioDates.length > 0) {
-        try {
-          const fanStudio = await importFanStudioSchedulesForDates(fanStudioDates);
-          fanStudioSchedules = fanStudio.schedules;
-        } catch (error) {
-          fanStudioError = error instanceof Error ? error : new Error(String(error));
-          mergeOfficialUpdateSection(sections, {
-            key: "funstudio-schedule",
-            dates: fanStudioDates,
-            diffCounts: { uncertain: fanStudioDates.length },
-            highlights: [],
-          });
-        }
-      }
-
-      for (const [date, group] of changedByDate) {
-        const comparisonGroup = { calendar: group.calendar, fanstudio: group.fanstudio && !fanStudioError };
-        if (!comparisonGroup.calendar && !comparisonGroup.fanstudio) continue;
-        const [published, calendarPreview] = await Promise.all([
-          getPublishedDataForDate(date),
-          comparisonGroup.calendar ? previewChangedCalendarDate(date) : Promise.resolve(emptyPreview(date)),
+      for (const date of changedDates) {
+        const [published, preview] = await Promise.all([
+          publishedForDate(date),
+          previewChangedCalendarDate(date),
         ]);
-        const preview = calendarPreview;
-        if (comparisonGroup.fanstudio) {
-          preview.schedules.push(...fanStudioSchedules.filter((schedule) => schedule.date === date));
-        }
         const diffs = meaningfulSemanticDiffs(createSemanticDiff(
-          filterPublishedSources(published, comparisonGroup),
+          filterPublishedSources(published),
           importPreviewData(preview),
         ));
         if (diffs.length === 0) continue;
-        for (const key of ["harmonyland-schedule", "funstudio-schedule"] as const) {
-          const sectionDiffs = diffs.filter((diff) => sectionForDiff(diff) === key);
-          if (sectionDiffs.length === 0) continue;
-          mergeOfficialUpdateSection(sections, {
-            key,
-            dates: [date],
-            diffCounts: countSemanticDiffs(sectionDiffs),
-            highlights: [],
-          });
-        }
+        mergeOfficialUpdateSection(sections, {
+          key: "harmonyland-schedule",
+          dates: [date],
+          diffCounts: countSemanticDiffs(diffs),
+          highlights: [],
+        });
       }
 
       if (sections.length > 0) {
@@ -202,13 +148,11 @@ export async function runOfficialUpdateMonitor(force = false): Promise<MonitorRu
             changedSections: sections.map((section) => section.key),
             sections,
             semanticDiffCount: Object.values(diffCounts).reduce((total, count) => total + count, 0),
-            ...(fanStudioError ? { monitorWarnings: [fanStudioError.message] } : {}),
           },
         });
         await sendDiscordUpdate(event).catch(() => undefined);
       }
       await pruneOfficialMonitorHistory(settings.retentionDays);
-      if (fanStudioError) throw fanStudioError;
       await markMonitorFinished();
     } catch (error) {
       await markMonitorFinished(error instanceof Error ? error.message : String(error));

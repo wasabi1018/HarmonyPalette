@@ -1,4 +1,4 @@
-import type { PublishedData, SemanticDiff, StoredImportData } from "@/lib/official-monitor/types";
+import type { PublishedData, SemanticDiff, SourceFingerprint, StoredImportData } from "@/lib/official-monitor/types";
 import type { ImportPreview } from "@/lib/official-import/types";
 
 type EntityKind = SemanticDiff["entityType"];
@@ -190,4 +190,29 @@ export function countSemanticDiffs(diffs: SemanticDiff[]) {
     counts[diff.changeType] = (counts[diff.changeType] || 0) + 1;
     return counts;
   }, {});
+}
+
+export function isAlreadyPublishedOfficialSource(
+  fingerprint: SourceFingerprint,
+  published: PublishedData,
+) {
+  const date = fingerprint.documentDate;
+  if (!date) return false;
+
+  if (fingerprint.sourceKey === "calendar") {
+    const recordsHash = fingerprint.metadata.recordsSha256;
+    if (typeof recordsHash !== "string" || !recordsHash) return false;
+    const rows = published.operatingDays.filter((row) =>
+      row.source_id === "harmonyland-calendar" && row.operation_date === date,
+    );
+    return rows.length > 0 && rows.every((row) => row.source_hash === recordsHash);
+  }
+
+  if (fingerprint.sourceKey !== "daily-pdf") return false;
+  const rows = [...published.schedules, ...published.operations].filter((row) =>
+    row.source_id === "harmonyland-calendar"
+    && (row.event_date === date || row.operation_date === date)
+    && row.source_reference === fingerprint.sourceUrl,
+  );
+  return rows.length > 0 && rows.every((row) => row.source_hash === fingerprint.rawSha256);
 }

@@ -1,5 +1,4 @@
 import { parseHarmonylandDailyPdf } from "@/lib/official-import/daily-pdf-parser";
-import { importFanStudioSchedules } from "@/lib/official-import/funstudio";
 import { normalizeParkOperatingDay, type HarmonylandCalendarRecord } from "@/lib/official-import/park-operating-days";
 import type { ImportPreview, SourceDocument } from "@/lib/official-import/types";
 import { addDays, createRunId, sha256 } from "@/lib/official-import/utils";
@@ -15,7 +14,6 @@ export type OfficialImportOptions = {
   to: string;
   includeSchedules?: boolean;
   includeParkOperatingDays?: boolean;
-  includeFanStudio?: boolean;
   onProgress?: (message: string) => void;
 };
 
@@ -113,18 +111,6 @@ export async function importHarmonylandOfficialSchedules(options: OfficialImport
       } catch (error) {
         warnings.push(`${date}: PDF解析に失敗しました（${error instanceof Error ? error.message : String(error)}）。`);
       }
-    }
-  }
-
-  if (options.includeFanStudio) {
-    options.onProgress?.("ファンスタジオ予定表を取得しています。");
-    try {
-      const fanStudio = await importFanStudioSchedules(options.from, options.to, options.onProgress);
-      schedules.push(...fanStudio.schedules);
-      documents.push(...fanStudio.documents);
-      warnings.push(...fanStudio.warnings);
-    } catch (error) {
-      warnings.push(`ファンスタジオの取込に失敗しました（${error instanceof Error ? error.message : String(error)}）。`);
     }
   }
 

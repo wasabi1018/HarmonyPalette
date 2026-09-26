@@ -20,16 +20,18 @@ test("detected schedule changes are notification-only", () => {
 test("official monitor runner does not enqueue or persist automatic imports", () => {
   const source = readFileSync("lib/official-monitor/runner.ts", "utf8");
   assert.doesNotMatch(source, /enqueueImportJob|claimNextImportJob|persistImportPreview/);
-  assert.doesNotMatch(source, /importFanStudioSchedules\(date, date\)/);
-  assert.match(source, /await importFanStudioSchedulesForDates\(fanStudioDates\)/);
-  assert.match(source, /diffCounts: \{ uncertain: fanStudioDates\.length \}/);
+  assert.doesNotMatch(source, /importFanStudioSchedules|harmonyland-funstudio/);
   assert.match(source, /if \(diffs\.length === 0\) continue/);
   assert.match(source, /sourceKey: "official-site"/);
   assert.match(source, /buildOfficialUpdateSummary\(sections\)/);
 });
 
-test("official update functions include the Tesseract runtime assets", () => {
+test("official monitor does not fetch or bundle Fan Studio OCR assets", () => {
+  const probe = readFileSync("lib/official-monitor/probe.ts", "utf8");
+  const calendarImporter = readFileSync("lib/official-import/harmonyland.ts", "utf8");
   const source = readFileSync("next.config.mjs", "utf8");
+  assert.doesNotMatch(probe, /FUN_STUDIO_URL|sourceKey:\s*"funstudio"/);
+  assert.doesNotMatch(calendarImporter, /funstudio|includeFanStudio/i);
   assert.match(source, /\.\/node_modules\/tesseract\.js-core\/\*\.wasm/);
-  assert.match(source, /"\/api\/cron\/official-updates": tesseractRuntimeAssets/);
+  assert.doesNotMatch(source, /"\/api\/cron\/official-updates": tesseractRuntimeAssets/);
 });
