@@ -25,3 +25,14 @@ test("関連記事リンクはサイト内の記事URLを使う", () => {
     assert.match(link.href, /^\/articles\/[a-z0-9-]+$/);
   }
 });
+
+test("ビンゴガイドはカード購入と場所取りの予定を案内する", () => {
+  const bingo = PLAN_BEFORE_YOU_GO.items.find((item) => item.id === "bingo");
+  assert.ok(bingo);
+  assert.deepEqual(bingo.content, [
+    { type: "paragraph", text: "ビンゴは、参加するのにビンゴカードの購入が必要です。" },
+    { type: "paragraph", text: "開演30分前から客席後方で数量限定で販売しています。" },
+    { type: "paragraph", text: "1人3枚まで購入可能です。" },
+  ]);
+  assert.equal(bingo.planAction, "ビンゴカードの購入時間＆場所取りの予定も確保する");
+});
