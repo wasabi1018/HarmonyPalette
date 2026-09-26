@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DailyPlanBuilder } from "@/components/daily-plan-builder";
 import { PlanBeforeYouGoGuide } from "@/components/plan-before-you-go-guide";
+import { RecommendedPlanBuildingGuide } from "@/components/recommended-plan-building-guide";
 import type { PlanOptions } from "@/lib/plan-options";
 import { getInitialParkOperatingDayData, getInitialScheduleData } from "@/lib/supabase/initial-data";
 import { getPublicPlanOptions } from "@/lib/supabase/plan-options-repository";
@@ -48,6 +49,7 @@ export default async function PlanPage({
         initialPlanOptions={initialPlanOptions}
         initialPlanOptionsError={planOptionsResult.error}
       />
+      <RecommendedPlanBuildingGuide />
       <PlanBeforeYouGoGuide />
     </>
   );
