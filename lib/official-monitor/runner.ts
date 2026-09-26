@@ -23,6 +23,7 @@ import {
 } from "@/lib/official-monitor/repository";
 import type { MonitorRunResult, OfficialUpdateSection, PublishedData } from "@/lib/official-monitor/types";
 import { importHarmonylandOfficialSchedules } from "@/lib/official-import/harmonyland";
+import type { ImportPreview } from "@/lib/official-import/types";
 import { addDays } from "@/lib/official-import/utils";
 
 function todayInJapan() {
