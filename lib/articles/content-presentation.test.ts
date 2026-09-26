@@ -2,8 +2,18 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   applyContextualArticleImageAlt,
+  formatArticlePublishedDate,
   isUnhelpfulArticleImageAlt,
 } from "./content-presentation";
+
+test("公開日をサーバーとブラウザで共通の日本時間として表示する", () => {
+  assert.equal(
+    formatArticlePublishedDate("2026-07-31T15:30:00.000Z"),
+    "2026年8月1日",
+  );
+  assert.equal(formatArticlePublishedDate(null), "");
+  assert.equal(formatArticlePublishedDate("invalid"), "");
+});
 
 test("数字やファイル名だけの画像説明を検出する", () => {
   assert.equal(isUnhelpfulArticleImageAlt("7914"), true);

@@ -2,6 +2,7 @@
 
 import { CalendarDays, Clock3, List, RefreshCw, UserRound, X } from "lucide-react";
 import { ArticleShareActions } from "@/components/article-share-actions";
+import { formatArticlePublishedDate } from "@/lib/articles/content-presentation";
 import type { ArticleHeading } from "@/lib/articles/publishing";
 import type { ArticleTag } from "@/lib/articles/types";
 
@@ -22,16 +23,6 @@ type ArticlePreviewProps = {
   datedContentNotice?: string;
   onClose?: () => void;
 };
-
-function formatDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "公開日未設定";
-  return new Intl.DateTimeFormat("ja-JP", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(date);
-}
 
 function dateKey(value: string) {
   const date = new Date(value);
@@ -103,12 +94,12 @@ export function ArticlePreview({
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] font-bold text-ink/35">
             <span className="inline-flex items-center gap-2">
               <CalendarDays size={13} aria-hidden="true" />
-              公開 {formatDate(publishedAt)}
+              公開 {formatArticlePublishedDate(publishedAt) || "公開日未設定"}
             </span>
             {showUpdatedAt && updatedAt && (
               <span className="inline-flex items-center gap-2">
                 <RefreshCw size={13} aria-hidden="true" />
-                更新 {formatDate(updatedAt)}
+                更新 {formatArticlePublishedDate(updatedAt) || "更新日未設定"}
               </span>
             )}
             {authorName && (

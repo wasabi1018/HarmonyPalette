@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, BookCopy, BookOpen, CalendarDays, Rss, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import { formatArticlePublishedDate } from "@/lib/articles/content-presentation";
 import type { ArticleSeries, ArticleSummary } from "@/lib/articles/types";
 import { publicArticleImageUrl } from "@/lib/articles/media-url";
 
@@ -14,13 +15,6 @@ export type ArticleIndexItem = Pick<
   "id" | "title" | "slug" | "excerpt" | "coverImageUrl" | "destination" | "publishedAt" | "tags"
 >;
 export type ArticleIndexSeries = Pick<ArticleSeries, "id" | "title" | "slug" | "articleCount">;
-
-function formatDate(value: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "long", day: "numeric" }).format(date);
-}
 
 function readLocation() {
   const params = new URLSearchParams(window.location.search);
@@ -155,7 +149,7 @@ export function ArticleIndex({ articles, series, initialQuery, initialTag, initi
             <h2 className="mt-4 font-display text-[21px] font-semibold leading-8 text-ink transition group-hover:text-pink">{article.title}</h2>
             {article.excerpt && <p className="mt-3 line-clamp-2 text-[13px] font-bold leading-6 text-ink/55">{article.excerpt}</p>}
             <div className="mt-5 flex items-center justify-between gap-3">
-              <span className="inline-flex items-center gap-2 text-[10px] font-bold text-ink/35"><CalendarDays size={13} aria-hidden="true" />{formatDate(article.publishedAt)}</span>
+              <span className="inline-flex items-center gap-2 text-[10px] font-bold text-ink/35"><CalendarDays size={13} aria-hidden="true" />{formatArticlePublishedDate(article.publishedAt)}</span>
               <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-pink">続きを読む<ArrowRight size={13} className="transition-transform group-hover:translate-x-1" aria-hidden="true" /></span>
             </div>
           </div>

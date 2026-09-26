@@ -6,6 +6,20 @@ function stripTags(value: string) {
     .trim();
 }
 
+const articlePublishedDateFormatter = new Intl.DateTimeFormat("ja-JP", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+export function formatArticlePublishedDate(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return articlePublishedDateFormatter.format(date);
+}
+
 function attributeValue(tag: string, name: string) {
   const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*(["'])(.*?)\\1`, "i"));
   return match?.[2]?.trim() || "";

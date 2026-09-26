@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       eyebrow="PRIVACY POLICY"
       title="プライバシーポリシー"
       description="安心してご利用いただくために、当サイトで取り扱う情報と外部サービスについてご案内します。"
-      updatedAt="2026年8月3日"
+      updatedAt="2026年9月26日"
     >
       <p>
         Harmony Palette（以下「当サイト」）は、利用者のプライバシーを尊重し、
@@ -68,6 +68,18 @@ export default function PrivacyPage() {
         から、パーソナライズ広告を無効にできます。詳細は
         <a href="https://policies.google.com/technologies/ads?hl=ja" target="_blank" rel="noreferrer">
           Googleの広告に関するポリシー
+        </a>
+        をご確認ください。
+      </p>
+      <p>
+        Google以外の第三者配信事業者や広告ネットワークが広告を配信する場合、
+        これらの事業者もCookieを使用することがあります。利用者は、各事業者のウェブサイト、または
+        <a href="https://optout.aboutads.info/" target="_blank" rel="noreferrer">
+          Digital Advertising Allianceのオプトアウトページ
+        </a>
+        から、パーソナライズ広告に使用されるCookieを無効にできます。第三者配信事業者の詳細は、
+        <a href="https://support.google.com/adsense/answer/94149?hl=ja" target="_blank" rel="noreferrer">
+          Googleが認定する第三者広告配信事業者の一覧
         </a>
         をご確認ください。
       </p>
