@@ -27,6 +27,25 @@ export function sortCharacterNames(names: string[], catalog: Character[]) {
   });
 }
 
+export function sortByCharacterDisplayOrder<T>(
+  items: T[],
+  catalog: Character[],
+  getCharacterNames: (item: T) => string[],
+) {
+  const orderedNames = sortCharacterNames(items.flatMap(getCharacterNames), catalog);
+  const orderByName = new Map(orderedNames.map((name, index) => [name, index]));
+
+  return items
+    .map((item, index) => {
+      const displayOrder = getCharacterNames(item).reduce((smallest, name) => (
+        Math.min(smallest, orderByName.get(name) ?? Number.MAX_SAFE_INTEGER)
+      ), Number.MAX_SAFE_INTEGER);
+      return { item, index, displayOrder };
+    })
+    .sort((left, right) => left.displayOrder - right.displayOrder || left.index - right.index)
+    .map(({ item }) => item);
+}
+
 function virtualCharacterId(name: string) {
   let hash = 2166136261;
   for (const character of name) {

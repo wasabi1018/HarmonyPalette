@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock3, LoaderCircle, MapPin, PartyPopper, Sparkles, Sun } from "lucide-react";
 import type { Character } from "@/data/types";
 import { compareCharacters, type InitialCharacterData, mergeCharactersWithNames, sortCharacterNames, useCharacters } from "@/lib/character-store";
-import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, specialAppearance } from "@/lib/schedule-display";
+import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, sortFanStudioEntriesByRoom, specialAppearance } from "@/lib/schedule-display";
 import { getEntryCharacterNames, type InitialScheduleData, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { ParkOperatingInfo } from "@/components/park-operating-info";
@@ -130,7 +130,7 @@ export function HomeTodaySections({
   const eventGroups = groupTimelineEntries(eventSchedules);
   const fanStudioGroups = groupTimelineEntries(fanStudioSchedules).map((group) => ({
     ...group,
-    entries: [...group.entries].sort((left, right) => left.location.localeCompare(right.location, "ja")),
+    entries: sortFanStudioEntriesByRoom(group.entries, catalogCharacters),
   }));
   const timelineStartTimes = Array.from(new Set(selectedSchedules.map((entry) => entry.startTime))).sort();
   const latestTimelineEnd = selectedSchedules

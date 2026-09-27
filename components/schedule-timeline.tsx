@@ -8,6 +8,7 @@ import {
   fanStudioFallbackName,
   isFanStudioGreeting,
   shortFanStudioLocation,
+  sortFanStudioEntriesByRoom,
   specialAppearance,
 } from "@/lib/schedule-display";
 import { getEntryCharacterNames, type ScheduleEntry } from "@/lib/schedule-store";
@@ -106,9 +107,9 @@ export function ScheduleTimeline({
   const fanStudioGroups = useMemo(() => (
     groupTimelineEntries(schedules.filter(isFanStudioGreeting)).map((group) => ({
       ...group,
-      entries: [...group.entries].sort((left, right) => left.location.localeCompare(right.location, "ja")),
+      entries: sortFanStudioEntriesByRoom(group.entries, characters),
     }))
-  ), [schedules]);
+  ), [characters, schedules]);
   const timelineStartTimes = useMemo(() => (
     Array.from(new Set(schedules.map((entry) => entry.startTime))).sort()
   ), [schedules]);

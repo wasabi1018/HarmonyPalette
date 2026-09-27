@@ -1,18 +1,22 @@
 import { CalendarRange, ChevronDown, Clock3, ExternalLink, MapPin, PartyPopper, Users } from "lucide-react";
+import type { Character } from "@/data/types";
+import { sortCharacterNames } from "@/lib/character-store";
 import type { ScheduleEntry } from "@/lib/schedule-store";
 import { getEntryCharacterNames } from "@/lib/schedule-store";
 import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
 
 export function ScheduleEntryCard({
   entry,
+  characters,
   selectedCharacters = [],
   planDate = entry.date,
 }: {
   entry: ScheduleEntry;
+  characters: Character[];
   selectedCharacters?: string[];
   planDate?: string;
 }) {
-  const names = getEntryCharacterNames(entry);
+  const names = sortCharacterNames(getEntryCharacterNames(entry), characters);
   const selectedCharacterNames = new Set(selectedCharacters);
   const isEvent = entry.kind === "event";
 

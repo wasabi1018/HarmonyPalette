@@ -39,6 +39,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { PlanItemCard } from "@/components/plan-item-card";
 import { ParkOperatingInfo } from "@/components/park-operating-info";
 import { ScheduleTimeline } from "@/components/schedule-timeline";
+import { type InitialCharacterData, useCharacters } from "@/lib/character-store";
 import {
   addCustomPlanItem,
   clearPlan,
@@ -230,12 +231,14 @@ function PrintablePlan({ date, items }: { date: string; items: DailyPlanItem[] }
 export function DailyPlanBuilder({
   initialDate,
   initialScheduleData,
+  initialCharacterData,
   initialOperatingDayData,
   initialPlanOptions,
   initialPlanOptionsError,
 }: {
   initialDate: string;
   initialScheduleData: InitialScheduleData;
+  initialCharacterData: InitialCharacterData;
   initialOperatingDayData: InitialParkOperatingDayData;
   initialPlanOptions: PlanOptions;
   initialPlanOptionsError: string;
@@ -246,6 +249,7 @@ export function DailyPlanBuilder({
   const plan = plans[selectedDate];
   const items = useMemo(() => plan?.items ?? [], [plan]);
   const scheduleState = useScheduleEntries({ initialData: initialScheduleData });
+  const characterState = useCharacters({ initialData: initialCharacterData });
   const operatingDayState = useParkOperatingDays(initialOperatingDayData);
   const [addOpen, setAddOpen] = useState(false);
   const [addTab, setAddTab] = useState<"official" | "custom">("official");
@@ -639,7 +643,7 @@ export function DailyPlanBuilder({
                   {scheduleState.status === "loading" ? (
                     <div className="flex min-h-40 items-center justify-center gap-2 text-[12px] font-bold text-ink/45"><LoaderCircle size={18} className="animate-spin text-pink" aria-hidden="true" />読み込み中…</div>
                   ) : officialCandidates.length > 0 ? (
-                    <ScheduleTimeline entries={officialCandidates} date={selectedDate} />
+                    <ScheduleTimeline entries={officialCandidates} date={selectedDate} characters={characterState.characters} />
                   ) : (
                     <p className="rounded-2xl border border-dashed border-pink/20 px-4 py-10 text-center text-[12px] font-bold text-ink/45">この日の公開スケジュールはまだありません。</p>
                   )}

@@ -31,6 +31,7 @@ import {
   useScheduleEntries,
 } from "@/lib/schedule-store";
 import {
+  compareFanStudioLocations,
   fanStudioFallbackName,
   isFanStudioGreeting,
   shortFanStudioLocation,
@@ -208,10 +209,11 @@ function eventNameForEntry(entry: ScheduleEntry) {
   return isFanStudioGreeting(entry) ? FAN_STUDIO_EVENT : entry.title;
 }
 
-function characterNamesForCell(
+export function characterNamesForCell(
   entries: ScheduleEntry[],
   date: string,
   eventName: string,
+  characters: Character[],
   closedDates: ReadonlySet<string>,
 ) {
   if (eventName === FAN_STUDIO_EVENT && closedDates.has(date)) return [];
@@ -228,7 +230,7 @@ function characterNamesForCell(
       return isFanStudioGreeting(entry) ? [fanStudioFallbackName(entry)] : [];
     });
 
-  return Array.from(new Set(names)).sort((left, right) => left.localeCompare(right, "ja"));
+  return sortCharacterNames(names, characters);
 }
 
 function characterNamesForEntry(entry: ScheduleEntry) {
@@ -290,14 +292,10 @@ export function buildFanStudioRows(
   }));
 }
 
-function roomSortValue(room: string) {
-  const roomNumber = Number(room.match(/\d+/)?.[0]);
-  return Number.isFinite(roomNumber) ? roomNumber : Number.MAX_SAFE_INTEGER;
-}
-
 export function buildDailyFanStudioSchedule(
   date: string,
   entries: ScheduleEntry[],
+  characters: Character[],
   closedDates: ReadonlySet<string> = new Set(),
 ) {
   if (closedDates.has(date)) return { rooms: [], rows: [] };
@@ -307,10 +305,7 @@ export function buildDailyFanStudioSchedule(
   );
   const rooms = Array.from(
     new Set(dailyEntries.map((entry) => shortFanStudioLocation(entry.location))),
-  ).sort((left, right) => (
-    roomSortValue(left) - roomSortValue(right)
-    || left.localeCompare(right, "ja")
-  ));
+  ).sort(compareFanStudioLocations);
   const times = Array.from(
     new Set(dailyEntries.map((entry) => entry.startTime).filter(Boolean)),
   ).sort();
@@ -332,7 +327,8 @@ export function buildDailyFanStudioSchedule(
           });
         });
 
-      return Array.from(items, ([name, special]) => ({ name, special }));
+      return sortCharacterNames(Array.from(items.keys()), characters)
+        .map((name) => ({ name, special: items.get(name) ?? false }));
     }),
   }));
 
@@ -671,7 +667,7 @@ function ScheduleInstagramCard({
               </div>
 
               {columns.map((eventName) => {
-                const names = characterNamesForCell(entries, date, eventName, closedDates).filter(
+                const names = characterNamesForCell(entries, date, eventName, characters, closedDates).filter(
                   (name) =>
                     eventName !== FAN_STUDIO_EVENT
                     || !fanStudioRegularNames.has(name),
@@ -1043,6 +1039,7 @@ export function FanStudioInstagramCard({
 export function DailyFanStudioInstagramCard({
   date,
   entries,
+  characters = [],
   theme,
   specialEmoji,
   specialEmojiMeaning,
@@ -1050,6 +1047,7 @@ export function DailyFanStudioInstagramCard({
 }: {
   date: string;
   entries: ScheduleEntry[];
+  characters?: Character[];
   theme: Theme;
   specialEmoji: string;
   specialEmojiMeaning: string;
@@ -1058,6 +1056,7 @@ export function DailyFanStudioInstagramCard({
   const { rooms, rows } = buildDailyFanStudioSchedule(
     date,
     entries,
+    characters,
     isClosed ? new Set([date]) : new Set(),
   );
   const rowGap = rows.length >= 13 ? 4 : rows.length >= 10 ? 6 : 8;
@@ -1471,8 +1470,8 @@ export function InstagramScheduleStudio({
     [activePeriod, characterState.characters, closedDates, scheduleState.entries],
   );
   const activeDailyFanStudio = useMemo(
-    () => buildDailyFanStudioSchedule(activePeriod.start, scheduleState.entries, closedDates),
-    [activePeriod.start, closedDates, scheduleState.entries],
+    () => buildDailyFanStudioSchedule(activePeriod.start, scheduleState.entries, characterState.characters, closedDates),
+    [activePeriod.start, characterState.characters, closedDates, scheduleState.entries],
   );
   const isDailyTemplate = template === "fan-studio-daily";
   const isBatchMode = periods.length > 1;
@@ -2095,6 +2094,7 @@ export function InstagramScheduleStudio({
                   <DailyFanStudioInstagramCard
                     date={activePeriod.start}
                     entries={scheduleState.entries}
+                    characters={characterState.characters}
                     theme={theme}
                     specialEmoji={normalizedSpecialEmoji}
                     specialEmojiMeaning={normalizedSpecialEmojiMeaning}
@@ -2211,6 +2211,7 @@ export function InstagramScheduleStudio({
               <DailyFanStudioInstagramCard
                 date={period.start}
                 entries={scheduleState.entries}
+                characters={characterState.characters}
                 theme={theme}
                 specialEmoji={normalizedSpecialEmoji}
                 specialEmojiMeaning={normalizedSpecialEmojiMeaning}

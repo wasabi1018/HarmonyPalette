@@ -3,7 +3,7 @@ import { DailyPlanBuilder } from "@/components/daily-plan-builder";
 import { PlanBeforeYouGoGuide } from "@/components/plan-before-you-go-guide";
 import { RecommendedPlanBuildingGuide } from "@/components/recommended-plan-building-guide";
 import type { PlanOptions } from "@/lib/plan-options";
-import { getInitialParkOperatingDayData, getInitialScheduleData } from "@/lib/supabase/initial-data";
+import { getInitialCharacterData, getInitialParkOperatingDayData, getInitialScheduleData } from "@/lib/supabase/initial-data";
 import { getPublicPlanOptions } from "@/lib/supabase/plan-options-repository";
 
 export const metadata: Metadata = {
@@ -28,8 +28,9 @@ export default async function PlanPage({
     ? candidate
     : todayInJapan();
 
-  const [initialScheduleData, initialOperatingDayData, planOptionsResult] = await Promise.all([
+  const [initialScheduleData, initialCharacterData, initialOperatingDayData, planOptionsResult] = await Promise.all([
     getInitialScheduleData(),
+    getInitialCharacterData(),
     getInitialParkOperatingDayData(),
     getPublicPlanOptions()
       .then((options) => ({ options, error: "" }))
@@ -45,6 +46,7 @@ export default async function PlanPage({
       <DailyPlanBuilder
         initialDate={initialDate}
         initialScheduleData={initialScheduleData}
+        initialCharacterData={initialCharacterData}
         initialOperatingDayData={initialOperatingDayData}
         initialPlanOptions={initialPlanOptions}
         initialPlanOptionsError={planOptionsResult.error}

@@ -746,12 +746,19 @@ function ScheduleDayGrid({
     sortTime: entry.startTime,
     entry,
   }));
-  const cards = [...regularCards, ...groupedCards].sort((left, right) => `${left.sortTime}-${left.key}`.localeCompare(`${right.sortTime}-${right.key}`, "ja"));
+  const chronologicalCards = [...regularCards, ...groupedCards]
+    .sort((left, right) => `${left.sortTime}-${left.key}`.localeCompare(`${right.sortTime}-${right.key}`, "ja"));
+  let nextFanStudioCard = 0;
+  const cards = chronologicalCards.map((card) => (
+    card.type === "fan-studio"
+      ? groupedCards[nextFanStudioCard++] ?? card
+      : card
+  ));
 
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {cards.map((card) => card.type === "entry"
-        ? <ScheduleEntryCard key={card.key} entry={card.entry} selectedCharacters={selectedCharacters} planDate={date} />
+        ? <ScheduleEntryCard key={card.key} entry={card.entry} characters={characters} selectedCharacters={selectedCharacters} planDate={date} />
         : <FanStudioCharacterCard key={card.key} date={date} name={card.name} entries={card.entries} selected={selectedCharacters.includes(card.name)} />)}
     </div>
   );

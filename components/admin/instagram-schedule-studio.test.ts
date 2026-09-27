@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   buildDailyFanStudioSchedule,
   buildFanStudioRows,
+  characterNamesForCell,
   getDailyFanStudioPeriods,
 } from "@/components/admin/instagram-schedule-studio";
 import type { Character } from "@/data/types";
@@ -56,10 +57,55 @@ test("休園日は常時登場キャラクターのハートを表示しない",
 test("休園日は個別予定も週間・日別ファンスタジオ表に表示しない", () => {
   const closedDates = new Set(["2026-09-02"]);
   const rows = buildFanStudioRows(period, [scheduledEntry], [], closedDates);
-  const daily = buildDailyFanStudioSchedule("2026-09-02", [scheduledEntry], closedDates);
+  const daily = buildDailyFanStudioSchedule("2026-09-02", [scheduledEntry], [], closedDates);
 
   assert.equal(rows[0].cells[2], "closed");
   assert.deepEqual(daily, { rooms: [], rows: [] });
+});
+
+test("Instagram画像のキャラクターを設定済みの表示順で並べる", () => {
+  const firstCharacter = {
+    ...regularCharacter,
+    id: "first-character",
+    slug: "first-character",
+    name: "先に表示するキャラクター",
+    nameKana: "さきにひょうじするきゃらくたー",
+    isFanStudioRegular: false,
+    displayOrder: 10,
+  };
+  const secondCharacter = {
+    ...regularCharacter,
+    id: "second-character",
+    slug: "second-character",
+    name: "後に表示するキャラクター",
+    nameKana: "あとにひょうじするきゃらくたー",
+    isFanStudioRegular: false,
+    displayOrder: 20,
+  };
+  const entries = [secondCharacter, firstCharacter].map((character) => ({
+    ...scheduledEntry,
+    id: `schedule-${character.id}`,
+    title: `${character.name} ファンスタジオグリーティング`,
+    characterNames: [character.name],
+  }));
+  const characters = [secondCharacter, firstCharacter];
+
+  const weekly = buildFanStudioRows(period, entries, characters);
+  const daily = buildDailyFanStudioSchedule("2026-09-02", entries, characters);
+  const overview = characterNamesForCell(
+    entries,
+    "2026-09-02",
+    "ファンスタジオ",
+    characters,
+    new Set(),
+  );
+
+  assert.deepEqual(weekly.map((row) => row.name), [firstCharacter.name, secondCharacter.name]);
+  assert.deepEqual(overview, [firstCharacter.name, secondCharacter.name]);
+  assert.deepEqual(
+    daily.rows[0].cells[0].map((item) => item.name),
+    [firstCharacter.name, secondCharacter.name],
+  );
 });
 
 test("日別ファンスタジオは選択日を含む月曜日から日曜日までを作成する", () => {
