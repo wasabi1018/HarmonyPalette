@@ -358,6 +358,13 @@ export function DailyPlanBuilder({
     setNotice("");
   };
 
+  const clearSelectedPlan = () => {
+    const formattedDate = formatDate(selectedDate, false);
+    if (!window.confirm(`${formattedDate}のプランをすべて削除しますか？`)) return;
+    clearPlan(selectedDate);
+    setNotice(`${formattedDate}のプランを削除しました。`);
+  };
+
   const openEdit = (item: DailyPlanItem) => {
     setEditingItem(item);
     setCustomForm({
@@ -547,15 +554,26 @@ export function DailyPlanBuilder({
                 {items.some((item) => !item.timeLocked) ? "・自由予定はハンドルを長押しして時刻変更" : ""}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => { setAddTab("official"); setAddOpen(true); }} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-pink px-4 text-[12px] font-black text-white shadow-soft">
+            <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+              <button type="button" onClick={() => { setAddTab("official"); setAddOpen(true); }} className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-pink px-2 text-[12px] font-black text-white shadow-soft sm:w-auto sm:px-4">
                 <ListPlus size={16} aria-hidden="true" />
                 予定を追加
               </button>
-              <button type="button" onClick={() => setExportOpen(true)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-pink/20 bg-white px-4 text-[12px] font-black text-pink shadow-soft">
+              <button type="button" onClick={() => setExportOpen(true)} className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-pink/20 bg-white px-2 text-[12px] font-black text-pink shadow-soft sm:w-auto sm:px-4">
                 <ImageDown size={16} aria-hidden="true" />
                 画像・共有
               </button>
+              {items.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearSelectedPlan}
+                  aria-label={`${formatDate(selectedDate, false)}のプランを削除`}
+                  className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-red-100 bg-white px-2 text-[12px] font-black text-red-500 shadow-soft hover:bg-red-50 sm:w-auto sm:px-3"
+                >
+                  <Trash2 size={15} aria-hidden="true" />
+                  プラン削除
+                </button>
+              )}
             </div>
           </div>
 
@@ -592,15 +610,6 @@ export function DailyPlanBuilder({
               <button type="button" onClick={() => { setAddTab("official"); setAddOpen(true); }} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-pink px-5 text-[12px] font-black text-white">
                 <Plus size={16} aria-hidden="true" />
                 最初の予定を追加
-              </button>
-            </div>
-          )}
-
-          {items.length > 0 && (
-            <div className="mt-4 flex justify-end">
-              <button type="button" onClick={() => { if (window.confirm(`${formatDate(selectedDate, false)}のプランをすべて削除しますか？`)) clearPlan(selectedDate); }} className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-[11px] font-black text-ink/40 hover:bg-pink/5 hover:text-pink">
-                <Trash2 size={14} aria-hidden="true" />
-                この日のプランを空にする
               </button>
             </div>
           )}
