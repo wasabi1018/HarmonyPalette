@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSameOriginRequest } from "@/lib/analytics/request";
 import { incrementArticleView } from "@/lib/articles/analytics-repository";
 
 export const runtime = "nodejs";
@@ -14,14 +15,7 @@ export async function POST(
   if (!SLUG_PATTERN.test(slug)) {
     return NextResponse.json({ error: "記事スラッグが正しくありません。" }, { status: 400 });
   }
-  const origin = request.headers.get("origin");
-  const fetchSite = request.headers.get("sec-fetch-site");
-  const requestUrl = new URL(request.url);
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  const host = forwardedHost || request.headers.get("host") || requestUrl.host;
-  const protocol = request.headers.get("x-forwarded-proto") || requestUrl.protocol.replace(":", "");
-  const expectedOrigin = `${protocol}://${host}`;
-  if (fetchSite !== "same-origin" || !origin || origin !== expectedOrigin) {
+  if (!isSameOriginRequest(request)) {
     return NextResponse.json({ error: "許可されていないリクエストです。" }, { status: 403 });
   }
   try {

@@ -48,6 +48,17 @@ export async function incrementSiteAnalyticsEvent(eventName: SiteAnalyticsEvent)
   return data === true;
 }
 
+export async function recordDailyUniqueVisitor(visitDate: string, visitorHash: string) {
+  const client = getSupabaseAdminClient();
+  if (!client) throw new Error("アクセス数の集計が設定されていません。");
+  const { data, error } = await client.rpc("record_daily_unique_visitor", {
+    visitor_date_arg: visitDate,
+    visitor_hash_arg: visitorHash,
+  });
+  if (error) throw new Error(error.message);
+  return data === true;
+}
+
 async function listViewRows(startDate: string) {
   const client = getSupabaseAdminClient();
   if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
@@ -114,6 +125,7 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
     }),
   );
   const dateTotals = new Map<string, number>();
+  const uniqueVisitorTotals = new Map<string, number>();
   const homeVisitTotals = new Map<string, number>();
   const planCreationTotals = new Map<string, number>();
   const planImageSaveTotals = new Map<string, number>();
@@ -143,6 +155,9 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
     const count = Number(row.event_count || 0);
     const date = asText(row.event_date);
     const eventName = asText(row.event_name);
+    if (eventName === "unique_visitor") {
+      uniqueVisitorTotals.set(date, (uniqueVisitorTotals.get(date) || 0) + count);
+    }
     if (eventName === "home_view") {
       homeVisitTotals.set(date, (homeVisitTotals.get(date) || 0) + count);
       homeVisits += count;
@@ -169,6 +184,7 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
     const date = dateDaysAgo(days - index - 1);
     return {
       date,
+      uniqueVisitors: uniqueVisitorTotals.get(date) || 0,
       views: dateTotals.get(date) || 0,
       homeVisits: homeVisitTotals.get(date) || 0,
       planCreations: planCreationTotals.get(date) || 0,
@@ -180,9 +196,16 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
     .filter((article) => article.views > 0)
     .sort((left, right) => right.views - left.views)
     .slice(0, 10);
+  const totalDailyUniqueVisitors = daily.reduce(
+    (total, point) => total + point.uniqueVisitors,
+    0,
+  );
 
   return {
     rangeDays: days,
+    todayUniqueVisitors: uniqueVisitorTotals.get(today) || 0,
+    averageDailyUniqueVisitors: Math.round((totalDailyUniqueVisitors / days) * 10) / 10,
+    peakDailyUniqueVisitors: Math.max(...daily.map((point) => point.uniqueVisitors), 0),
     totalViews,
     todayViews,
     averageViews: Math.round((totalViews / days) * 10) / 10,

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSameOriginRequest } from "@/lib/analytics/request";
 import { incrementSiteAnalyticsEvent } from "@/lib/articles/analytics-repository";
 import type { SiteAnalyticsEvent } from "@/lib/articles/types";
 
@@ -12,18 +13,8 @@ const SITE_EVENTS = new Set<SiteAnalyticsEvent>([
   "plan_shared",
 ]);
 
-function isSameOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  const fetchSite = request.headers.get("sec-fetch-site");
-  const requestUrl = new URL(request.url);
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  const host = forwardedHost || request.headers.get("host") || requestUrl.host;
-  const protocol = request.headers.get("x-forwarded-proto") || requestUrl.protocol.replace(":", "");
-  return fetchSite === "same-origin" && origin === `${protocol}://${host}`;
-}
-
 export async function POST(request: Request) {
-  if (!isSameOrigin(request)) {
+  if (!isSameOriginRequest(request)) {
     return NextResponse.json({ error: "許可されていないリクエストです。" }, { status: 403 });
   }
 

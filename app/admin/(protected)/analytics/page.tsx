@@ -5,7 +5,7 @@ import type { ArticleAnalyticsData } from "@/lib/articles/types";
 
 export const metadata: Metadata = {
   title: "サイト分析",
-  description: "TOPページ訪問、マイプラン作成、画像保存・共有、記事閲覧の推移を確認します。",
+  description: "日次UU、TOPページ訪問、マイプラン作成、画像保存・共有、記事閲覧の推移を確認します。",
 };
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,9 @@ export const dynamic = "force-dynamic";
 function emptyAnalytics(rangeDays: number): ArticleAnalyticsData {
   return {
     rangeDays,
+    todayUniqueVisitors: 0,
+    averageDailyUniqueVisitors: 0,
+    peakDailyUniqueVisitors: 0,
     totalViews: 0,
     todayViews: 0,
     averageViews: 0,

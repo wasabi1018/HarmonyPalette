@@ -10,10 +10,17 @@ import {
   Home,
   ImageDown,
   Share2,
+  UsersRound,
 } from "lucide-react";
 import type { ArticleAnalyticsData, ArticleAnalyticsPoint } from "@/lib/articles/types";
 
-type MetricKey = "views" | "homeVisits" | "planCreations" | "planImageSaves" | "planShares";
+type MetricKey =
+  | "uniqueVisitors"
+  | "views"
+  | "homeVisits"
+  | "planCreations"
+  | "planImageSaves"
+  | "planShares";
 
 const METRICS: Record<MetricKey, {
   label: string;
@@ -21,6 +28,12 @@ const METRICS: Record<MetricKey, {
   barClass: string;
   selectedClass: string;
 }> = {
+  uniqueVisitors: {
+    label: "日次ユニーク訪問",
+    shortLabel: "UU",
+    barClass: "bg-[#39a6a0]/80 group-hover:bg-[#248a85]",
+    selectedClass: "bg-[#248a85] ring-[#248a85]/25",
+  },
   views: {
     label: "記事閲覧",
     shortLabel: "記事閲覧",
@@ -86,7 +99,7 @@ export function ArticleAnalyticsDashboard({
   data: ArticleAnalyticsData;
   setupError?: string;
 }) {
-  const [metric, setMetric] = useState<MetricKey>("views");
+  const [metric, setMetric] = useState<MetricKey>("uniqueVisitors");
   const [selectedDate, setSelectedDate] = useState("");
   const metricConfig = METRICS[metric];
   const selectedPoint = data.daily.find((point) => point.date === selectedDate);
@@ -94,9 +107,10 @@ export function ArticleAnalyticsDashboard({
 
   const downloadCsv = () => {
     const rows = [
-      ["日付", "記事閲覧数", "TOPページ訪問数", "マイプラン作成数", "画像保存数", "共有数"],
+      ["日付", "日次ユニークブラウザ数", "記事閲覧数", "TOPページ訪問数", "マイプラン作成数", "画像保存数", "共有数"],
       ...data.daily.map((point) => [
         point.date,
+        String(point.uniqueVisitors),
         String(point.views),
         String(point.homeVisits),
         String(point.planCreations),
@@ -120,42 +134,44 @@ export function ArticleAnalyticsDashboard({
 
   const summaries = [
     {
+      label: "今日のユニーク訪問",
+      value: data.todayUniqueVisitors,
+      detail: `${data.rangeDays}日平均 ${data.averageDailyUniqueVisitors.toLocaleString("ja-JP")}件 ・ 最大 ${data.peakDailyUniqueVisitors.toLocaleString("ja-JP")}件`,
+      icon: UsersRound,
+      tone: "text-[#248a85] bg-[#eaf8f7]",
+    },
+    {
       label: `${data.rangeDays}日間の記事閲覧`,
       value: data.totalViews,
-      today: data.todayViews,
-      average: data.averageViews,
+      detail: `今日 ${data.todayViews.toLocaleString("ja-JP")}件 ・ 1日平均 ${data.averageViews.toLocaleString("ja-JP")}件`,
       icon: Eye,
       tone: "text-pink bg-pink/10",
     },
     {
       label: `${data.rangeDays}日間のTOP訪問`,
       value: data.homeVisits,
-      today: data.todayHomeVisits,
-      average: average(data.homeVisits, data.rangeDays),
+      detail: `今日 ${data.todayHomeVisits.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.homeVisits, data.rangeDays).toLocaleString("ja-JP")}件`,
       icon: Home,
       tone: "text-[#5687bd] bg-[#eef5fc]",
     },
     {
       label: `${data.rangeDays}日間のマイプラン作成`,
       value: data.planCreations,
-      today: data.todayPlanCreations,
-      average: average(data.planCreations, data.rangeDays),
+      detail: `今日 ${data.todayPlanCreations.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.planCreations, data.rangeDays).toLocaleString("ja-JP")}件`,
       icon: ClipboardCheck,
       tone: "text-[#4d987a] bg-mint/10",
     },
     {
       label: `${data.rangeDays}日間の画像保存`,
       value: data.planImageSaves,
-      today: data.todayPlanImageSaves,
-      average: average(data.planImageSaves, data.rangeDays),
+      detail: `今日 ${data.todayPlanImageSaves.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.planImageSaves, data.rangeDays).toLocaleString("ja-JP")}件`,
       icon: ImageDown,
       tone: "text-[#bd7f3f] bg-[#fff5e9]",
     },
     {
       label: `${data.rangeDays}日間の共有`,
       value: data.planShares,
-      today: data.todayPlanShares,
-      average: average(data.planShares, data.rangeDays),
+      detail: `今日 ${data.todayPlanShares.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.planShares, data.rangeDays).toLocaleString("ja-JP")}件`,
       icon: Share2,
       tone: "text-[#8264a6] bg-[#f4effa]",
     },
@@ -171,7 +187,7 @@ export function ArticleAnalyticsDashboard({
           </p>
           <h1 className="mt-2 font-display text-[30px] font-semibold text-ink sm:text-[36px]">サイト分析</h1>
           <p className="mt-2 text-[12px] font-bold leading-6 text-ink/50">
-            個人を識別する情報を保存せず、訪問・マイプラン利用・記事閲覧の傾向を確認します。
+            個人を直接識別する情報を保存せず、訪問・マイプラン利用・記事閲覧の傾向を確認します。
           </p>
         </div>
         <button
@@ -207,8 +223,8 @@ export function ArticleAnalyticsDashboard({
         ))}
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {summaries.map(({ label, value, today, average: dailyAverage, icon: Icon, tone }) => (
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {summaries.map(({ label, value, detail, icon: Icon, tone }) => (
           <div key={label} className="rounded-2xl border border-ink/[0.07] bg-white p-5 shadow-soft">
             <span className={`grid h-10 w-10 place-items-center rounded-xl ${tone}`}>
               <Icon size={18} aria-hidden="true" />
@@ -218,12 +234,15 @@ export function ArticleAnalyticsDashboard({
               {value.toLocaleString("ja-JP")}
             </strong>
             <p className="mt-1 text-[9px] font-bold text-ink/35">
-              今日 {today.toLocaleString("ja-JP")}件 ・ 1日平均 {dailyAverage.toLocaleString("ja-JP")}件
+              {detail}
             </p>
           </div>
         ))}
       </div>
       <p className="mt-3 text-[9px] font-bold leading-5 text-ink/35">
+        UUは同じブラウザを日本時間の同じ日に1回として数えます。別端末・別ブラウザ・保存データの削除後は別の訪問として集計されます。
+        期間をまたぐ同一人物の判定は行わないため、期間合計ではなく今日・日平均・最大・日別推移を表示します。
+        <br />
         TOP訪問は同じタブ内の同じ日に1回、マイプラン作成は最初の予定追加時に1回として集計します。
         画像保存は保存開始時、共有は端末の共有操作が完了した時に数えます。
       </p>

@@ -40,6 +40,7 @@ export type ArticleMedia = {
 
 export type ArticleAnalyticsPoint = {
   date: string;
+  uniqueVisitors: number;
   views: number;
   homeVisits: number;
   planCreations: number;
@@ -63,6 +64,9 @@ export type ArticleAnalyticsItem = {
 
 export type ArticleAnalyticsData = {
   rangeDays: number;
+  todayUniqueVisitors: number;
+  averageDailyUniqueVisitors: number;
+  peakDailyUniqueVisitors: number;
   totalViews: number;
   todayViews: number;
   averageViews: number;
