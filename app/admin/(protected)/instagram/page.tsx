@@ -4,6 +4,7 @@ import { ChevronRight, Instagram, Sparkles } from "lucide-react";
 import { InstagramEmbedSettingsForm } from "@/components/admin/instagram-embed-settings-form";
 import { CharacterRecommendationStudio } from "@/components/admin/character-recommendation-studio";
 import { InstagramScheduleStudio } from "@/components/admin/instagram-schedule-studio";
+import { InstagramDmCampaignManager } from "@/components/admin/instagram-dm-campaign-manager";
 import { defaultInstagramPostUrls } from "@/data/instagram-posts";
 import { getInstagramEmbedSettings } from "@/lib/instagram-settings";
 import {
@@ -76,6 +77,7 @@ export default async function AdminInstagramPage() {
         initialCharacterData={initialCharacterData}
         initialParkOperatingDayData={initialParkOperatingDayData}
       />
+      <InstagramDmCampaignManager />
       <InstagramScheduleStudio
         initialScheduleData={initialScheduleData}
         initialCharacterData={initialCharacterData}

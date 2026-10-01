@@ -181,7 +181,39 @@ articles. Cron endpoints require:
 Authorization: Bearer <CRON_SECRET>
 ```
 
-## 7. Read APIs
+## 7. Instagram comment-to-DM automation (not enabled by migration alone)
+
+Review and apply `supabase/migrations/202609300001_instagram_dm_campaigns.sql` after a backup. It creates three service-role-only tables, a short-lease queue claim function, and a public PNG bucket. The image URL is accessible to anyone who has it; this is not a cryptographic follower-only download.
+
+1. In Meta, configure an Instagram professional account and an app using Instagram Login. Request `instagram_business_basic`, `instagram_business_manage_comments`, and `instagram_business_manage_messages`; App Review or tester roles may be required before public use. Confirm the currently supported Graph API version in Meta's dashboard. Obtain the Instagram account ID, access token, app secret, and username. Arrange token renewal before expiry.
+2. Add the server-only `INSTAGRAM_*` variables from `.env.example` to the deployment. Keep the token, app secret, webhook verify token, and worker secret out of browser code and source control.
+3. Set the webhook callback to `https://<site>/api/instagram/webhook`, enter `INSTAGRAM_WEBHOOK_VERIFY_TOKEN`, and subscribe the account to `comments`, `messages`, and `messaging_postbacks`. Confirm GET verification and signed POST deliveries using a test account.
+4. Schedule the worker. Save the site URL and worker secret to Supabase Vault, then run the following SQL manually after replacing placeholders. If the site URL secret already exists for official monitoring, do not create it again.
+
+```sql
+select vault.create_secret('https://your-public-site.example', 'harmony_palette_site_url');
+select vault.create_secret('replace-with-instagram-worker-secret', 'harmony_palette_instagram_dm_worker_secret');
+
+select cron.schedule(
+  'harmony-palette-instagram-dm',
+  '* * * * *',
+  $$
+  select net.http_get(
+    url := (select decrypted_secret from vault.decrypted_secrets where name = 'harmony_palette_site_url') || '/api/cron/instagram-dm',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'harmony_palette_instagram_dm_worker_secret')
+    )
+  );
+  $$
+);
+```
+
+5. Create and publish the target Reel. Resolve its **media ID** (not the Reel URL or shortcode) with the Instagram Graph API; cross-check the returned permalink. In `/admin/instagram`, create the monthly draft and use "自動DM用にセット" for each generated character ranking (or upload a saved PNG and paste its DM text). Review keywords and activate only after a test account completes the full flow.
+6. In the admin status table, inspect `failed` and `needs_review`. Do not blindly retry `needs_review`: Meta may have accepted the send before a timeout. Pausing stops both new comments and pending sends. A same-user second comment is not the designed retry mechanism; the DM button is.
+
+The worker claims up to three deliveries concurrently per pass and makes up to three passes per invocation. Each delivery completes one stage per pass; the next stage is claimed only after the previous stage is recorded. The webhook starts an immediate pass after persisting events, while the one-minute Cron is the durable fallback. Meta and Supabase rate limits still apply.
+
+## 8. Read APIs
 
 - Published schedules: `/api/schedules`
 - Published attraction operations: `/api/operations?date=YYYY-MM-DD`

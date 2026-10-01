@@ -8,6 +8,7 @@ import {
   ImageDown,
   Link2,
   LoaderCircle,
+  Send,
   Sparkles,
 } from "lucide-react";
 import { toBlob } from "html-to-image";
@@ -442,6 +443,7 @@ export function CharacterRecommendationStudio({
   const [selectedCharacterId, setSelectedCharacterId] = useState(initialCharacterData.characters[0]?.id ?? "");
   const [feedback, setFeedback] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPreparingDm, setIsPreparingDm] = useState(false);
   const [isDisplaying, setIsDisplaying] = useState(false);
   const cardRef = useRef<HTMLElement>(null);
   const { containerRef, scale } = usePreviewScale();
@@ -476,7 +478,7 @@ export function CharacterRecommendationStudio({
     }),
     [character, recommendations, selectedMonth],
   );
-  const isBusy = isDownloading || isDisplaying;
+  const isBusy = isDownloading || isDisplaying || isPreparingDm;
   const canCreate = Boolean(character && recommendations.length > 0);
 
   const copyText = async (value: string, successMessage: string) => {
@@ -505,6 +507,29 @@ export function CharacterRecommendationStudio({
       setFeedback(error instanceof Error ? error.message : "画像の作成に失敗しました。");
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handlePrepareDm = async () => {
+    if (!character) return;
+    setIsPreparingDm(true);
+    setFeedback("");
+    try {
+      const blob = await getBlob();
+      const file = new File([blob], `harmony-palette_oshi_${character.slug}_${selectedMonth}.png`, { type: "image/png" });
+      window.dispatchEvent(new CustomEvent("harmony:instagram-dm-asset", { detail: {
+        month: selectedMonth,
+        characterName: character.name,
+        keywords: character.name,
+        dmText: message,
+        file,
+      } }));
+      document.getElementById("instagram-dm-manager")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setFeedback("自動DM欄に画像と文言をセットしました。内容を確認して登録してください。");
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "画像の準備に失敗しました。");
+    } finally {
+      setIsPreparingDm(false);
     }
   };
 
@@ -665,6 +690,15 @@ export function CharacterRecommendationStudio({
               >
                 {isDownloading ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <ImageDown size={16} aria-hidden="true" />}
                 {isDownloading ? "作成中…" : "PNG画像を保存"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handlePrepareDm()}
+                disabled={isBusy || !canCreate}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-lavender/25 px-4 text-[11px] font-black text-lavender transition hover:bg-lavender/5 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isPreparingDm ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <Send size={16} aria-hidden="true" />}
+                自動DM用にセット
               </button>
             </div>
           </div>
