@@ -64,6 +64,7 @@ export type ArticleAnalyticsItem = {
 
 export type ArticleAnalyticsData = {
   rangeDays: number;
+  totalDailyUniqueVisitors: number;
   todayUniqueVisitors: number;
   averageDailyUniqueVisitors: number;
   peakDailyUniqueVisitors: number;

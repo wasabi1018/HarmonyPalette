@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 function emptyAnalytics(rangeDays: number): ArticleAnalyticsData {
   return {
     rangeDays,
+    totalDailyUniqueVisitors: 0,
     todayUniqueVisitors: 0,
     averageDailyUniqueVisitors: 0,
     peakDailyUniqueVisitors: 0,

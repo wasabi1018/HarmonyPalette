@@ -134,9 +134,9 @@ export function ArticleAnalyticsDashboard({
 
   const summaries = [
     {
-      label: "今日のユニーク訪問",
-      value: data.todayUniqueVisitors,
-      detail: `${data.rangeDays}日平均 ${data.averageDailyUniqueVisitors.toLocaleString("ja-JP")}件 ・ 最大 ${data.peakDailyUniqueVisitors.toLocaleString("ja-JP")}件`,
+      label: `${data.rangeDays}日間のユニーク訪問`,
+      value: data.totalDailyUniqueVisitors,
+      detail: `今日 ${data.todayUniqueVisitors.toLocaleString("ja-JP")}件 ・ 1日平均 ${data.averageDailyUniqueVisitors.toLocaleString("ja-JP")}件 ・ 最大 ${data.peakDailyUniqueVisitors.toLocaleString("ja-JP")}件`,
       icon: UsersRound,
       tone: "text-[#248a85] bg-[#eaf8f7]",
     },
@@ -241,7 +241,7 @@ export function ArticleAnalyticsDashboard({
       </div>
       <p className="mt-3 text-[9px] font-bold leading-5 text-ink/35">
         UUは同じブラウザを日本時間の同じ日に1回として数えます。別端末・別ブラウザ・保存データの削除後は別の訪問として集計されます。
-        期間をまたぐ同一人物の判定は行わないため、期間合計ではなく今日・日平均・最大・日別推移を表示します。
+        期間合計は日次UUを足した延べ数です。同じブラウザが別の日に訪問した場合は、それぞれ1回として数えます。
         <br />
         TOP訪問は同じタブ内の同じ日に1回、マイプラン作成は最初の予定追加時に1回として集計します。
         画像保存は保存開始時、共有は端末の共有操作が完了した時に数えます。

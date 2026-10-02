@@ -203,6 +203,7 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
 
   return {
     rangeDays: days,
+    totalDailyUniqueVisitors,
     todayUniqueVisitors: uniqueVisitorTotals.get(today) || 0,
     averageDailyUniqueVisitors: Math.round((totalDailyUniqueVisitors / days) * 10) / 10,
     peakDailyUniqueVisitors: Math.max(...daily.map((point) => point.uniqueVisitors), 0),
