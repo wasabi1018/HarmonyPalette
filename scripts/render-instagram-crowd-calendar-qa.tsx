@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import React from "react";
@@ -21,5 +21,8 @@ const calendar = buildCrowdCalendarMonth(
 );
 if (!calendar) throw new Error("QA用の対象月を生成できませんでした。");
 
-const html = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>混雑予想カレンダー QA</title></head><body style="margin:0;width:1080px">${renderToStaticMarkup(<CrowdCalendarCard calendar={calendar} createdOn="2026-10-02" />)}</body></html>`;
+const logoDataUrl = `data:image/png;base64,${readFileSync(join(process.cwd(), "public", "logo-compact.png")).toString("base64")}`;
+const cardHtml = renderToStaticMarkup(<CrowdCalendarCard calendar={calendar} createdOn="2026-10-02" />)
+  .replace('src="/logo-compact.png"', `src="${logoDataUrl}"`);
+const html = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>混雑予想カレンダー QA</title></head><body style="margin:0;width:1080px">${cardHtml}</body></html>`;
 writeFileSync(join(process.cwd(), "audit", "instagram-crowd-calendar-qa.html"), html, "utf8");

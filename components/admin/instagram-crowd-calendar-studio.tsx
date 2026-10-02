@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import {
   CalendarDays,
   ChevronLeft,
@@ -98,10 +99,15 @@ export function CrowdCalendarCard({
       <span style={{ position: "absolute", left: -90, bottom: -95, width: 245, height: 245, borderRadius: "50%", background: "#f3effb" }} />
 
       <header style={{ position: "absolute", top: 54, left: 52, right: 52 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, height: 48 }}>
-          <span style={{ display: "grid", placeItems: "center", width: 46, height: 46, borderRadius: 15, background: "#eb6e98", color: "#fff", fontSize: 28, fontWeight: 900 }}>H</span>
-          <span style={{ fontSize: 32, fontWeight: 900 }}>Harmony <span style={{ color: "#eb6e98" }}>Palette</span></span>
-        </div>
+        <Image
+          src="/logo-compact.png"
+          alt="Harmony Palette"
+          width={309}
+          height={52}
+          priority
+          unoptimized
+          style={{ display: "block", width: "auto", height: 52, objectFit: "contain" }}
+        />
         <p style={{ margin: "45px 0 0", color: "#eb6e98", fontSize: 19, fontWeight: 900, letterSpacing: 3 }}>MONTHLY CROWD FORECAST</p>
         <h2 style={{ margin: "14px 0 0", fontSize: 53, fontWeight: 900, lineHeight: 1.25, letterSpacing: "-0.03em" }}>
           {calendar.year}年{calendar.month}月 混雑予想
