@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+  <defs>
+    <pattern id="closedHatch" patternUnits="userSpaceOnUse" width="16" height="16" patternTransform="rotate(45)">
+      <rect width="16" height="16" fill="#F0EEF1"/>
+      <rect width="5" height="16" fill="#DFDAE0"/>
+    </pattern>
+  </defs>
+  <rect width="1080" height="1350" fill="#FFFAFC"/>
+  <circle cx="1039" cy="75" r="178" fill="#FFF0F5"/>
+  <circle cx="26" cy="1300" r="126" fill="#F3EFFB"/>
+  <rect x="52" y="54" width="46" height="46" rx="15" fill="#EB6E98"/>
+  <text x="75" y="86" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="28" font-weight="900" fill="#FFFFFF" text-anchor="middle">H</text>
+  <text x="114" y="87" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="32" font-weight="900" fill="#3E3540" >Harmony</text>
+  <text x="278" y="87" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="32" font-weight="900" fill="#EB6E98" >Palette</text>
+  <rect x="786" y="55" width="244" height="47" rx="24" fill="#FFFFFF"/>
+  <text x="908" y="85" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="19" font-weight="900" fill="#D65F88" text-anchor="middle" letter-spacing="2">DESIGN SAMPLE</text>
+  <text x="54" y="166" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="19" font-weight="900" fill="#EB6E98" letter-spacing="3">MONTHLY CROWD FORECAST</text>
+  <text x="52" y="238" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="53" font-weight="900" fill="#3E3540" >2026年10月 混雑予想</text>
+  <text x="55" y="282" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="22" font-weight="700" fill="#766B74" >日付ごとの混雑の目安を、ひと目で。</text>
+  <rect x="54" y="307" width="234" height="62" rx="21" fill="#FFFFFF" stroke="#F2DFE7" stroke-width="2"/>
+    <rect x="67" y="320" width="36" height="36" rx="11" fill="#F8D9DE" stroke="#D85F70" stroke-width="2"/>
+    <text x="116" y="348" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="24" font-weight="900" fill="#3E3540" >大混雑</text>
+  <rect x="300" y="307" width="234" height="62" rx="21" fill="#FFFFFF" stroke="#F2DFE7" stroke-width="2"/>
+    <rect x="313" y="320" width="36" height="36" rx="11" fill="#FFF0C2" stroke="#BD852B" stroke-width="2"/>
+    <text x="362" y="348" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="24" font-weight="900" fill="#3E3540" >混雑</text>
+  <rect x="546" y="307" width="234" height="62" rx="21" fill="#FFFFFF" stroke="#F2DFE7" stroke-width="2"/>
+    <rect x="559" y="320" width="36" height="36" rx="11" fill="#DDF1F9" stroke="#438EAF" stroke-width="2"/>
+    <text x="608" y="348" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="24" font-weight="900" fill="#3E3540" >普通</text>
+  <rect x="792" y="307" width="234" height="62" rx="21" fill="#FFFFFF" stroke="#F2DFE7" stroke-width="2"/>
+    <rect x="805" y="320" width="36" height="36" rx="11" fill="url(#closedHatch)" stroke="#B7AFB7" stroke-width="2"/>
+    <text x="854" y="348" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="24" font-weight="900" fill="#3E3540" >休園日</text>
+  <rect x="50" y="396" width="980" height="753" rx="30" fill="#FFFFFF" stroke="#F5DDE7" stroke-width="2"/>
+  <text x="79" y="457" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="36" font-weight="900" fill="#3E3540" >2026  /  10</text>
+  <text x="1001" y="455" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="18" font-weight="800" fill="#887B85" text-anchor="end">混雑予想カレンダー</text>
+  <rect x="51" y="475" width="978" height="57" fill="#FFF7FA"/>
+  <line x1="51" y1="475" x2="1029" y2="475" stroke="#F6E7ED" stroke-width="2"/>
+  <line x1="51" y1="532" x2="1029" y2="532" stroke="#F6E7ED" stroke-width="2"/>
+  <text x="125.15" y="516" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="22" font-weight="900" fill="#D85F84" text-anchor="middle">日</text><text x="263.45000000000005" y="516" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="22" font-weight="900" fill="#6B6069" text-anchor="middle">月</text><text x="401.75" y="516" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="22" font-weight="900" fill="#6B6069" text-anchor="middle">火</text><text x="540.0500000000001" y="516" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="22" font-weight="900" fill="#6B6069" text-anchor="middle">水</text><text x="678.35" y="516" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="22" font-weight="900" fill="#6B6069" text-anchor="middle">木</text><text x="816.65" y="516" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="22" font-weight="900" fill="#6B6069" text-anchor="middle">金</text><text x="954.95" y="516" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="22" font-weight="900" fill="#438EAF" text-anchor="middle">土</text>
+  <rect x="56" y="538" width="134.3" height="116" rx="11" fill="#F8F6F8"/>
+      <text x="71" y="580" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="29" font-weight="800" fill="#CFC5CD" >27</text><rect x="194.3" y="538" width="134.3" height="116" rx="11" fill="#F8F6F8"/>
+      <text x="209.3" y="580" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="29" font-weight="800" fill="#CFC5CD" >28</text><rect x="332.6" y="538" width="134.3" height="116" rx="11" fill="#F8F6F8"/>
+      <text x="347.6" y="580" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="29" font-weight="800" fill="#CFC5CD" >29</text><rect x="470.90000000000003" y="538" width="134.3" height="116" rx="11" fill="#F8F6F8"/>
+      <text x="485.90000000000003" y="580" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="29" font-weight="800" fill="#CFC5CD" >30</text><rect x="609.2" y="538" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="611.2" y="540" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="624.2" y="589" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >1</text><rect x="747.5" y="538" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="749.5" y="540" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="762.5" y="589" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >2</text><rect x="885.8000000000001" y="538" width="134.3" height="116" rx="11" fill="#FFF0C2"/>
+    <rect x="887.8000000000001" y="540" width="130.3" height="112" rx="9" fill="none" stroke="#BD852B" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="900.8000000000001" y="589" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >3</text><rect x="56" y="658" width="134.3" height="116" rx="11" fill="#FFF0C2"/>
+    <rect x="58" y="660" width="130.3" height="112" rx="9" fill="none" stroke="#BD852B" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="71" y="709" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >4</text><rect x="194.3" y="658" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="196.3" y="660" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="209.3" y="709" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >5</text><rect x="332.6" y="658" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="334.6" y="660" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="347.6" y="709" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >6</text><rect x="470.90000000000003" y="658" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="472.90000000000003" y="660" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="485.90000000000003" y="709" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >7</text><rect x="609.2" y="658" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="611.2" y="660" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="624.2" y="709" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >8</text><rect x="747.5" y="658" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="749.5" y="660" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="762.5" y="709" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >9</text><rect x="885.8000000000001" y="658" width="134.3" height="116" rx="11" fill="#FFF0C2"/>
+    <rect x="887.8000000000001" y="660" width="130.3" height="112" rx="9" fill="none" stroke="#BD852B" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="900.8000000000001" y="709" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >10</text><rect x="56" y="778" width="134.3" height="116" rx="11" fill="#F8D9DE"/>
+    <rect x="58" y="780" width="130.3" height="112" rx="9" fill="none" stroke="#D85F70" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="71" y="829" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >11</text><rect x="194.3" y="778" width="134.3" height="116" rx="11" fill="#FFF0C2"/>
+    <rect x="196.3" y="780" width="130.3" height="112" rx="9" fill="none" stroke="#BD852B" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="209.3" y="829" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >12</text><rect x="332.6" y="778" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="334.6" y="780" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="347.6" y="829" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >13</text><rect x="470.90000000000003" y="778" width="134.3" height="116" rx="11" fill="url(#closedHatch)"/>
+    <rect x="472.90000000000003" y="780" width="130.3" height="112" rx="9" fill="none" stroke="#B7AFB7" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="485.90000000000003" y="829" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#817881" >14</text><rect x="609.2" y="778" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="611.2" y="780" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="624.2" y="829" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >15</text><rect x="747.5" y="778" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="749.5" y="780" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="762.5" y="829" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >16</text><rect x="885.8000000000001" y="778" width="134.3" height="116" rx="11" fill="#FFF0C2"/>
+    <rect x="887.8000000000001" y="780" width="130.3" height="112" rx="9" fill="none" stroke="#BD852B" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="900.8000000000001" y="829" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >17</text><rect x="56" y="898" width="134.3" height="116" rx="11" fill="#F8D9DE"/>
+    <rect x="58" y="900" width="130.3" height="112" rx="9" fill="none" stroke="#D85F70" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="71" y="949" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >18</text><rect x="194.3" y="898" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="196.3" y="900" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="209.3" y="949" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >19</text><rect x="332.6" y="898" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="334.6" y="900" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="347.6" y="949" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >20</text><rect x="470.90000000000003" y="898" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="472.90000000000003" y="900" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="485.90000000000003" y="949" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >21</text><rect x="609.2" y="898" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="611.2" y="900" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="624.2" y="949" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >22</text><rect x="747.5" y="898" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="749.5" y="900" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="762.5" y="949" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >23</text><rect x="885.8000000000001" y="898" width="134.3" height="116" rx="11" fill="#FFF0C2"/>
+    <rect x="887.8000000000001" y="900" width="130.3" height="112" rx="9" fill="none" stroke="#BD852B" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="900.8000000000001" y="949" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >24</text><rect x="56" y="1018" width="134.3" height="116" rx="11" fill="#F8D9DE"/>
+    <rect x="58" y="1020" width="130.3" height="112" rx="9" fill="none" stroke="#D85F70" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="71" y="1069" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >25</text><rect x="194.3" y="1018" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="196.3" y="1020" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="209.3" y="1069" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >26</text><rect x="332.6" y="1018" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="334.6" y="1020" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="347.6" y="1069" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >27</text><rect x="470.90000000000003" y="1018" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="472.90000000000003" y="1020" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="485.90000000000003" y="1069" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >28</text><rect x="609.2" y="1018" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="611.2" y="1020" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="624.2" y="1069" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >29</text><rect x="747.5" y="1018" width="134.3" height="116" rx="11" fill="#DDF1F9"/>
+    <rect x="749.5" y="1020" width="130.3" height="112" rx="9" fill="none" stroke="#438EAF" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="762.5" y="1069" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >30</text><rect x="885.8000000000001" y="1018" width="134.3" height="116" rx="11" fill="#FFF0C2"/>
+    <rect x="887.8000000000001" y="1020" width="130.3" height="112" rx="9" fill="none" stroke="#BD852B" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="900.8000000000001" y="1069" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="38" font-weight="900" fill="#3E3540" >31</text>
+  <text x="55" y="1207" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="21" font-weight="700" fill="#695D67" >※ 混雑区分と休園日はデザイン確認用の仮データです。</text>
+  <text x="55" y="1243" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="20" font-weight="700" fill="#8F838B" >※ 混雑予想は目安です。最新の営業情報もご確認ください。</text>
+  <line x1="54" y1="1270" x2="1026" y2="1270" stroke="#F3DFE8" stroke-width="2"/>
+  <text x="54" y="1307" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="25" font-weight="900" fill="#D65F88" >Harmony Palette</text>
+  <text x="1026" y="1307" font-family="'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif" font-size="18" font-weight="800" fill="#9A8792" text-anchor="end" letter-spacing="2">CROWD CALENDAR</text>
+</svg>
