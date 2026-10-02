@@ -4,6 +4,7 @@ import { ChevronRight, Instagram, Sparkles } from "lucide-react";
 import { InstagramEmbedSettingsForm } from "@/components/admin/instagram-embed-settings-form";
 import { CharacterRecommendationStudio } from "@/components/admin/character-recommendation-studio";
 import { InstagramScheduleStudio } from "@/components/admin/instagram-schedule-studio";
+import { InstagramCrowdCalendarStudio } from "@/components/admin/instagram-crowd-calendar-studio";
 import { defaultInstagramPostUrls } from "@/data/instagram-posts";
 import { getInstagramEmbedSettings } from "@/lib/instagram-settings";
 import {
@@ -14,7 +15,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Instagram画像作成",
-  description: "推しキャラおすすめ日、全体予定、ファンスタジオの週間・日別予定をInstagram画像にまとめます。",
+  description: "混雑予想カレンダー、推しキャラおすすめ日、全体予定、ファンスタジオの週間・日別予定をInstagram画像にまとめます。",
 };
 
 export default async function AdminInstagramPage() {
@@ -57,7 +58,7 @@ export default async function AdminInstagramPage() {
               Instagram画像作成
             </h1>
             <p className="mt-2 max-w-[720px] text-[13px] font-bold leading-6 text-ink/55">
-              管理中の予定から、推しキャラおすすめ日の返信画像、全体スケジュール、ファンスタジオの週間・日別投稿画像を自動作成します。
+              混雑予想カレンダーを日別に編集し、推しキャラおすすめ日や予定の画像とともにInstagram投稿用に保存できます。
             </p>
           </div>
           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-[10px] font-black text-lavender shadow-sm">
@@ -71,6 +72,7 @@ export default async function AdminInstagramPage() {
         initialPostUrls={postUrls}
         setupError={setupError}
       />
+      <InstagramCrowdCalendarStudio />
       <CharacterRecommendationStudio
         initialScheduleData={initialScheduleData}
         initialCharacterData={initialCharacterData}
