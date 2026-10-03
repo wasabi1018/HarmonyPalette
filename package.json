@@ -12,6 +12,7 @@
     "test:official-monitor": "tsx --test lib/official-monitor/diff.test.ts lib/official-monitor/probe.test.ts lib/official-monitor/runner.test.ts lib/official-monitor/summary.test.ts",
     "test:schedule-calendar": "tsx --test lib/schedule-calendar.test.ts components/schedule-month-calendar.test.tsx",
     "test:character-recommendation": "tsx --test lib/character-recommendation.test.ts",
+    "test:instagram-dm": "tsx --test lib/instagram-dm/*.test.ts",
     "seed:character-theme-colors": "tsx scripts/seed-character-theme-colors.ts",
     "seed:plan-options": "tsx scripts/seed-plan-options.ts",
     "import:official": "tsx scripts/import-official.ts",

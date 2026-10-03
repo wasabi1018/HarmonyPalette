@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { useInstagramSessionState, useInstagramUnsavedChanges } from "./instagram-session-provider";
 import {
   CalendarDays,
   ChevronLeft,
@@ -188,13 +189,15 @@ function downloadBlob(blob: Blob, fileName: string) {
 }
 
 export function InstagramCrowdCalendarStudio() {
-  const [month, setMonth] = useState(() => todayInJapan().slice(0, 7));
-  const [brush, setBrush] = useState<CrowdLevel>("normal");
-  const [overrides, setOverrides] = useState<CrowdCalendarOverrides>({});
-  const [savedOverrides, setSavedOverrides] = useState<CrowdCalendarOverrides>({});
-  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [month, setMonth] = useInstagramSessionState("crowd.month", () => todayInJapan().slice(0, 7));
+  const [brush, setBrush] = useInstagramSessionState<CrowdLevel>("crowd.brush", "normal");
+  const [overrides, setOverrides] = useInstagramSessionState<CrowdCalendarOverrides>("crowd.overrides", {});
+  const [savedOverrides, setSavedOverrides] = useInstagramSessionState<CrowdCalendarOverrides>("crowd.saved-overrides", {});
+  const [savedAt, setSavedAt] = useInstagramSessionState<string | null>("crowd.saved-at", null);
+  const [loadedMonth, setLoadedMonth] = useInstagramSessionState("crowd.loaded-month", "");
+  const loadedMonthRef = useRef(loadedMonth);
   const [closedDates, setClosedDates] = useState<ReadonlySet<string>>(() => new Set());
-  const [history, setHistory] = useState<CrowdCalendarOverrides[]>([]);
+  const [history, setHistory] = useInstagramSessionState<CrowdCalendarOverrides[]>("crowd.history", []);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
@@ -206,6 +209,7 @@ export function InstagramCrowdCalendarStudio() {
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const captureRef = useRef<HTMLDivElement>(null);
   const dirty = !crowdOverridesEqual(overrides, savedOverrides);
+  useInstagramUnsavedChanges("crowd", dirty);
 
   const calendar = useMemo(
     () => buildCrowdCalendarMonth(month, overrides, closedDates),
@@ -231,10 +235,14 @@ export function InstagramCrowdCalendarStudio() {
         if (!Array.isArray(loadedClosedDates)) throw new Error("休園日を取得できませんでした。");
         const loaded = normalizeCrowdOverrides(month, draft.overrides);
         setClosedDates(new Set(loadedClosedDates));
-        setOverrides(loaded);
-        setSavedOverrides(loaded);
-        setSavedAt(draft.updatedAt ?? null);
-        setHistory([]);
+        if (loadedMonthRef.current !== month) {
+          setOverrides(loaded);
+          setSavedOverrides(loaded);
+          setSavedAt(draft.updatedAt ?? null);
+          setHistory([]);
+        }
+        loadedMonthRef.current = month;
+        setLoadedMonth(month);
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
@@ -245,7 +253,7 @@ export function InstagramCrowdCalendarStudio() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [month, reloadRevision]);
+  }, [month, reloadRevision, setHistory, setLoadedMonth, setOverrides, setSavedAt, setSavedOverrides]);
 
   useEffect(() => {
     const container = previewContainerRef.current;
@@ -258,14 +266,8 @@ export function InstagramCrowdCalendarStudio() {
   }, []);
 
   useEffect(() => {
-    if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+    loadedMonthRef.current = loadedMonth;
+  }, [loadedMonth]);
 
   const changeMonth = (next: string) => {
     if (!isCrowdMonth(next) || next === month || saving) return;

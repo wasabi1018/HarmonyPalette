@@ -18,6 +18,7 @@ import {
 import { toBlob } from "html-to-image";
 import Image from "next/image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useInstagramSessionState } from "./instagram-session-provider";
 import type { Character } from "@/data/types";
 import { type InitialCharacterData, sortCharacterNames, useCharacters } from "@/lib/character-store";
 import {
@@ -1364,24 +1365,29 @@ export function InstagramScheduleStudio({
   initialScheduleData,
   initialCharacterData,
   initialParkOperatingDayData,
+  fixedTemplate,
 }: {
   initialScheduleData: InitialScheduleData;
   initialCharacterData: InitialCharacterData;
   initialParkOperatingDayData: InitialParkOperatingDayData;
+  fixedTemplate?: ImageTemplate;
 }) {
   const scheduleState = useScheduleEntries({ fallbackToBundled: true, initialData: initialScheduleData });
   const characterState = useCharacters({ initialData: initialCharacterData });
   const operatingDayState = useParkOperatingDays(initialParkOperatingDayData);
   const today = useMemo(todayInJapan, []);
-  const [template, setTemplate] = useState<ImageTemplate>("overview");
-  const [mode, setMode] = useState<GenerationMode>("week");
-  const [selectedDate, setSelectedDate] = useState(today);
-  const [selectedMonth, setSelectedMonth] = useState(today.slice(0, 7));
-  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
-  const [specialLegend, setSpecialLegend] = useState(DEFAULT_SPECIAL_LEGEND);
-  const [specialEmoji, setSpecialEmoji] = useState(DEFAULT_SPECIAL_EMOJI);
-  const [specialEmojiMeaning, setSpecialEmojiMeaning] = useState(DEFAULT_SPECIAL_EMOJI_MEANING);
-  const [themeKey, setThemeKey] = useState<ThemeKey>("pink");
+  const [chosenTemplate, setTemplate] = useState<ImageTemplate>("overview");
+  const template = fixedTemplate ?? chosenTemplate;
+  const sessionKey = `schedule.${template}`;
+  const [mode, setMode] = useInstagramSessionState<GenerationMode>(`${sessionKey}.mode`, "week");
+  const [selectedDate, setSelectedDate] = useInstagramSessionState(`${sessionKey}.date`, today);
+  const [selectedMonth, setSelectedMonth] = useInstagramSessionState(`${sessionKey}.month`, today.slice(0, 7));
+  const [selectedEvents, setSelectedEvents] = useInstagramSessionState<string[]>(`${sessionKey}.events`, []);
+  const [eventsInitialized, setEventsInitialized] = useInstagramSessionState(`${sessionKey}.events-initialized`, false);
+  const [specialLegend, setSpecialLegend] = useInstagramSessionState(`${sessionKey}.legend`, DEFAULT_SPECIAL_LEGEND);
+  const [specialEmoji, setSpecialEmoji] = useInstagramSessionState(`${sessionKey}.emoji`, DEFAULT_SPECIAL_EMOJI);
+  const [specialEmojiMeaning, setSpecialEmojiMeaning] = useInstagramSessionState(`${sessionKey}.emoji-meaning`, DEFAULT_SPECIAL_EMOJI_MEANING);
+  const [themeKey, setThemeKey] = useInstagramSessionState<ThemeKey>(`${sessionKey}.theme`, "pink");
   const [previewIndex, setPreviewIndex] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDisplaying, setIsDisplaying] = useState(false);
@@ -1434,12 +1440,14 @@ export function InstagramScheduleStudio({
   }, [periodRange, scheduleState.entries]);
 
   useEffect(() => {
+    if (eventOptions.length === 0) return;
     setSelectedEvents((current) => {
       const availableSelection = current.filter((eventName) => eventOptions.includes(eventName));
-      if (availableSelection.length > 0) return availableSelection;
-      return eventOptions.slice(0, Math.min(4, eventOptions.length));
+      if (!eventsInitialized) return eventOptions.slice(0, Math.min(4, eventOptions.length));
+      return availableSelection.length === current.length ? current : availableSelection;
     });
-  }, [eventOptions]);
+    setEventsInitialized(true);
+  }, [eventOptions, eventsInitialized, setEventsInitialized, setSelectedEvents]);
 
   const filteredEntries = useMemo(
     () =>
@@ -1713,7 +1721,7 @@ export function InstagramScheduleStudio({
   return (
     <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(340px,0.72fr)_minmax(0,1.28fr)]">
       <aside className="min-w-0 space-y-5">
-        <section className="rounded-[24px] border border-pink/10 bg-white p-5 shadow-soft sm:p-6">
+        {!fixedTemplate && <section className="rounded-[24px] border border-pink/10 bg-white p-5 shadow-soft sm:p-6">
           <div className="flex items-start gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-pink/10 text-pink">
               <LayoutTemplate size={21} aria-hidden="true" />
@@ -1753,7 +1761,7 @@ export function InstagramScheduleStudio({
                 ? "時間を縦軸、予定のある部屋を横軸にした日別画像を、月〜日の7枚作成します。"
                 : "選択したイベントを横軸に並べた、現在のスケジュール画像を作成します。"}
           </p>
-        </section>
+        </section>}
 
         <section className="rounded-[24px] border border-pink/10 bg-white p-5 shadow-soft sm:p-6">
           <div className="flex items-start gap-3">
@@ -1812,6 +1820,8 @@ export function InstagramScheduleStudio({
         </section>
 
         <section className="rounded-[24px] border border-pink/10 bg-white p-5 shadow-soft sm:p-6">
+          <details open={template === "overview"}>
+          <summary className="mb-4 cursor-pointer text-[13px] font-black text-ink">{template === "overview" ? "掲載するイベント" : "表示の詳細設定"}</summary>
           {template === "overview" ? (
             <>
               <div className="flex items-end justify-between gap-3">
@@ -1975,6 +1985,7 @@ export function InstagramScheduleStudio({
               </button>
             ))}
           </div>
+          </details>
         </section>
 
         <section className="rounded-[24px] border border-lavender/15 bg-white p-5 shadow-soft sm:p-6">
