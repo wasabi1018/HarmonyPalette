@@ -13,16 +13,24 @@ async function adminDb() {
   return getSupabaseAdminClient();
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const db = await adminDb();
   if (!db) return NextResponse.json({ error: "管理者ログインまたはSupabaseの設定が必要です。" }, { status: 401 });
-  const { data: campaigns, error } = await db.from("instagram_dm_campaigns")
+  const campaignId = new URL(request.url).searchParams.get("id");
+  if (campaignId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(campaignId)) {
+    return NextResponse.json({ error: "キャンペーンIDが正しくありません。" }, { status: 400 });
+  }
+  let campaignQuery = db.from("instagram_dm_campaigns")
     .select("id,month,reel_media_id,status,created_at,instagram_dm_assets(id,character_name,keywords,image_path,dm_text)")
-    .order("created_at", { ascending: false }).limit(30);
+    .order("created_at", { ascending: false });
+  campaignQuery = campaignId ? campaignQuery.eq("id", campaignId) : campaignQuery.limit(30);
+  const { data: campaigns, error } = await campaignQuery;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const { data: deliveries, error: deliveryError } = await db.from("instagram_dm_deliveries")
+  let deliveryQuery = db.from("instagram_dm_deliveries")
     .select("id,campaign_id,status,comment_id,created_at,last_error,follow_status")
     .order("created_at", { ascending: false }).limit(100);
+  if (campaignId) deliveryQuery = deliveryQuery.eq("campaign_id", campaignId);
+  const { data: deliveries, error: deliveryError } = await deliveryQuery;
   if (deliveryError) return NextResponse.json({ error: deliveryError.message }, { status: 500 });
   const campaignsWithImages = campaigns?.map((campaign) => ({
     ...campaign,

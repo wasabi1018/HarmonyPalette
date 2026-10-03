@@ -2,6 +2,7 @@
 
 import { ExternalLink, LoaderCircle, Save } from "lucide-react";
 import { useState } from "react";
+import { useInstagramSessionState, useInstagramUnsavedChanges } from "./instagram-session-provider";
 import {
   normalizeInstagramPostUrl,
   type InstagramPostUrls,
@@ -16,8 +17,8 @@ export function InstagramEmbedSettingsForm({
   initialPostUrls,
   setupError = "",
 }: InstagramEmbedSettingsFormProps) {
-  const [postUrls, setPostUrls] = useState<InstagramPostUrls>(initialPostUrls);
-  const [savedPostUrls, setSavedPostUrls] = useState<InstagramPostUrls>(initialPostUrls);
+  const [postUrls, setPostUrls] = useInstagramSessionState<InstagramPostUrls>("settings.post-urls", initialPostUrls);
+  const [savedPostUrls, setSavedPostUrls] = useInstagramSessionState<InstagramPostUrls>("settings.saved-post-urls", initialPostUrls);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [messageIsError, setMessageIsError] = useState(false);
@@ -62,6 +63,7 @@ export function InstagramEmbedSettingsForm({
   };
 
   const changed = postUrls.some((url, index) => url !== savedPostUrls[index]);
+  useInstagramUnsavedChanges("settings", changed);
 
   return (
     <section className="mb-5 rounded-[22px] border border-pink/10 bg-white p-4 shadow-soft sm:p-6">

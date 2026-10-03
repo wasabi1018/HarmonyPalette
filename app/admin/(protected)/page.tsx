@@ -71,10 +71,10 @@ export default function AdminPage() {
           </span>
           <span className="min-w-0 flex-1">
             <strong className="block text-[15px] font-black text-ink">
-              Instagram画像作成
+              Instagram
             </strong>
             <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
-              週次画像・月分セット・投稿文をまとめて作成
+              投稿画像・返信素材の作成とDM運用・表示設定
             </span>
           </span>
           <ChevronRight
