@@ -13,26 +13,32 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-pink/10 bg-white/95 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          aria-label="ホームに戻る"
-          className="flex min-w-0 items-center"
-          onClick={() => setIsOpen(false)}
-        >
-          <div className="relative h-11 w-[154px] shrink-0 overflow-hidden sm:w-[188px]" aria-label="Harmony Palette ロゴ">
-            <Image
-              src="/logo-compact.png"
-              alt="Harmony Palette"
-              fill
-              priority
-              className="object-contain object-center"
-              sizes="(max-width: 639px) 154px, 188px"
-            />
-          </div>
-        </Link>
+      <div className="mx-auto flex min-h-16 max-w-[1200px] items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 flex-1 items-center gap-6 sm:gap-10">
+          <Link
+            href="/"
+            aria-label="ホームに戻る"
+            className="flex shrink-0 items-center"
+            onClick={() => setIsOpen(false)}
+          >
+            <div className="relative h-11 w-[128px] overflow-hidden min-[360px]:w-[154px] sm:w-[188px]" aria-label="Harmony Palette ロゴ">
+              <Image
+                src="/logo-compact.png"
+                alt="Harmony Palette"
+                fill
+                priority
+                className="object-contain object-center"
+                sizes="(max-width: 359px) 128px, (max-width: 639px) 154px, 188px"
+              />
+            </div>
+          </Link>
+          <p className="ml-auto shrink-0 whitespace-nowrap text-right text-[10px] font-normal leading-[14px] text-ink/70 sm:text-[11px] sm:leading-[15px] lg:ml-0 lg:text-left">
+            <span className="block lg:inline">ハーモニーランドの予定と</span>
+            <span className="block lg:inline">来園ガイドの非公式サイト</span>
+          </p>
+        </div>
 
-        <nav className="hidden items-center gap-0.5 xl:flex" aria-label="メインナビゲーション">
+        <nav className="hidden shrink-0 items-center gap-0.5 xl:flex" aria-label="メインナビゲーション">
           {mainNavigation.map((item) => {
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
             return (

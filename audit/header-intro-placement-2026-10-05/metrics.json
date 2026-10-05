@@ -1,0 +1,100 @@
+[
+  {
+    "clientWidth": 305,
+    "copyHeight": 42,
+    "copyLeft": 156,
+    "copyRight": 286,
+    "fontSize": "10px",
+    "h1": [
+      "Harmony Palette"
+    ],
+    "headerHeight": 64.80000305175781,
+    "lineHeight": "14px",
+    "logoRight": 144,
+    "mainIntroCount": 0,
+    "scrollWidth": 342,
+    "width": 320
+  },
+  {
+    "clientWidth": 360,
+    "copyHeight": 42,
+    "copyLeft": 182,
+    "copyRight": 312,
+    "fontSize": "10px",
+    "headerHeight": 64.80000305175781,
+    "logoRight": 170,
+    "mainTop": 64.80000305175781,
+    "overviewTop": 64.80000305175781,
+    "scrollWidth": 360,
+    "width": 375
+  },
+  {
+    "clientWidth": 1009,
+    "copyHeight": 45,
+    "fontSize": "11px",
+    "headerHeight": 64.80000305175781,
+    "scrollWidth": 1009,
+    "width": 1024
+  },
+  {
+    "clientWidth": 1265,
+    "copyHeight": 45,
+    "copyLeft": 268.3999938964844,
+    "copyRight": 411.3999938964844,
+    "fontSize": "11px",
+    "headerHeight": 64.80000305175781,
+    "links": [
+      {
+        "height": 35.79999923706055,
+        "left": 828.4000244140625,
+        "right": 908.4000244140624,
+        "text": "キャラ検索"
+      },
+      {
+        "height": 35.79999923706055,
+        "left": 910.4000244140624,
+        "right": 978.4000244140624,
+        "text": "予定検索"
+      },
+      {
+        "height": 35.79999923706055,
+        "left": 980.4000244140624,
+        "right": 1060.4000244140625,
+        "text": "マイプラン"
+      },
+      {
+        "height": 35.79999923706055,
+        "left": 1062.4000244140625,
+        "right": 1154.4000244140625,
+        "text": "キャラクター"
+      },
+      {
+        "height": 35.79999923706055,
+        "left": 1156.4000244140625,
+        "right": 1200.4000244140625,
+        "text": "記事"
+      }
+    ],
+    "logoRight": 252.4000015258789,
+    "navLeft": 828.4000244140625,
+    "scrollWidth": 1265,
+    "width": 1280
+  },
+  {
+    "check": "about-page",
+    "clientWidth": 1265,
+    "description": "ハーモニーランドの予定と、来園に役立つ記事をまとめた非公式ファンサイト。",
+    "heading": "Harmony Paletteについて",
+    "scrollWidth": 1265
+  },
+  {
+    "check": "normal-preview",
+    "clientWidth": 447,
+    "copyHeight": 42,
+    "cropBottom": 128.8000030517578,
+    "fontSize": "10px",
+    "headerHeight": 64.80000305175781,
+    "scrollWidth": 447,
+    "width": 462
+  }
+]

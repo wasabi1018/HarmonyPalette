@@ -1,0 +1,182 @@
+[
+  {
+    "clientWidth": 305,
+    "contentRight": 288.8000183105469,
+    "copyHeight": 28,
+    "copyLeft": 168.8000030517578,
+    "copyRight": 288.8000030517578,
+    "cropBottom": 128.8000030517578,
+    "fontSize": "10px",
+    "gap": 24.800003051757812,
+    "headerHeight": 64.80000305175781,
+    "lineHeight": "14px",
+    "navLeft": null,
+    "parts": [
+      {
+        "display": "block",
+        "right": 288.8000030517578,
+        "text": "ハーモニーランドの予定と",
+        "top": 18
+      },
+      {
+        "display": "block",
+        "right": 288.8000030517578,
+        "text": "来園ガイドの非公式サイト",
+        "top": 32
+      }
+    ],
+    "scrollWidth": 342,
+    "textAlign": "right",
+    "width": 320
+  },
+  {
+    "clientWidth": 360,
+    "contentRight": 344,
+    "copyHeight": 28,
+    "copyLeft": 224,
+    "copyRight": 344,
+    "cropBottom": 128.8000030517578,
+    "fontSize": "10px",
+    "gap": 54,
+    "headerHeight": 64.80000305175781,
+    "lineHeight": "14px",
+    "navLeft": null,
+    "parts": [
+      {
+        "display": "block",
+        "right": 344,
+        "text": "ハーモニーランドの予定と",
+        "top": 18
+      },
+      {
+        "display": "block",
+        "right": 344,
+        "text": "来園ガイドの非公式サイト",
+        "top": 32
+      }
+    ],
+    "scrollWidth": 360,
+    "textAlign": "right",
+    "width": 375
+  },
+  {
+    "clientWidth": 753,
+    "contentRight": 728.7999877929688,
+    "copyHeight": 30,
+    "copyLeft": 596.7999877929688,
+    "copyRight": 728.7999877929688,
+    "cropBottom": 128.8000030517578,
+    "fontSize": "11px",
+    "gap": 384.7999877929687,
+    "headerHeight": 64.80000305175781,
+    "lineHeight": "15px",
+    "navLeft": null,
+    "parts": [
+      {
+        "display": "block",
+        "right": 728.7999877929688,
+        "text": "ハーモニーランドの予定と",
+        "top": 17
+      },
+      {
+        "display": "block",
+        "right": 728.7999877929688,
+        "text": "来園ガイドの非公式サイト",
+        "top": 32
+      }
+    ],
+    "scrollWidth": 753,
+    "textAlign": "right",
+    "width": 768
+  },
+  {
+    "clientWidth": 1009,
+    "contentRight": 976.7999877929688,
+    "copyHeight": 15,
+    "copyLeft": 260,
+    "copyRight": 522.8000183105469,
+    "cropBottom": 128.8000030517578,
+    "fontSize": "11px",
+    "gap": 40,
+    "headerHeight": 64.80000305175781,
+    "lineHeight": "15px",
+    "navLeft": null,
+    "parts": [
+      {
+        "display": "inline",
+        "right": 392,
+        "text": "ハーモニーランドの予定と",
+        "top": 24.5
+      },
+      {
+        "display": "inline",
+        "right": 522.8000030517578,
+        "text": "来園ガイドの非公式サイト",
+        "top": 24.5
+      }
+    ],
+    "scrollWidth": 1009,
+    "textAlign": "left",
+    "width": 1024
+  },
+  {
+    "clientWidth": 1265,
+    "contentRight": 1200.400001525879,
+    "copyHeight": 15,
+    "copyLeft": 292.3999938964844,
+    "copyRight": 555.2000122070312,
+    "cropBottom": 128.8000030517578,
+    "fontSize": "11px",
+    "gap": 39.99999237060547,
+    "headerHeight": 64.80000305175781,
+    "lineHeight": "15px",
+    "navLeft": 828.4000244140625,
+    "parts": [
+      {
+        "display": "inline",
+        "right": 424.3999938964844,
+        "text": "ハーモニーランドの予定と",
+        "top": 24.5
+      },
+      {
+        "display": "inline",
+        "right": 555.1999969482422,
+        "text": "来園ガイドの非公式サイト",
+        "top": 24.5
+      }
+    ],
+    "scrollWidth": 1265,
+    "textAlign": "left",
+    "width": 1280
+  },
+  {
+    "clientWidth": 447,
+    "contentRight": 431.2000122070313,
+    "copyHeight": 28,
+    "copyLeft": 311.20001220703125,
+    "copyRight": 431.2000122070313,
+    "cropBottom": 128.8000030517578,
+    "fontSize": "10px",
+    "gap": 141.20001220703125,
+    "headerHeight": 64.80000305175781,
+    "lineHeight": "14px",
+    "navLeft": null,
+    "parts": [
+      {
+        "display": "block",
+        "right": 431.2000122070313,
+        "text": "ハーモニーランドの予定と",
+        "top": 18
+      },
+      {
+        "display": "block",
+        "right": 431.2000122070313,
+        "text": "来園ガイドの非公式サイト",
+        "top": 32
+      }
+    ],
+    "scrollWidth": 447,
+    "textAlign": "right",
+    "width": 462
+  }
+]

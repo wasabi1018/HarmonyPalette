@@ -1,0 +1,147 @@
+[
+  {
+    "cards": [
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "クロミ10/31"
+      },
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "ハローキティ11/1"
+      },
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "ハローミミィ11/1"
+      }
+    ],
+    "documentWidth": 360,
+    "height": 113.20000457763672,
+    "rect": {
+      "height": 113.20000457763672,
+      "width": 360,
+      "x": 0,
+      "y": 417.1000061035156
+    },
+    "scheduleY": 1204,
+    "width": 375
+  },
+  {
+    "cards": [
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "クロミ10/31"
+      },
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "ハローキティ11/1"
+      },
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "ハローミミィ11/1"
+      }
+    ],
+    "documentWidth": 375,
+    "height": 113.20000457763672,
+    "rect": {
+      "height": 113.20000457763672,
+      "width": 375.2000122070313,
+      "x": 0,
+      "y": 417.1000061035156
+    },
+    "scheduleY": 1204,
+    "width": 390
+  },
+  {
+    "cards": [
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "クロミ10/31"
+      },
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "ハローキティ11/1"
+      },
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "ハローミミィ11/1"
+      }
+    ],
+    "documentWidth": 517,
+    "height": 113.20000457763672,
+    "rect": {
+      "height": 113.20000457763672,
+      "width": 516.7999877929688,
+      "x": 0,
+      "y": 417.1000061035156
+    },
+    "scheduleY": 1092,
+    "width": 532
+  },
+  {
+    "cards": [
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "クロミ10/31"
+      },
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "ハローキティ11/1"
+      },
+      {
+        "height": 47.60000228881836,
+        "overflow": false,
+        "text": "ハローミミィ11/1"
+      }
+    ],
+    "documentWidth": 753,
+    "height": 69.20000457763672,
+    "rect": {
+      "height": 69.20000457763672,
+      "width": 752.7999877929688,
+      "x": 0,
+      "y": 415.5500183105469
+    },
+    "scheduleY": 1208,
+    "width": 768
+  },
+  {
+    "cards": [
+      {
+        "height": 44,
+        "overflow": false,
+        "text": "クロミ10/31"
+      },
+      {
+        "height": 44,
+        "overflow": false,
+        "text": "ハローキティ11/1"
+      },
+      {
+        "height": 44,
+        "overflow": false,
+        "text": "ハローミミィ11/1"
+      }
+    ],
+    "documentWidth": 1265,
+    "height": 65.5999984741211,
+    "rect": {
+      "height": 65.5999984741211,
+      "width": 1200,
+      "x": 32.400001525878906,
+      "y": 417.3250122070313
+    },
+    "scheduleY": 1226,
+    "width": 1280
+  }
+]

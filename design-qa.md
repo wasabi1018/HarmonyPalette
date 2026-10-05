@@ -588,3 +588,101 @@ The requested target is the hero logo region, which is fully readable in the sid
 ## Final result
 
 passed
+
+# TOP option 2 and editable guide cards — 2026-10-05
+
+## Authoritative source and scope
+
+- Selected source: `audit/top-plan-2026-10-05/option-2-selected.png` (1536 × 1024). This is the second image selected by the user.
+- Approved refinements: `audit/top-plan-2026-10-05/proposal-option-2-ja.md`. Use 最新記事 with the latest two published articles, preserve the full timeline and today's characters, retain the site's navigation, and add three guides below the timeline.
+- The current request authorizes implementation and editing the guide headings, URLs, and descriptions through the admin screen. It does not request a new deployment or push.
+
+## Evidence
+
+| File | CSS viewport | Actual raster | State |
+| --- | --- | --- | --- |
+| `01-desktop-top.png` | 1280 × 900 | 1265 × 889 | TOP, 2026-10-05, after the published schedules ended |
+| `13-desktop-1024-top.png` | 1024 × 1024 | 1009 × 1009 | Width near the selected source's desktop panel |
+| `02-mobile-top.png` | 390 × 844 | 375 × 811 | Initial viewport, two real latest articles |
+| `03-mobile-375-top.png` | 375 × 844 | 360 × 810 | Narrow mobile, no horizontal overflow |
+| `04-mobile-schedule-jump.png` | 390 × 844 | 375 × 811 | After the primary link reaches the schedule |
+| `05-guide-cards-desktop.png` | 1280 × 900 | 1280 × 900 | Three guide columns below the timeline |
+| `09-guide-cards-mobile.png` | 390 × 844 | 375 × 811 | Three vertically arranged guides |
+| `06-admin-form-saved-desktop.png` | 1280 × 900 | 1265 × 889 | Actual form in the isolated QA harness, saved state |
+| `08-admin-form-mobile.png` | 375 × 844 | 360 × 2078 | Actual form in the isolated QA harness, full page |
+
+Raster dimensions reflect the in-app browser's content capture, including scrollbar and capture scaling differences. CSS dimensions and element measurements are stored in `desktop-metrics.json`, `mobile-390-metrics.json`, and `mobile-375-metrics.json`.
+
+`11-desktop-source-comparison.png` combines the cropped source desktop panel and the 1024px implementation viewport, each resized proportionally to 640px wide. `12-mobile-source-comparison.png` combines the cropped source mobile panel and the actual mobile initial viewport, each proportionally normalized to 375px. These are combined side-by-side artifacts, not separate views. The shorter initial viewport is padded rather than stretched. Screenshots of the schedule jump and guides document content below that viewport.
+
+## Comparison history and findings
+
+1. First pass: the new article image initially failed under sandbox network restrictions (upstream EACCES). Restarting the local preview with authorized read access resolved it; both covers then loaded. This was an environment problem, not a production code change.
+2. First mobile pass: the schedule heading moved from the previous baseline of about 1202px to 1309px. The birthday dates were shortened visually to M/D while retaining full accessible labels, names were arranged with wrapping, and excess section spacing was reduced. No names or timeline rows were removed and fonts were not reduced.
+3. Final mobile pass: the heading is at 1197px at both tested widths, latest articles at 385px. All three top actions fit within the first viewport (48.75px primary height, 44px secondary heights). Clicking the primary link places the schedule heading at 142px from the viewport top after the smooth scroll settles.
+4. Final comparison: the compact introduction, blush today panel, two article cards/rows, and birthday strip follow the selected order. Approved content changes explain the longer real titles, the updated second article, the extra introduction on mobile, the retained header, and the additional character section before the full timetable.
+5. Small text and primary controls received darker pink and secondary foreground colors. White against the new primary pink `#c94372` is 4.64:1, and the link foreground `#b43e68` against white is 5.48:1. The pale panels and existing Lucide icon family are preserved.
+
+## Functional checks
+
+- Full production build, including TypeScript and Next.js lint: passed.
+- Standalone ESLint: passed. Existing audit and draft artifacts are excluded from application lint/type checking; app, library, component and test code remain checked.
+- 16 unit tests passed, including existing birthday behavior, safe guide URLs and field limits, and today status transitions. Missing schedules never imply closure or completion.
+- 3 integration tests passed using the actual API and repository with isolated Storage/auth mocks: save/read all fields and invalidate TOP; deny signed-out and non-admin users; reject invalid links and preserve previous settings on storage failure.
+- Browser form verification used the actual form, provider, route and repository with in-memory Storage at localhost:3100. Changed the first card's heading, URL and description, verified the live preview, saved, reloaded, and verified the persisted fields. The public guide component subsequently read and displayed the saved fields. Dangerous URLs were rejected visibly. The harness was stopped after verification; no production settings were written.
+- The actual protected admin page redirects an unauthenticated browser to the existing login screen; actual unauthenticated settings API returns 401. No application authentication bypass was added.
+- The default three public guide destinations all returned HTTP 200.
+- The real TOP's existing plan button changes aria-pressed false → true when adding an event and returns to false after cancellation. Restored the initial local state.
+- No horizontal overflow at 375px, 390px, 1024px or 1280px. Labels, guides and the existing schedule lanes remain legible. Existing article photos and logos are used, with no new character images.
+- No application JavaScript errors observed. One existing external AdSense warning, “head tag doesn't support data-nscript attribute”, remains outside this UI change.
+
+## Severity review
+
+- P0: none.
+- P1: none.
+- P2: none remaining after the spacing and contrast corrections.
+- P3: the concept's decorative castle backdrop and gradient ornamentation are omitted in favor of the existing visual tokens and real assets; the selected layout and functionality are present. The existing AdSense script warning is recorded above.
+
+## Final result
+
+passed — for the approved refined layout and editable guide form, within the local verification scope. Deployment, a production authenticated save, and AdSense approval are not claimed.
+
+## Follow-up: mobile character alignment — 2026-10-05
+
+The user identified an alignment defect in the free-wrapping character list that the initial QA missed. Fixed it with 2 columns below 480px, 3 columns from 480px, and the existing 4 desktop columns from 1024px. Names, font size and order are preserved. Compact row spacing keeps the schedule heading at 1201px on 375px and 390px screens.
+
+Verified aligned column positions and all 16 names without overflow at 375px, 390px, 532px and 1280px; browser error/warn output was empty. ESLint and the production build passed. Evidence and detailed measurements are in `audit/top-mobile-character-fix-2026-10-05/qa.md`, `metrics.json` and the screenshots in that directory. P2 resolved; local preview updated, no production deployment.
+
+## Follow-up: birthday decoration — 2026-10-05
+
+Added a white circular cake icon with a small sparkle, a subtle pink/lavender gradient and corner stars, character theme-color dots, white cards and date badges. Mobile uses stacked name/date cards; desktop places them inline. The three current names and dates fit without horizontal overflow at 375px, 390px, 532px, 768px and 1280px. The mobile band's height increases by about 4px; desktop height is unchanged. Birthday logic, order, link destinations and accessible labels are preserved.
+
+Birthday unit tests (11), ESLint and the production build passed. No application JavaScript errors observed; the existing external AdSense data-nscript warning remains. Evidence is in `audit/top-birthday-decoration-2026-10-05/qa.md`, `metrics.json` and the captured screenshots. Final result: passed within the local verification scope; no production deployment.
+
+## Follow-up: Instagram and About order — 2026-10-05
+
+Moved Instagram before the About card as requested. Removed the embed section's former preceding separator/spacing and added a 40px gap before About. Public post URLs, embed behavior and About content are preserved.
+
+Verified the heading order and both loaded embeds at 1280px, and the single mobile embed at 375px. About follows Instagram with a 40px gap and no horizontal overflow at both sizes. ESLint, production build and diff whitespace checks passed. No application JavaScript errors observed; the existing external AdSense data-nscript warning remains. Evidence: `audit/top-section-order-2026-10-05/metrics.json`, `01-mobile.png` and `02-desktop.png`. Local preview updated; no commit, push or production deployment.
+
+## Follow-up: excessive space below About — 2026-10-05
+
+The previous order-change QA did not flag the compounded 184px mobile gap between About and the footer. Reduced it to 24px on TOP, moved the mobile navigation allowance below footer content, and preserved other pages' spacing. Verified 375px and 1280px without horizontal overflow, copyright clear of the fixed navigation, and unchanged /about layout styles. ESLint and production build passed. The existing external AdSense warning remains. Evidence and limits: `audit/top-bottom-spacing-2026-10-05/qa.md`. Local preview updated; no production deployment.
+
+## Follow-up: intro typography — 2026-10-05
+
+Reduced the TOP introduction from 13px to 12px on mobile and from 15px to 13px on desktop. Changed medium weight to regular, tightened mobile line-height from 24px to 20px, balanced wrapping, widened the desktop copy area, and added a very pale blush background with a subtle lower border. Protected the guide and unofficial-site phrases from splitting after the first visual pass. The text and heading structure are preserved.
+
+Verified 375px, the normal 462px preview and 1280px: no horizontal overflow, two mobile lines, one desktop line. The normal mobile band shrinks from 64px to about 57px. ESLint and production build passed; no application JavaScript errors observed. The existing external AdSense warning remains. Evidence: `audit/top-intro-refinement-2026-10-05/metrics.json` and screenshots. `intro-refined.png` is a proportional crop of the normal preview including the header and next section's date. Local preview updated; no production deployment.
+
+## Follow-up: description beside the header logo — 2026-10-05
+
+Moved the introduction into the shared public header as three lines with 10px mobile / 11px larger-screen text. Removed the separate TOP introduction and duplicate large logo, keeping the main H1 for assistive technology. Header height remains about 65px, and today's overview begins immediately below it. Verified mobile, tablet menu open/close, desktop navigation and the /about header. Lint and build passed; no application JavaScript errors observed. The existing AdSense warning and 320px Instagram minimum-width overflow remain outside this change. Evidence and measurements: `audit/header-intro-placement-2026-10-05/qa.md`. Local preview updated; no production deployment.
+
+## Follow-up: two-line header and wider logo gap — 2026-10-05
+
+Shortened the copy to two lines: "ハーモニーランドの予定と" / "来園ガイドの非公式サイト". Kept 10px mobile and 11px larger-screen fonts. Increased logo spacing from 12px to 24px on mobile and from 16px to 40px above 640px. Verified both lines fit at 320px, 375px, 462px and 1280px; header height stays about 65px. The five desktop navigation links remain clear. No document overflow at 375px, 462px or 1280px; the pre-existing 320px Instagram overflow remains. Build, lint and whitespace checks passed; no application JavaScript errors observed, with the existing external AdSense warning unchanged. Evidence: `audit/header-two-lines-2026-10-05/metrics.json` and screenshots. Local preview updated; no production deployment.
+
+## Follow-up: desktop single line and mobile right alignment — 2026-10-05
+
+At 1024px and above, the two phrases display inline on one 15px-high line, maintaining the 40px logo gap. Below that breakpoint, the two-line paragraph and its text align with the header's right content edge while retaining the minimum logo gap. Verified 320px, 375px, 768px, 1024px, 1280px and the normal 462px preview. Mobile paragraph right equals the content edge; desktop phrases share the same top coordinate. Header height remains about 65px, and desktop navigation is clear. Build and lint passed; no application JavaScript errors observed. The existing AdSense warning and 320px Instagram overflow remain unchanged. Evidence: `audit/header-responsive-intro-2026-10-05/metrics.json` and screenshots. The two exported header crops preserve their raster proportions and include the following overview date. Local preview updated; no production deployment.

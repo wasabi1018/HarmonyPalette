@@ -246,7 +246,7 @@ export function HomeTodaySections({
 
   return (
     <>
-      {mode === "home" && <section id="today-characters" className="mx-auto max-w-[1200px] scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8">
+      {mode === "home" && <section id="today-characters" className="mx-auto max-w-[1200px] scroll-mt-20 px-4 pt-5 sm:px-6 sm:pt-7 lg:px-8">
         <SectionHeading
           eyebrow="TODAY'S CHARACTERS"
           title="今日会えるキャラクター"
@@ -265,18 +265,18 @@ export function HomeTodaySections({
             }}
           />
         ) : todayCharacterCards.length > 0 ? (
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-[20px] border border-pink/10 bg-white px-4 py-3 shadow-soft sm:gap-x-6 sm:px-5 sm:py-4 lg:grid-cols-4 lg:gap-x-8">
+          <ul className="grid grid-cols-2 gap-x-3 gap-y-1 rounded-[20px] border border-pink/10 bg-white px-4 py-2 shadow-soft min-[480px]:grid-cols-3 sm:gap-x-6 sm:gap-y-2 sm:px-5 sm:py-4 lg:grid-cols-4 lg:gap-x-8">
             {todayCharacterCards.map(({ character }) => (
               <li
                 key={character.id}
-                className="flex min-w-0 items-center gap-2"
+                className="flex min-w-0 max-w-full items-center gap-2"
               >
                 <span
                   className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ backgroundColor: character.themeColor }}
                   aria-hidden="true"
                 />
-                <span className="min-w-0 text-[11px] font-black leading-4 text-ink sm:text-[12px]">
+                <span className="min-w-0 break-words text-[11px] font-black leading-4 text-ink sm:text-[12px]">
                   {character.name}
                 </span>
               </li>
@@ -289,7 +289,7 @@ export function HomeTodaySections({
         )}
       </section>}
 
-      <section id={mode === "home" ? "today-schedule" : "daily-schedule"} className={`mx-auto max-w-[1200px] scroll-mt-20 px-4 sm:px-6 lg:px-8 ${mode === "home" ? "pt-12" : "pt-6 sm:pt-8"}`}>
+      <section id={mode === "home" ? "today-schedule" : "daily-schedule"} className={`mx-auto max-w-[1200px] scroll-mt-20 px-4 sm:px-6 lg:px-8 ${mode === "home" ? "pt-5 sm:pt-7" : "pt-6 sm:pt-8"}`}>
         <div className="rounded-[26px] border border-pink/10 bg-[#fff6f9] p-3.5 sm:p-6">
           {mode === "home" && (
             <SectionHeading

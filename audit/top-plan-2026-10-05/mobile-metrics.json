@@ -1,0 +1,30 @@
+{
+  "headings": [
+    {
+      "text": "30日以内の誕生日",
+      "top": 572
+    },
+    {
+      "text": "今日会えるキャラクター",
+      "top": 858
+    },
+    {
+      "text": "今日のスケジュール",
+      "top": 1202
+    },
+    {
+      "text": "最新記事",
+      "top": 3977
+    },
+    {
+      "text": "Instagram",
+      "top": 5338
+    }
+  ],
+  "heroHeight": 444,
+  "horizontalOverflow": false,
+  "viewport": {
+    "height": 844,
+    "width": 390
+  }
+}

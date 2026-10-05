@@ -1,0 +1,57 @@
+[
+  {
+    "file": "01-desktop-top.png",
+    "width": 1265,
+    "height": 889
+  },
+  {
+    "file": "02-mobile-top.png",
+    "width": 375,
+    "height": 811
+  },
+  {
+    "file": "03-mobile-375-top.png",
+    "width": 360,
+    "height": 810
+  },
+  {
+    "file": "04-mobile-schedule-jump.png",
+    "width": 375,
+    "height": 811
+  },
+  {
+    "file": "05-guide-cards-desktop.png",
+    "width": 1280,
+    "height": 900
+  },
+  {
+    "file": "06-admin-form-saved-desktop.png",
+    "width": 1265,
+    "height": 889
+  },
+  {
+    "file": "08-admin-form-mobile.png",
+    "width": 360,
+    "height": 2078
+  },
+  {
+    "file": "09-guide-cards-mobile.png",
+    "width": 375,
+    "height": 811
+  },
+  {
+    "file": "13-desktop-1024-top.png",
+    "width": 1009,
+    "height": 1009
+  },
+  {
+    "file": "11-desktop-source-comparison.png",
+    "width": 1304,
+    "height": 684
+  },
+  {
+    "file": "12-mobile-source-comparison.png",
+    "width": 774,
+    "height": 1019
+  }
+]

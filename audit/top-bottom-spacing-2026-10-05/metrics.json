@@ -1,0 +1,41 @@
+{
+  "before": {
+    "width": 462,
+    "gap": 184,
+    "sectionPaddingBottom": 40,
+    "mainPaddingBottom": 96,
+    "footerMarginTop": 48
+  },
+  "after": [
+    {
+      "clientWidth": 360,
+      "footerMarginTop": "0px",
+      "footerPaddingBottom": "96px",
+      "gap": 24.000030517578125,
+      "mainPaddingBottom": "0px",
+      "scrollWidth": 360,
+      "width": 375
+    },
+    {
+      "check": "mobile-navigation-clearance",
+      "clearance": 32.2750244140625,
+      "copyrightBottom": 788.125,
+      "navTop": 820.4000244140625
+    },
+    {
+      "clientWidth": 1265,
+      "footerMarginTop": "0px",
+      "footerPaddingBottom": "0px",
+      "gap": 24.000030517578125,
+      "mainPaddingBottom": "0px",
+      "scrollWidth": 1265,
+      "width": 1280
+    },
+    {
+      "check": "other-page-about",
+      "footerMarginTop": "48px",
+      "footerPaddingBottom": "0px",
+      "mainPaddingBottom": "96px"
+    }
+  ]
+}

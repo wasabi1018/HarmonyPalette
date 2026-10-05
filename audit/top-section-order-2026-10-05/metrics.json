@@ -1,0 +1,36 @@
+{
+  "mobile": {
+    "aboutTop": 415.125,
+    "clientWidth": 360,
+    "gap": 39.999969482421875,
+    "headingOrder": [
+      "最新記事",
+      "30日以内の誕生日",
+      "今日会えるキャラクター",
+      "今日のスケジュール",
+      "来園に役立つガイド",
+      "Instagram",
+      "Harmony Paletteについて"
+    ],
+    "instagramBottom": 375.1250305175781,
+    "scrollWidth": 360,
+    "width": 375
+  },
+  "desktop": {
+    "aboutTop": 411.25,
+    "clientWidth": 1265,
+    "gap": 40,
+    "headingOrder": [
+      "最新記事",
+      "30日以内の誕生日",
+      "今日会えるキャラクター",
+      "今日のスケジュール",
+      "来園に役立つガイド",
+      "Instagram",
+      "Harmony Paletteについて"
+    ],
+    "instagramBottom": 371.25,
+    "scrollWidth": 1265,
+    "width": 1280
+  }
+}

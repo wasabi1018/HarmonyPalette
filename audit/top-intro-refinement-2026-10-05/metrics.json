@@ -1,0 +1,51 @@
+{
+  "before": {
+    "width": 462,
+    "fontSize": 13,
+    "lineHeight": 24,
+    "fontWeight": 500,
+    "height": 64,
+    "copyHeight": 48
+  },
+  "after": [
+    {
+      "clientWidth": 360,
+      "copyHeight": 40,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "lineHeight": "20px",
+      "phrases": [
+        {
+          "text": "来園に役立つ記事",
+          "whiteSpace": "nowrap"
+        },
+        {
+          "text": "非公式ファンサイト。",
+          "whiteSpace": "nowrap"
+        }
+      ],
+      "scrollWidth": 360,
+      "width": 375
+    },
+    {
+      "clientWidth": 1265,
+      "copyHeight": 24,
+      "fontSize": "13px",
+      "fontWeight": "400",
+      "lineHeight": "24px",
+      "scrollWidth": 1265,
+      "width": 1280
+    },
+    {
+      "clientWidth": 447,
+      "copyHeight": 40,
+      "cropBottom": 185.60000228881836,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "height": 56.79999923706055,
+      "lineHeight": "20px",
+      "scrollWidth": 447,
+      "width": 462
+    }
+  ]
+}
