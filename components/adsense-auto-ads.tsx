@@ -22,7 +22,7 @@ export function AdSenseAutoAds({
     setIsIndexable(!directives.includes("noindex"));
   }, [pathname, searchParams]);
 
-  if (!enabled || !isIndexable || !isAdSenseEligiblePage(pathname, searchParams)) {
+  if (!enabled || !isIndexable || !isAdSenseEligiblePage(pathname)) {
     return null;
   }
 

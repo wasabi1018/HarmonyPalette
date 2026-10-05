@@ -1,13 +1,9 @@
-type SearchParamsLike = Pick<URLSearchParams, "toString">;
-
-export function isAdSenseEligiblePage(
-  pathname: string,
-  searchParams: SearchParamsLike,
-) {
-  if (pathname === "/schedule") return searchParams.toString() === "";
+export function isAdSenseEligiblePage(pathname: string) {
   if (pathname === "/") return true;
-  if (pathname === "/articles" || pathname.startsWith("/articles/")) return true;
-  if (pathname === "/characters") return true;
 
-  return false;
+  // 一覧・検索・シリーズページを除き、記事詳細だけを広告対象にする。
+  const article = pathname.match(/^\/articles\/([^/]+)$/);
+  if (!article) return false;
+
+  return !["series", "feed.xml", "feed.json"].includes(article[1]);
 }
