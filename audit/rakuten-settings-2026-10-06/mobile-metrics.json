@@ -1,0 +1,31 @@
+{
+  "buttons": [
+    {
+      "height": 44,
+      "text": "接続を確認",
+      "width": 309.6000061035156
+    },
+    {
+      "height": 44,
+      "text": "設定を保存",
+      "width": 309.6000061035156
+    }
+  ],
+  "height": 844,
+  "inputs": [
+    {
+      "empty": true,
+      "id": "rakuten-applicationId"
+    },
+    {
+      "empty": true,
+      "id": "rakuten-accessKey"
+    },
+    {
+      "empty": true,
+      "id": "rakuten-affiliateId"
+    }
+  ],
+  "scrollWidth": 375,
+  "width": 375
+}

@@ -41,6 +41,7 @@ const navigation = [
   { href: "/admin/official-updates", label: "公式更新監視", icon: BellRing, exact: false },
   { href: "/admin/instagram", label: "Instagram", icon: Instagram, exact: false },
   { href: "/admin/links", label: "リンク集設定", icon: Link2, exact: false },
+  { href: "/admin/rakuten", label: "楽天API設定", icon: Settings, exact: false },
   { href: "/admin/characters", label: "キャラクター", icon: UsersRound, exact: false },
   { href: "/admin/plan-options", label: "マイプラン候補", icon: ListTree, exact: false },
 ] as const;
