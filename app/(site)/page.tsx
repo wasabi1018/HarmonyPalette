@@ -8,6 +8,8 @@ import { getHomepageSettings } from "@/lib/homepage-settings";
 import { createDefaultHomepageGuideCards } from "@/lib/homepage-guide-cards";
 import { getPublicRakutenPrPlacement } from "@/lib/rakuten-pr-data";
 import type { RakutenPrDisplay } from "@/lib/rakuten-pr";
+import { getPublicRakutenBanner } from "@/lib/rakuten-banner-settings";
+import type { RakutenBannerPlacement } from "@/lib/rakuten-banner";
 import { INSTAGRAM_URL, SITE_NAME, SITE_URL } from "@/lib/site-config";
 import { getInitialCharacterData, getInitialParkOperatingDayData, getInitialScheduleData } from "@/lib/supabase/initial-data";
 
@@ -31,13 +33,14 @@ export default async function HomePage() {
   let instagramPostUrls = [...defaultInstagramPostUrls] as [string, string];
   let guideCards = createDefaultHomepageGuideCards();
   let rakutenPr: RakutenPrDisplay | null = null;
+  let rakutenBanner: RakutenBannerPlacement | null = null;
   const initialDataPromise = Promise.all([
     getInitialScheduleData(),
     getInitialCharacterData(),
     getInitialParkOperatingDayData(),
   ]);
   try {
-    const [articles, instagramSettings, homepageSettings, pickup] = await Promise.all([
+    const [articles, instagramSettings, homepageSettings, pickup, banner] = await Promise.all([
       listPublishedArticles({
         limit: 2,
       }).catch(() => []),
@@ -47,14 +50,16 @@ export default async function HomePage() {
       })),
       getHomepageSettings().catch(() => ({ guideCards: createDefaultHomepageGuideCards(), updatedAt: null })),
       getPublicRakutenPrPlacement("home-pickup"),
+      getPublicRakutenBanner("home-between-articles-birthday"),
     ]);
     latestArticles = articles;
     instagramPostUrls = instagramSettings.postUrls;
     guideCards = homepageSettings.guideCards;
     rakutenPr = pickup;
+    rakutenBanner = banner;
   } catch {
     latestArticles = [];
   }
   const [initialScheduleData, initialCharacterData, initialOperatingDayData] = await initialDataPromise;
-  return <><SiteEventTracker eventName="home_view" sessionKey="home-view" /><HomeSections latestArticles={latestArticles} instagramPostUrls={instagramPostUrls} guideCards={guideCards} initialScheduleData={initialScheduleData} initialCharacterData={initialCharacterData} initialOperatingDayData={initialOperatingDayData} rakutenPr={rakutenPr} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /></>;
+  return <><SiteEventTracker eventName="home_view" sessionKey="home-view" /><HomeSections latestArticles={latestArticles} instagramPostUrls={instagramPostUrls} guideCards={guideCards} initialScheduleData={initialScheduleData} initialCharacterData={initialCharacterData} initialOperatingDayData={initialOperatingDayData} rakutenPr={rakutenPr} rakutenBanner={rakutenBanner} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /></>;
 }

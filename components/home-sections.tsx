@@ -8,6 +8,7 @@ import type { InitialParkOperatingDayData } from "@/lib/park-operating-day-store
 import type { InitialScheduleData } from "@/lib/schedule-store";
 import type { HomepageGuideCard } from "@/lib/homepage-guide-cards";
 import type { RakutenPrDisplay } from "@/lib/rakuten-pr";
+import type { RakutenBannerPlacement } from "@/lib/rakuten-banner";
 import { HomeBirthdayRibbon } from "./home-birthday-ribbon";
 import { HomeTodayOverview } from "./home-today-overview";
 import { HomeTodaySections } from "./home-today-sections";
@@ -15,6 +16,7 @@ import { HomepageGuideCards } from "./homepage-guide-cards";
 import { InstagramEmbedSection } from "./instagram-embed-section";
 import { SectionHeading } from "./section-heading";
 import { RakutenPrSection } from "./rakuten-pr-section";
+import { RakutenBanner } from "./rakuten-banner";
 
 function formatArticleDate(value: string | null) {
   if (!value) return "";
@@ -58,7 +60,7 @@ function LatestArticles({ articles }: { articles: ArticleSummary[] }) {
   );
 }
 
-export function HomeSections({ latestArticles, instagramPostUrls, guideCards, initialScheduleData, initialCharacterData, initialOperatingDayData, rakutenPr = null }: {
+export function HomeSections({ latestArticles, instagramPostUrls, guideCards, initialScheduleData, initialCharacterData, initialOperatingDayData, rakutenPr = null, rakutenBanner = null }: {
   latestArticles: ArticleSummary[];
   instagramPostUrls: InstagramPostUrls;
   guideCards: HomepageGuideCard[];
@@ -66,12 +68,14 @@ export function HomeSections({ latestArticles, instagramPostUrls, guideCards, in
   initialCharacterData: InitialCharacterData;
   initialOperatingDayData: InitialParkOperatingDayData;
   rakutenPr?: RakutenPrDisplay | null;
+  rakutenBanner?: RakutenBannerPlacement | null;
 }) {
   return (
     <>
       <h1 className="sr-only">Harmony Palette</h1>
       <HomeTodayOverview initialScheduleData={initialScheduleData} initialOperatingDayData={initialOperatingDayData} />
       <LatestArticles articles={latestArticles} />
+      <RakutenBanner banner={rakutenBanner} />
       <HomeBirthdayRibbon initialCharacterData={initialCharacterData} />
       <HomeTodaySections initialScheduleData={initialScheduleData} initialCharacterData={initialCharacterData} initialOperatingDayData={initialOperatingDayData} />
       <section aria-label="来園に役立つガイド" className="mx-auto max-w-[1200px] px-4 pt-10 sm:px-6 lg:px-8">

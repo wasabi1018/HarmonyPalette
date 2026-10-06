@@ -1,0 +1,17 @@
+{
+  "loginSucceeded": true,
+  "productEditorAccessible": true,
+  "initialBannerEnabled": true,
+  "replacementCodeImported": true,
+  "unsafeCodeError": "リンク先URLには楽天アフィリエイトのHTTPS URLを入力してください。",
+  "disabledPublicBannerCount": 0,
+  "replacementPublishedLink": "https://hb.afl.rakuten.co.jp/hsc/56d09deb.fdeee607.56d09dec.cb2cfcda/?link_type=pict&ut=eyJwYWdlIjoic2hvcCIsInR5cGUiOiJwaWN0IiwiY29sIjoxLCJjYXQiOiI0NCIsImJhbiI6Mjc5NDg1OCwiYW1wIjpmYWxzZX0%3D",
+  "replacementImageLoaded": true,
+  "originalBannerRestored": true,
+  "statePreservedAfterReload": true,
+  "actualClickOpenedNewTab": true,
+  "destinationHost": "event.rakuten.co.jp",
+  "publicApplicationErrors": 0,
+  "adminErrors": 0,
+  "finalInertTemplateImportAndPersistenceVerified": true
+}
