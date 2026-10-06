@@ -18,6 +18,7 @@ export default async function AdminRakutenPage() {
       <nav aria-label="パンくずリスト" className="mb-3 text-[13px] text-ink/65"><Link href="/admin" className="hover:text-pink">管理トップ</Link> / 楽天API設定</nav>
       <h1 className="text-[28px] font-black text-ink">楽天API設定</h1>
       <p className="mb-6 mt-2 text-sm leading-6 text-ink/65">商品や宿泊施設の紹介に使う楽天APIの接続情報を登録します。</p>
+      <Link href="/admin/rakuten-pr" className="mb-5 inline-flex min-h-11 items-center rounded-xl border border-pink/20 bg-white px-4 text-sm font-bold text-[#b43e68]">楽天PRの商品・掲載内容を管理</Link>
       <RakutenSettingsForm initialStatus={status} siteOrigin={getRakutenSiteOrigin()} setupError={setupError} />
     </div>
   );

@@ -41,6 +41,7 @@ const client = { storage: {
 } };
 
 mock.module("server-only", { defaultExport: {} });
+mock.module("next/cache", { namedExports: { revalidatePath: () => undefined, revalidateTag: () => undefined } });
 mock.module(pathToFileURL(resolve(__dirname, "supabase/server.ts")), { namedExports: { getSupabaseAdminClient: () => configured ? client : null } });
 mock.module(pathToFileURL(resolve(__dirname, "supabase/auth-server.ts")), { namedExports: { getAdminAccess: async () => access } });
 mock.module(pathToFileURL(resolve(__dirname, "site-config.ts")), { namedExports: { SITE_URL: "https://example.test" } });
@@ -84,7 +85,7 @@ test("first save creates a private bucket and returns only presence flags", asyn
   const response = await route.PUT(request("PUT", credentials));
   assert.equal(response.status, 200);
   assert.equal((await safeBody(response)).settings.configured, true);
-  assert.equal(bucket?.public, false); assert.equal(uploads, 1);
+  assert.equal((bucket as { public: boolean } | null)?.public, false); assert.equal(uploads, 1);
   assert.deepEqual(JSON.parse(files.get(objectPath)!).accessKey, credentials.accessKey);
   const get = await safeBody(await route.GET());
   assert.deepEqual(Object.keys(get.settings).sort(), ["configured", "hasAccessKey", "hasAffiliateId", "hasApplicationId", "updatedAt"].sort());

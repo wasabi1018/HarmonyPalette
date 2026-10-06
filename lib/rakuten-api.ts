@@ -1,10 +1,78 @@
 import "server-only";
 
+import { setTimeout as delay } from "node:timers/promises";
+
 import { SITE_URL } from "@/lib/site-config";
 import { RakutenSettingsError, type RakutenConnectionResult, type RakutenCredentials } from "@/lib/rakuten-settings-input";
+import { isRakutenItemCode, normalizeRakutenProduct, parseRakutenProductSearch, type RakutenProductSearchResult } from "@/lib/rakuten-products";
 
 export function getRakutenSiteOrigin() {
   return new URL(SITE_URL).origin;
+}
+
+let requestQueue: Promise<unknown> = Promise.resolve();
+let lastRequestStartedAt = 0;
+
+// Share a queue in this server process rather than bursting four item requests.
+async function requestRakutenProducts(settings: RakutenCredentials, parameters: Record<string, string>) {
+  if (!settings.applicationId || !settings.accessKey) throw new RakutenSettingsError("楽天API設定でアプリIDとアクセスキーを登録してください。", 503);
+  const task = requestQueue.catch(() => undefined).then(async () => {
+    const wait = Math.max(0, 1100 - (Date.now() - lastRequestStartedAt));
+    if (wait) await delay(wait);
+    const url = new URL("https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701");
+    url.search = new URLSearchParams({
+      applicationId: settings.applicationId, format: "json", formatVersion: "2", imageFlag: "1", availability: "1",
+      elements: "count,page,pageCount,itemCode,itemName,itemUrl,affiliateUrl,mediumImageUrls,availability,shopName",
+      ...parameters, ...(settings.affiliateId ? { affiliateId: settings.affiliateId } : {}),
+    }).toString();
+    lastRequestStartedAt = Date.now();
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        headers: { accessKey: settings.accessKey, Referer: `${getRakutenSiteOrigin()}/`, Origin: getRakutenSiteOrigin() },
+        cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10000),
+      });
+    } catch {
+      throw new RakutenSettingsError("楽天APIへ接続できませんでした。時間をおいて再度お試しください。", 502);
+    }
+    if (response.status === 404) return { items: [], count: 0, pageCount: 0 } as Record<string, unknown>;
+    if (!response.ok) {
+      throw new RakutenSettingsError(response.status === 429
+        ? "楽天APIの利用回数上限に達しました。時間をおいて再度お試しください。"
+        : response.status === 400 || response.status === 401 || response.status === 403
+          ? "楽天API設定と楽天側のAPI利用権限・許可サイトを確認してください。"
+          : "楽天APIから商品情報を取得できませんでした。時間をおいて再度お試しください。", 502);
+    }
+    let body: unknown;
+    try { body = await response.json(); }
+    catch { throw new RakutenSettingsError("楽天APIの応答を読み込めませんでした。", 502); }
+    if (!body || typeof body !== "object" || Array.isArray(body) || (body as Record<string, unknown>).error) {
+      throw new RakutenSettingsError("楽天APIの応答を確認できませんでした。", 502);
+    }
+    const result = body as Record<string, unknown>;
+    if (!Array.isArray(result.Items ?? result.items)) throw new RakutenSettingsError("楽天APIから商品一覧を取得できませんでした。", 502);
+    return result;
+  });
+  requestQueue = task.then(() => undefined, () => undefined);
+  return task;
+}
+
+function productsIn(body: Record<string, unknown>) {
+  return ((body.Items ?? body.items) as unknown[]).map(normalizeRakutenProduct).filter((item) => item !== null);
+}
+
+export async function searchRakutenProducts(settings: RakutenCredentials, keyword: string, page = 1): Promise<RakutenProductSearchResult> {
+  const query = parseRakutenProductSearch(keyword, page);
+  const body = await requestRakutenProducts(settings, { keyword: query.keyword, page: String(query.page), hits: "12" });
+  const count = typeof body.count === "number" && Number.isFinite(body.count) ? Math.max(0, Math.floor(body.count)) : 0;
+  const pageCount = typeof body.pageCount === "number" && Number.isFinite(body.pageCount) ? Math.max(0, Math.min(100, Math.floor(body.pageCount))) : Math.min(100, Math.ceil(count / 12));
+  return { products: productsIn(body).slice(0, 12), page: query.page, pageCount, totalCount: count };
+}
+
+export async function getRakutenProduct(settings: RakutenCredentials, itemCode: string) {
+  if (!isRakutenItemCode(itemCode)) throw new RakutenSettingsError("掲載商品を選び直してください。");
+  const body = await requestRakutenProducts(settings, { itemCode, hits: "1" });
+  return productsIn(body).find((item) => item.itemCode === itemCode) ?? null;
 }
 
 export async function testRakutenConnection(settings: RakutenCredentials): Promise<RakutenConnectionResult> {

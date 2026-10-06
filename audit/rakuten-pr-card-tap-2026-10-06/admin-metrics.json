@@ -1,0 +1,106 @@
+{
+  "preview": {
+    "cards": [
+      {
+        "descriptionLinked": true,
+        "height": 260.5,
+        "imageLinked": true,
+        "linkHeight": 258.8999938964844,
+        "linkWidth": 164.90000915527344,
+        "sponsored": true,
+        "target": "_blank",
+        "titleLinked": true,
+        "width": 166.5,
+        "x": 576.9000244140625,
+        "y": 2030
+      },
+      {
+        "descriptionLinked": true,
+        "height": 260.5,
+        "imageLinked": true,
+        "linkHeight": 258.8999938964844,
+        "linkWidth": 164.90000915527344,
+        "sponsored": true,
+        "target": "_blank",
+        "titleLinked": true,
+        "width": 166.5,
+        "x": 753.4000244140625,
+        "y": 2030
+      },
+      {
+        "descriptionLinked": true,
+        "height": 260.5,
+        "imageLinked": true,
+        "linkHeight": 258.8999938964844,
+        "linkWidth": 164.90000915527344,
+        "sponsored": true,
+        "target": "_blank",
+        "titleLinked": true,
+        "width": 166.5,
+        "x": 576.9000244140625,
+        "y": 2300.5
+      },
+      {
+        "descriptionLinked": true,
+        "height": 260.5,
+        "imageLinked": true,
+        "linkHeight": 258.8999938964844,
+        "linkWidth": 164.90000915527344,
+        "sponsored": true,
+        "target": "_blank",
+        "titleLinked": true,
+        "width": 166.5,
+        "x": 753.4000244140625,
+        "y": 2300.5
+      }
+    ],
+    "documentWidth": 1265,
+    "images": [
+      {
+        "loaded": true,
+        "width": 128
+      },
+      {
+        "loaded": true,
+        "width": 128
+      },
+      {
+        "loaded": true,
+        "width": 128
+      },
+      {
+        "loaded": true,
+        "width": 128
+      }
+    ],
+    "section": {
+      "height": 643.75,
+      "width": 343,
+      "x": 576.9000244140625,
+      "y": 1949.25
+    },
+    "viewportHeight": 720,
+    "viewportWidth": 1265,
+    "visibleCtas": 0
+  },
+  "savedNotes": [
+    "お気に入りの柄を毎日のおともに。",
+    "かわいいアイテムをピックアップ。",
+    "気になるアイテムをチェック。",
+    "贈りものにもおすすめです。"
+  ],
+  "uiFlow": [
+    "login",
+    "remove four items",
+    "search twelve products",
+    "select four",
+    "fifth and duplicate additions disabled",
+    "move second item up",
+    "fill four notes",
+    "save disabled placement",
+    "TOP hides placement",
+    "enable and save placement",
+    "reload preserves selection and notes",
+    "TOP displays four whole-card links"
+  ]
+}

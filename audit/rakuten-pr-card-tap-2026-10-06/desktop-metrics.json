@@ -1,0 +1,84 @@
+{
+  "cards": [
+    {
+      "descriptionLinked": true,
+      "height": 366,
+      "imageLinked": true,
+      "linkHeight": 364.3999938964844,
+      "linkWidth": 270.3999938964844,
+      "sponsored": true,
+      "target": "_blank",
+      "titleLinked": true,
+      "width": 272,
+      "x": 72,
+      "y": 1283.800048828125
+    },
+    {
+      "descriptionLinked": true,
+      "height": 366,
+      "imageLinked": true,
+      "linkHeight": 364.3999938964844,
+      "linkWidth": 270.3999938964844,
+      "sponsored": true,
+      "target": "_blank",
+      "titleLinked": true,
+      "width": 272,
+      "x": 360,
+      "y": 1283.800048828125
+    },
+    {
+      "descriptionLinked": true,
+      "height": 366,
+      "imageLinked": true,
+      "linkHeight": 364.3999938964844,
+      "linkWidth": 270.3999938964844,
+      "sponsored": true,
+      "target": "_blank",
+      "titleLinked": true,
+      "width": 272,
+      "x": 648,
+      "y": 1283.800048828125
+    },
+    {
+      "descriptionLinked": true,
+      "height": 366,
+      "imageLinked": true,
+      "linkHeight": 364.3999938964844,
+      "linkWidth": 270.3999938964844,
+      "sponsored": true,
+      "target": "_blank",
+      "titleLinked": true,
+      "width": 272,
+      "x": 936,
+      "y": 1283.800048828125
+    }
+  ],
+  "documentWidth": 1280,
+  "images": [
+    {
+      "loaded": true,
+      "width": 128
+    },
+    {
+      "loaded": true,
+      "width": 128
+    },
+    {
+      "loaded": true,
+      "width": 128
+    },
+    {
+      "loaded": true,
+      "width": 128
+    }
+  ],
+  "section": {
+    "height": 519.75,
+    "width": 1200,
+    "x": 40,
+    "y": 1162.050048828125
+  },
+  "viewportHeight": 900,
+  "viewportWidth": 1280,
+  "visibleCtas": 0
+}

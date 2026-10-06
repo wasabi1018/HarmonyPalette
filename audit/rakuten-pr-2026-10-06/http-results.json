@@ -1,0 +1,38 @@
+{
+  "results": [
+    "Unauthenticated search rejected: 401",
+    "Authenticated search: 12 real API product fixtures with valid affiliate links",
+    "Draft saved and read back with notes and reordered items",
+    "Disabled placement absent from TOP",
+    "Incomplete publication rejected: 400",
+    "Enabled TOP has four sponsored links before Instagram",
+    "Protected manager reads published state through real Auth/Storage SDK",
+    "Unregistered placement and foreign origin rejected"
+  ],
+  "state": {
+    "uploads": 2,
+    "apiCalls": 5,
+    "placement": {
+      "enabled": true,
+      "title": "PICK UP",
+      "items": [
+        {
+          "itemCode": "zakka-off:10009197",
+          "description": "お気に入りの柄を毎日のおともに。"
+        },
+        {
+          "itemCode": "elpase-hotta:10000194",
+          "description": "かわいいアイテムをピックアップ。"
+        },
+        {
+          "itemCode": "littleleaf:10014263",
+          "description": "気になるアイテムをチェック。"
+        },
+        {
+          "itemCode": "zakka-off:10012119",
+          "description": "贈りものにもおすすめです。"
+        }
+      ]
+    }
+  }
+}

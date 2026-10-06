@@ -1,0 +1,61 @@
+{
+  "buttons": [
+    44,
+    44,
+    44,
+    44
+  ],
+  "cards": [
+    {
+      "height": 418,
+      "width": 272,
+      "x": 72,
+      "y": 1283.800048828125
+    },
+    {
+      "height": 418,
+      "width": 272,
+      "x": 360,
+      "y": 1283.800048828125
+    },
+    {
+      "height": 418,
+      "width": 272,
+      "x": 648,
+      "y": 1283.800048828125
+    },
+    {
+      "height": 418,
+      "width": 272,
+      "x": 936,
+      "y": 1283.800048828125
+    }
+  ],
+  "documentWidth": 1280,
+  "images": [
+    {
+      "loaded": true,
+      "width": 128
+    },
+    {
+      "loaded": true,
+      "width": 128
+    },
+    {
+      "loaded": true,
+      "width": 128
+    },
+    {
+      "loaded": true,
+      "width": 128
+    }
+  ],
+  "section": {
+    "height": 571.75,
+    "width": 1200,
+    "x": 40,
+    "y": 1162.050048828125
+  },
+  "viewportHeight": 900,
+  "viewportWidth": 1280
+}

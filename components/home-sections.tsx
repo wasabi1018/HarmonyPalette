@@ -7,12 +7,14 @@ import type { InitialCharacterData } from "@/lib/character-store";
 import type { InitialParkOperatingDayData } from "@/lib/park-operating-day-store";
 import type { InitialScheduleData } from "@/lib/schedule-store";
 import type { HomepageGuideCard } from "@/lib/homepage-guide-cards";
+import type { RakutenPrDisplay } from "@/lib/rakuten-pr";
 import { HomeBirthdayRibbon } from "./home-birthday-ribbon";
 import { HomeTodayOverview } from "./home-today-overview";
 import { HomeTodaySections } from "./home-today-sections";
 import { HomepageGuideCards } from "./homepage-guide-cards";
 import { InstagramEmbedSection } from "./instagram-embed-section";
 import { SectionHeading } from "./section-heading";
+import { RakutenPrSection } from "./rakuten-pr-section";
 
 function formatArticleDate(value: string | null) {
   if (!value) return "";
@@ -56,13 +58,14 @@ function LatestArticles({ articles }: { articles: ArticleSummary[] }) {
   );
 }
 
-export function HomeSections({ latestArticles, instagramPostUrls, guideCards, initialScheduleData, initialCharacterData, initialOperatingDayData }: {
+export function HomeSections({ latestArticles, instagramPostUrls, guideCards, initialScheduleData, initialCharacterData, initialOperatingDayData, rakutenPr = null }: {
   latestArticles: ArticleSummary[];
   instagramPostUrls: InstagramPostUrls;
   guideCards: HomepageGuideCard[];
   initialScheduleData: InitialScheduleData;
   initialCharacterData: InitialCharacterData;
   initialOperatingDayData: InitialParkOperatingDayData;
+  rakutenPr?: RakutenPrDisplay | null;
 }) {
   return (
     <>
@@ -75,6 +78,7 @@ export function HomeSections({ latestArticles, instagramPostUrls, guideCards, in
         <SectionHeading title="来園に役立つガイド" />
         <HomepageGuideCards cards={guideCards} />
       </section>
+      <RakutenPrSection placement={rakutenPr} />
       <section className="mx-auto max-w-[1200px] px-4 pb-6 pt-10 sm:px-6 lg:px-8">
         <InstagramEmbedSection postUrls={instagramPostUrls} />
         <div id="home-about" className="mt-10 rounded-2xl border border-pink/10 bg-white p-5 sm:p-6">

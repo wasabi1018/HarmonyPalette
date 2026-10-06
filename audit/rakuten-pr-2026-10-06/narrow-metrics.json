@@ -1,0 +1,50 @@
+{
+  "buttons": [
+    {
+      "height": 44,
+      "scrollWidth": 117,
+      "width": 117.4000015258789
+    },
+    {
+      "height": 44,
+      "scrollWidth": 117,
+      "width": 117.4000015258789
+    },
+    {
+      "height": 44,
+      "scrollWidth": 117,
+      "width": 117.4000015258789
+    },
+    {
+      "height": 44,
+      "scrollWidth": 117,
+      "width": 117.4000015258789
+    }
+  ],
+  "documentWidth": 342,
+  "grid": [
+    {
+      "width": 139,
+      "x": 16,
+      "y": 1693.25
+    },
+    {
+      "width": 139,
+      "x": 165,
+      "y": 1693.25
+    },
+    {
+      "width": 139,
+      "x": 16,
+      "y": 1988.25
+    },
+    {
+      "width": 139,
+      "x": 165,
+      "y": 1988.25
+    }
+  ],
+  "sectionScrollWidth": 320,
+  "sectionWidth": 320,
+  "viewport": 320
+}

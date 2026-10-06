@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getAdminAccess } from "@/lib/supabase/auth-server";
 import { getRakutenSettingsStatus, resolveRakutenSettings, updateRakutenSettings } from "@/lib/rakuten-settings";
 import { testRakutenConnection } from "@/lib/rakuten-api";
 import { parseRakutenSettingsPatch, RakutenSettingsError } from "@/lib/rakuten-settings-input";
+import { RAKUTEN_PR_PLACEMENTS, RAKUTEN_PR_PRODUCTS_CACHE_TAG } from "@/lib/rakuten-pr";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +49,9 @@ export async function PUT(request: Request) {
   if (denied) return denied;
   try {
     const settings = await updateRakutenSettings(await input(request));
+    revalidateTag(RAKUTEN_PR_PRODUCTS_CACHE_TAG);
+    for (const definition of RAKUTEN_PR_PLACEMENTS) definition.revalidatePaths.forEach((path) => revalidatePath(path));
+    revalidatePath("/admin/rakuten-pr");
     return NextResponse.json({ ok: true, settings }, { headers });
   } catch (error) { return errorResponse(error); }
 }
