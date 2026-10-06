@@ -13,6 +13,7 @@
     "test:schedule-calendar": "tsx --test lib/schedule-calendar.test.ts components/schedule-month-calendar.test.tsx",
     "test:character-recommendation": "tsx --test lib/character-recommendation.test.ts",
     "test:instagram-dm": "tsx --test lib/instagram-dm/*.test.ts",
+    "test:rakuten": "node --experimental-test-module-mocks --import tsx --test lib/rakuten-settings.integration.test.ts",
     "seed:character-theme-colors": "tsx scripts/seed-character-theme-colors.ts",
     "seed:plan-options": "tsx scripts/seed-plan-options.ts",
     "import:official": "tsx scripts/import-official.ts",
