@@ -20,20 +20,23 @@ export type RakutenBannerDefinition = {
   allowInheritance?: boolean;
 };
 
+const DEFAULT_RAKUTEN_BANNER = {
+  linkUrl: "https://hb.afl.rakuten.co.jp/hsc/583c7758.af2ff55c.56d09dec.cb2cfcda/?link_type=pict&ut=eyJwYWdlIjoic2hvcCIsInR5cGUiOiJwaWN0IiwiY29sIjoxLCJjYXQiOiI0NCIsImJhbiI6Mjc5NDg4MywiYW1wIjpmYWxzZX0%3D",
+  imageUrl: "https://hbb.afl.rakuten.co.jp/hsb/583c7758.af2ff55c.56d09dec.cb2cfcda/?me_id=1&me_adv_id=2794883&t=pict",
+  alt: "楽天市場のおすすめ情報",
+  width: 468, height: 60,
+};
+
 export const RAKUTEN_BANNER_PLACEMENTS: readonly RakutenBannerDefinition[] = [{
   id: "home-between-articles-birthday",
   label: "TOPの楽天バナー",
   location: "最新記事の下・誕生日欄の前",
   revalidatePaths: ["/"],
-  defaultBanner: {
-    linkUrl: "https://hb.afl.rakuten.co.jp/hsc/583c7758.af2ff55c.56d09dec.cb2cfcda/?link_type=pict&ut=eyJwYWdlIjoic2hvcCIsInR5cGUiOiJwaWN0IiwiY29sIjoxLCJjYXQiOiI0NCIsImJhbiI6Mjc5NDg4MywiYW1wIjpmYWxzZX0%3D",
-    imageUrl: "https://hbb.afl.rakuten.co.jp/hsb/583c7758.af2ff55c.56d09dec.cb2cfcda/?me_id=1&me_adv_id=2794883&t=pict",
-    alt: "楽天市場のおすすめ情報",
-    width: 468, height: 60,
-  },
+  defaultBanner: DEFAULT_RAKUTEN_BANNER,
 }, {
   id: "article-top", label: "全記事共通の上部バナー", location: "記事のタイトル・アイキャッチの下、目次の前",
   revalidatePaths: ["/articles/[slug]"],
+  defaultBanner: DEFAULT_RAKUTEN_BANNER,
 }];
 
 export function getRakutenBannerDefinition(id: string) {

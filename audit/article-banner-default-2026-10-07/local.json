@@ -1,0 +1,24 @@
+{
+  "commonBannerSaved": false,
+  "uploads": 0,
+  "articles": [
+    {
+      "url": "http://localhost:3113/articles/qa-article-1",
+      "status": 200,
+      "banners": 1,
+      "placement": "article-top",
+      "suppliedBanner": true,
+      "prLabel": true,
+      "sponsoredLink": true
+    },
+    {
+      "url": "http://localhost:3113/articles/qa-article-2",
+      "status": 200,
+      "banners": 1,
+      "placement": "article-top",
+      "suppliedBanner": true,
+      "prLabel": true,
+      "sponsoredLink": true
+    }
+  ]
+}

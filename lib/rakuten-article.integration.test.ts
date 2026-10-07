@@ -134,14 +134,21 @@ test("a corrupt optional PR setting cannot break the public article", async () =
 });
 
 function commonBanner() {
-  return { ...createDefaultRakutenBanner(getRakutenBannerDefinition("home-between-articles-birthday")), placementId: "article-top" };
+  return createDefaultRakutenBanner(getRakutenBannerDefinition("article-top"));
 }
 function customBanner() {
   return { ...commonBanner(), ...createDefaultRakutenBanner(createArticleRakutenBannerDefinition(baseArticle)), mode: "custom", enabled: true, linkUrl: "https://hb.afl.rakuten.co.jp/hsc/article-test/", imageUrl: "https://hbb.afl.rakuten.co.jp/hsb/article-test/" };
 }
 
 test("articles inherit the current common banner by default without an admin lookup", async () => {
-  assert.equal(await bannerData.getPublicArticleRakutenBanner(baseArticle), null);
+  const initial = await bannerData.getPublicArticleRakutenBanner(baseArticle);
+  assert.equal(initial?.enabled, true);
+  const top = createDefaultRakutenBanner(getRakutenBannerDefinition("home-between-articles-birthday"));
+  assert.equal(initial?.placementId, "article-top");
+  assert.equal(initial?.linkUrl, top.linkUrl);
+  assert.equal(initial?.imageUrl, top.imageUrl);
+  assert.equal(files.size, 0, "initial rendering does not write settings");
+  assert.equal(articleReads, 0);
   files.set("rakuten-banners/article-top.json", JSON.stringify(commonBanner()));
   const reads = articleReads;
   assert.equal((await bannerData.getPublicArticleRakutenBanner(baseArticle))?.linkUrl, commonBanner().linkUrl);
@@ -151,6 +158,24 @@ test("articles inherit the current common banner by default without an admin loo
   assert.equal((await bannerData.getPublicArticleRakutenBanner({ id: otherId, slug: "other" }))?.linkUrl, changed.linkUrl);
   assert.equal(articleReads, reads);
   assert.ok(invalidated.some((entry) => entry.path === "/articles/[slug]" && entry.type === "page"));
+});
+
+test("an explicitly disabled common banner remains hidden while custom article banners stay independent", async () => {
+  const top = createDefaultRakutenBanner(getRakutenBannerDefinition("home-between-articles-birthday"));
+  files.set("rakuten-banners/home-between-articles-birthday.json", JSON.stringify(top));
+  const disabled = { ...commonBanner(), enabled: false };
+  assert.equal((await bannerRoute.PUT(put(disabled), context("article-top"))).status, 200);
+  assert.equal(await bannerData.getPublicArticleRakutenBanner(baseArticle), null);
+  const loaded = await bannerRoute.GET(new Request("https://example.test"), context("article-top"));
+  assert.equal(loaded.status, 200);
+  assert.equal((await loaded.json()).banner.enabled, false);
+  const custom = customBanner();
+  assert.equal((await bannerRoute.PUT(put(custom), context(`article-banner-${id}`))).status, 200);
+  assert.equal((await bannerData.getPublicArticleRakutenBanner(baseArticle))?.linkUrl, custom.linkUrl);
+  assert.equal(await bannerData.getPublicArticleRakutenBanner({ id: otherId, slug: "other" }), null);
+  assert.equal((await bannerRoute.PUT(put(commonBanner()), context("article-top"))).status, 200);
+  assert.equal((await bannerData.getPublicArticleRakutenBanner({ id: otherId, slug: "other" }))?.enabled, true);
+  assert.equal(files.get("rakuten-banners/home-between-articles-birthday.json"), JSON.stringify(top));
 });
 
 test("individual banners can override, hide, and return to inheritance without affecting another article", async () => {
