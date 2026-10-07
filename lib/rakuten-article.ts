@@ -17,7 +17,7 @@ export function articleIdFromRakutenBanner(id: string) { return articleIdFromPla
 
 export function createArticleRakutenBannerDefinition(article: { id: string; slug: string }): RakutenBannerDefinition {
   if (!UUID.test(article.id)) throw new RakutenSettingsError("記事が見つかりません。", 404);
-  return { id: `${ARTICLE_BANNER_PREFIX}${article.id.toLowerCase()}`, label: "この記事の上部バナー", location: "タイトル・アイキャッチの下、目次の前", revalidatePaths: [`/articles/${article.slug}`], allowInheritance: true };
+  return { id: `${ARTICLE_BANNER_PREFIX}${article.id.toLowerCase()}`, label: "この記事の上部バナー", location: "目次の後・本文の前（目次がない記事は本文の前）", revalidatePaths: [`/articles/${article.slug}`], allowInheritance: true };
 }
 
 export function createArticleRakutenDefinition(article: { id: string; slug: string }, headings: readonly { id: string; text: string }[]): RakutenPrPlacementDefinition {

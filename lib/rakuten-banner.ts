@@ -34,7 +34,7 @@ export const RAKUTEN_BANNER_PLACEMENTS: readonly RakutenBannerDefinition[] = [{
   revalidatePaths: ["/"],
   defaultBanner: DEFAULT_RAKUTEN_BANNER,
 }, {
-  id: "article-top", label: "全記事共通の上部バナー", location: "記事のタイトル・アイキャッチの下、目次の前",
+  id: "article-top", label: "全記事共通の上部バナー", location: "目次の後・本文の前（目次がない記事は本文の前）",
   revalidatePaths: ["/articles/[slug]"],
   defaultBanner: DEFAULT_RAKUTEN_BANNER,
 }];

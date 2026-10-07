@@ -139,7 +139,6 @@ export function ArticlePreview({
         )}
 
         <div className="mx-auto max-w-[760px]">
-          {topContent && <div className="article-print-hidden mt-6">{topContent}</div>}
           {datedContentNotice && (
             <aside className="mt-8 rounded-2xl border border-[#e9cf9d] bg-[#fffaf0] px-4 py-3 text-[11px] font-bold leading-6 text-ink/65">
               {datedContentNotice}
@@ -168,6 +167,7 @@ export function ArticlePreview({
               </ol>
             </nav>
           )}
+          {topContent && <div className="article-print-hidden mt-6">{topContent}</div>}
           {bodyContent ? <div className="mt-10 scroll-mt-24">{bodyContent}</div> : <div
             className="article-prose mt-10 scroll-mt-24"
             dangerouslySetInnerHTML={{ __html: contentHtml || "<p></p>" }}

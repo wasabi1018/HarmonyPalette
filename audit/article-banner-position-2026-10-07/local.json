@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-07T04:30:37.765Z",
+  "production": false,
+  "articles": [
+    {
+      "url": "http://localhost:3114/articles/qa-article-1",
+      "status": 200,
+      "hasContents": true,
+      "bannerAfterContents": true,
+      "bannerBeforeBody": true,
+      "excludedFromPrint": true
+    },
+    {
+      "url": "http://localhost:3114/articles/qa-article-2",
+      "status": 200,
+      "hasContents": false,
+      "bannerAfterContents": null,
+      "bannerBeforeBody": true,
+      "excludedFromPrint": true
+    }
+  ]
+}
