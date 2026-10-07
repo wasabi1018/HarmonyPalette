@@ -588,3 +588,11 @@ The requested target is the hero logo region, which is fully readable in the sid
 ## Final result
 
 passed
+
+## Follow-up: guide card backgrounds without stars — 2026-10-07
+
+Restyled the three TOP guides with the birthday strip's pale gradients and corner circles. The cards use pink, mint and lavender in order, with white circular arrows and matching darker accents. Removed the guide cards' star decorations at the user's request. Description text uses 80% ink; the shared admin preview uses the same component.
+
+Verified star-free cards at 390px and 1280px in the production-built local app, with zero decorative SVGs and no card or page overflow. The earlier guide pass also checked keyboard focus and whole-card navigation. Related guide/settings/status/birthday tests passed (19), and lint passed in an isolated HEAD-plus-TOP snapshot prepared for the requested commit. The scoped production build and TypeScript check passed; the resulting app also passed 390px/1280px guide checks with no application JavaScript errors. The existing external AdSense warning remains.
+
+The user selected guide cards and the TOP changes needed to make this uncommitted homepage feature usable. The commit includes the homepage layout and settings dependencies. Unrelated Rakuten PR/banner/article, schedule-cache, draft, dependency and asset changes remain outside this commit. Evidence and verification limits: `audit/guide-card-backgrounds-no-stars-2026-10-07/qa.md`. No production data was written.

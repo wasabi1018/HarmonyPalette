@@ -19,7 +19,7 @@ export function InstagramSessionProvider({ children }: { children: ReactNode }) 
       if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
       const url = new URL(anchor.href, window.location.href);
       if (url.origin === window.location.origin && (url.pathname === "/admin" || url.pathname.startsWith("/admin/"))) return;
-      if (!window.confirm("未保存のInstagram編集内容があります。管理画面を離れますか？")) {
+      if (!window.confirm("未保存の編集内容があります。管理画面を離れますか？")) {
         event.preventDefault();
         event.stopPropagation();
       }

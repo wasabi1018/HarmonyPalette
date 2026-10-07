@@ -1,0 +1,64 @@
+[
+  {
+    "cards": [
+      {
+        "background": "linear-gradient(to right bottom, rgb(255, 240, 246), rgb(255, 247, 250), rgb(252, 235, 243))",
+        "href": "/articles/series/first-visit-guide",
+        "overflow": false,
+        "title": "初めての方へ"
+      },
+      {
+        "background": "linear-gradient(to right bottom, rgb(238, 249, 246), rgb(246, 252, 250), rgb(229, 244, 242))",
+        "href": "/articles/harmonyland-fan-studio-harmony-pass-guide",
+        "overflow": false,
+        "title": "整理券・ハーモニーパス"
+      },
+      {
+        "background": "linear-gradient(to right bottom, rgb(242, 239, 251), rgb(250, 247, 255), rgb(235, 229, 247))",
+        "href": "/articles/harmonyland-parade-seat-guide",
+        "overflow": false,
+        "title": "パレードの観覧場所"
+      }
+    ],
+    "decorativeSvgCount": 0,
+    "pageOverflow": false,
+    "rect": {
+      "height": 417.5500183105469,
+      "width": 375.2000122070313,
+      "x": 0,
+      "y": -204.6999969482422
+    },
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  {
+    "cards": [
+      {
+        "background": "linear-gradient(to right bottom, rgb(255, 240, 246), rgb(255, 247, 250), rgb(252, 235, 243))",
+        "href": "/articles/series/first-visit-guide",
+        "overflow": false,
+        "title": "初めての方へ"
+      },
+      {
+        "background": "linear-gradient(to right bottom, rgb(238, 249, 246), rgb(246, 252, 250), rgb(229, 244, 242))",
+        "href": "/articles/harmonyland-fan-studio-harmony-pass-guide",
+        "overflow": false,
+        "title": "整理券・ハーモニーパス"
+      },
+      {
+        "background": "linear-gradient(to right bottom, rgb(242, 239, 251), rgb(250, 247, 255), rgb(235, 229, 247))",
+        "href": "/articles/harmonyland-parade-seat-guide",
+        "overflow": false,
+        "title": "パレードの観覧場所"
+      }
+    ],
+    "decorativeSvgCount": 0,
+    "pageOverflow": false,
+    "viewport": {
+      "height": 900,
+      "width": 1280
+    }
+  }
+]

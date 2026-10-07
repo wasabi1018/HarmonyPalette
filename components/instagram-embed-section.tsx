@@ -33,7 +33,7 @@ export function InstagramEmbedSection({
   }, [postKey, processEmbeds]);
 
   return (
-    <section id="instagram" className="mt-12 border-t border-pink/10 pt-10" aria-labelledby="instagram-heading">
+    <section id="instagram" aria-labelledby="instagram-heading">
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
           <h2
