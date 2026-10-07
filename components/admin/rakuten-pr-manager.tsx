@@ -19,7 +19,7 @@ type Props = {
 };
 
 function editable(placement: RakutenPrPlacement) {
-  return JSON.stringify({ enabled: placement.enabled, title: placement.title, description: placement.description, items: placement.items });
+  return JSON.stringify({ enabled: placement.enabled, title: placement.title, description: placement.description, items: placement.items, beforeHeadingId: placement.beforeHeadingId });
 }
 
 export function RakutenPrManager({ definitions, initialPlacements, initialProducts, apiStatus, setupError, initialProductError }: Props) {
@@ -41,7 +41,8 @@ export function RakutenPrManager({ definitions, initialPlacements, initialProduc
   const changed = editable(placement) !== editable(saved[placementId]);
   const anyChanged = definitions.some((entry) => editable(placements[entry.id]) !== editable(saved[entry.id]));
   const complete = placement.items.length === definition.itemLimit;
-  const canEnable = complete && apiStatus.configured && apiStatus.hasAffiliateId;
+  const positionValid = !definition.beforeHeadings || definition.beforeHeadings.some((heading) => heading.id === placement.beforeHeadingId);
+  const canEnable = complete && positionValid && apiStatus.configured && apiStatus.hasAffiliateId;
 
   useEffect(() => () => searchRequest.current?.abort(), []);
   useEffect(() => {
@@ -98,7 +99,7 @@ export function RakutenPrManager({ definitions, initialPlacements, initialProduc
     try {
       const response = await fetch(`/api/admin/rakuten-pr/${encodeURIComponent(targetId)}`, {
         method: "PUT", headers: { "Content-Type": "application/json" }, cache: "no-store",
-        body: JSON.stringify({ title: placement.title, description: placement.description, enabled: placement.enabled, items: placement.items }),
+        body: JSON.stringify({ title: placement.title, description: placement.description, enabled: placement.enabled, items: placement.items, beforeHeadingId: placement.beforeHeadingId }),
       });
       const body = await response.json() as { placement?: RakutenPrPlacement; error?: string };
       if (!response.ok || !body.placement) throw new Error(body.error || "掲載内容を保存できませんでした。");
@@ -143,13 +144,24 @@ export function RakutenPrManager({ definitions, initialPlacements, initialProduc
           <fieldset disabled={saving || Boolean(setupError)}>
             <legend className="text-xl font-black text-ink">掲載内容</legend>
             <div className="mt-4 space-y-4">
+              {definition.beforeHeadings && <div>
+                <label htmlFor="rakuten-pr-position" className="text-sm font-bold text-ink">本文への挿入位置</label>
+                <select id="rakuten-pr-position" value={placement.beforeHeadingId || ""} onChange={(event) => change({ beforeHeadingId: event.target.value })} className="mt-2 min-h-11 w-full rounded-xl border border-ink/15 bg-white px-3 text-sm outline-none focus:border-pink focus:ring-2 focus:ring-pink/20">
+                  <option value="">見出しを選んでください</option>
+                  {placement.beforeHeadingId && !positionValid && <option value={placement.beforeHeadingId}>本文から削除された見出し（選び直してください）</option>}
+                  {definition.beforeHeadings.map((heading) => <option key={heading.id} value={heading.id}>「{heading.text}」の手前</option>)}
+                </select>
+                <p className="mt-2 text-xs leading-6 text-ink/65">保存済みの本文の見出しから選びます。見出しを変更したときは、記事を保存してからこの画面を再読み込みしてください。</p>
+                {!definition.beforeHeadings.length && <p role="alert" className="mt-2 text-xs leading-6 text-red-700">本文に見出しがありません。記事に見出しと、その前の本文を追加して保存してください。</p>}
+                {placement.beforeHeadingId && !positionValid && <p role="alert" className="mt-2 text-xs leading-6 text-red-700">挿入先の見出しが見つかりません。選び直して保存するまで、本文途中の商品は表示されません。</p>}
+              </div>}
               <div><label htmlFor="rakuten-pr-title" className="text-sm font-bold text-ink">見出し</label><input id="rakuten-pr-title" value={placement.title} required maxLength={80} onChange={(event) => change({ title: event.target.value })}
                 className="mt-2 min-h-11 w-full rounded-xl border border-ink/15 px-3 text-sm outline-none focus:border-pink focus:ring-2 focus:ring-pink/20" /></div>
               <div><label htmlFor="rakuten-pr-description" className="text-sm font-bold text-ink">説明文 <span className="font-medium text-ink/55">任意</span></label><input id="rakuten-pr-description" value={placement.description} maxLength={160} onChange={(event) => change({ description: event.target.value })}
                 className="mt-2 min-h-11 w-full rounded-xl border border-ink/15 px-3 text-sm outline-none focus:border-pink focus:ring-2 focus:ring-pink/20" /></div>
             </div>
             <div className="mb-3 mt-6 flex flex-wrap items-center justify-between gap-2"><h2 className="text-base font-black text-ink">掲載商品</h2><span className="text-sm font-bold text-ink/65">{placement.items.length} / {definition.itemLimit}件</span></div>
-            <p className="mb-3 text-xs leading-5 text-ink/65">商品検索から追加してください。上から順に、スマホでは左上・右上・左下・右下に表示します。</p>
+            <p className="mb-3 text-xs leading-5 text-ink/65">商品検索から追加してください。{definition.itemLimit === 2 ? "上から順に、左・右に表示します。" : "上から順に、スマホでは左上・右上・左下・右下に表示します。"}</p>
             {placement.items.length === 0 && <p className="rounded-xl border border-dashed border-pink/25 p-5 text-sm leading-6 text-ink/65">まだ商品を選んでいません。</p>}
             <ol className="space-y-3">
               {placement.items.map((selected, index) => {

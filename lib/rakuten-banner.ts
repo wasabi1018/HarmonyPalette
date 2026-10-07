@@ -9,6 +9,7 @@ export type RakutenBannerPlacement = {
   width: number;
   height: number;
   updatedAt: string | null;
+  mode?: "inherit" | "custom";
 };
 export type RakutenBannerDefinition = {
   id: string;
@@ -16,6 +17,7 @@ export type RakutenBannerDefinition = {
   location: string;
   revalidatePaths: readonly string[];
   defaultBanner?: Pick<RakutenBannerPlacement, "linkUrl" | "imageUrl" | "alt" | "width" | "height">;
+  allowInheritance?: boolean;
 };
 
 export const RAKUTEN_BANNER_PLACEMENTS: readonly RakutenBannerDefinition[] = [{
@@ -29,6 +31,9 @@ export const RAKUTEN_BANNER_PLACEMENTS: readonly RakutenBannerDefinition[] = [{
     alt: "楽天市場のおすすめ情報",
     width: 468, height: 60,
   },
+}, {
+  id: "article-top", label: "全記事共通の上部バナー", location: "記事のタイトル・アイキャッチの下、目次の前",
+  revalidatePaths: ["/articles/[slug]"],
 }];
 
 export function getRakutenBannerDefinition(id: string) {
@@ -41,7 +46,7 @@ export function createDefaultRakutenBanner(definition: RakutenBannerDefinition):
   return {
     placementId: definition.id, enabled: Boolean(definition.defaultBanner),
     linkUrl: "", imageUrl: "", alt: "楽天市場のおすすめ情報", width: 468, height: 60,
-    ...definition.defaultBanner, updatedAt: null,
+    ...definition.defaultBanner, updatedAt: null, ...(definition.allowInheritance ? { mode: "inherit" as const } : {}),
   };
 }
 
@@ -63,6 +68,8 @@ function bannerUrl(value: unknown, image: boolean, required: boolean) {
 export function parseRakutenBanner(value: unknown, definition: RakutenBannerDefinition): RakutenBannerPlacement {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new RakutenSettingsError("バナーの掲載内容を確認してください。");
   const input = value as Record<string, unknown>;
+  const mode = definition.allowInheritance ? input.mode ?? "inherit" : undefined;
+  if (definition.allowInheritance && mode !== "inherit" && mode !== "custom") throw new RakutenSettingsError("バナーの使い方を確認してください。");
   if (typeof input.enabled !== "boolean") throw new RakutenSettingsError("公開表示の設定を確認してください。");
   if (typeof input.alt !== "string" || !input.alt.trim() || input.alt.trim().length > 160 || /[\u0000-\u001f\u007f]/.test(input.alt)) {
     throw new RakutenSettingsError("画像の説明を1〜160文字で入力してください。");
@@ -72,8 +79,9 @@ export function parseRakutenBanner(value: unknown, definition: RakutenBannerDefi
   }
   return {
     placementId: definition.id, enabled: input.enabled,
-    linkUrl: bannerUrl(input.linkUrl, false, input.enabled), imageUrl: bannerUrl(input.imageUrl, true, input.enabled),
+    linkUrl: bannerUrl(input.linkUrl, false, input.enabled && mode !== "inherit"), imageUrl: bannerUrl(input.imageUrl, true, input.enabled && mode !== "inherit"),
     alt: input.alt.trim(), width: input.width as number, height: input.height as number,
     updatedAt: typeof input.updatedAt === "string" && Number.isFinite(Date.parse(input.updatedAt)) ? input.updatedAt : null,
+    ...(definition.allowInheritance ? { mode: mode as "inherit" | "custom" } : {}),
   };
 }

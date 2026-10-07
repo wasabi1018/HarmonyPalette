@@ -9,11 +9,12 @@ export type RakutenPrPlacementDefinition = {
   location: string;
   itemLimit: number;
   revalidatePaths: readonly string[];
+  beforeHeadings?: readonly { id: string; text: string }[];
 };
 
 // Register a page's placement here; the admin UI and persistence are shared.
 export const RAKUTEN_PR_PLACEMENTS: readonly RakutenPrPlacementDefinition[] = [
-  { id: "home-pickup", label: "TOPのPICK UP", location: "来園に役立つガイドの下・Instagramの前", itemLimit: 4, revalidatePaths: ["/"] },
+  { id: "home-pickup", label: "TOP・記事末尾の共通PICK UP", location: "TOPのガイド下・各記事の本文末尾", itemLimit: 4, revalidatePaths: ["/", "/articles/[slug]"] },
 ];
 
 export type RakutenPrSelection = { itemCode: string; description: string };
@@ -24,6 +25,7 @@ export type RakutenPrPlacement = {
   description: string;
   items: RakutenPrSelection[];
   updatedAt: string | null;
+  beforeHeadingId?: string;
 };
 export type RakutenPrDisplayItem = RakutenProduct & { affiliateUrl: string; description: string };
 export type RakutenPrDisplay = Pick<RakutenPrPlacement, "placementId" | "title" | "description"> & { items: RakutenPrDisplayItem[] };
@@ -35,7 +37,7 @@ export function getRakutenPrDefinition(id: string) {
 }
 
 export function createDefaultRakutenPrPlacement(definition: RakutenPrPlacementDefinition): RakutenPrPlacement {
-  return { placementId: definition.id, enabled: false, title: "PICK UP", description: "気になるアイテムをピックアップ", items: [], updatedAt: null };
+  return { placementId: definition.id, enabled: false, title: "PICK UP", description: "気になるアイテムをピックアップ", items: [], updatedAt: null, ...(definition.beforeHeadings ? { beforeHeadingId: "" } : {}) };
 }
 
 function text(value: unknown, maxLength: number, label: string, required = false) {
@@ -67,6 +69,7 @@ export function parseRakutenPrPlacement(value: unknown, definition: RakutenPrPla
     placementId: definition.id, enabled: input.enabled,
     title: text(input.title, 80, "見出し", true), description: text(input.description, 160, "説明文"), items,
     updatedAt: typeof input.updatedAt === "string" && Number.isFinite(Date.parse(input.updatedAt)) ? input.updatedAt : null,
+    ...(definition.beforeHeadings ? { beforeHeadingId: text(input.beforeHeadingId ?? "", 160, "挿入位置") } : {}),
   };
 }
 

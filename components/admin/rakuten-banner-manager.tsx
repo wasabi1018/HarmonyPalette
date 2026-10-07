@@ -5,11 +5,11 @@ import { LoaderCircle, Save } from "lucide-react";
 import { RakutenBanner } from "@/components/rakuten-banner";
 import { parseRakutenBanner, type RakutenBannerDefinition, type RakutenBannerPlacement } from "@/lib/rakuten-banner";
 
-type Props = { definitions: readonly RakutenBannerDefinition[]; initialBanners: RakutenBannerPlacement[]; setupError?: string };
+type Props = { definitions: readonly RakutenBannerDefinition[]; initialBanners: RakutenBannerPlacement[]; setupError?: string; initialPlacementId?: string; inheritedBanner?: RakutenBannerPlacement | null };
 function editable(banner: RakutenBannerPlacement) { return JSON.stringify({ ...banner, updatedAt: null }); }
 
-export function RakutenBannerManager({ definitions, initialBanners, setupError }: Props) {
-  const [placementId, setPlacementId] = useState(definitions[0].id);
+export function RakutenBannerManager({ definitions, initialBanners, setupError, initialPlacementId, inheritedBanner }: Props) {
+  const [placementId, setPlacementId] = useState(definitions.some((entry) => entry.id === initialPlacementId) ? initialPlacementId! : definitions[0].id);
   const [banners, setBanners] = useState(() => Object.fromEntries(initialBanners.map((banner) => [banner.placementId, banner])));
   const [saved, setSaved] = useState(banners);
   const [code, setCode] = useState("");
@@ -22,7 +22,7 @@ export function RakutenBannerManager({ definitions, initialBanners, setupError }
   const anyChanged = definitions.some((entry) => editable(banners[entry.id]) !== editable(saved[entry.id])) || Boolean(code.trim());
   let preview: RakutenBannerPlacement | null = null;
   let inputError = "";
-  try { preview = parseRakutenBanner(banner, definition); }
+  try { const parsed = parseRakutenBanner(banner, definition); preview = parsed.mode === "inherit" ? (inheritedBanner?.enabled ? inheritedBanner : null) : parsed; }
   catch (error) { inputError = error instanceof Error ? error.message : "バナーの掲載内容を確認してください。"; }
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export function RakutenBannerManager({ definitions, initialBanners, setupError }
       const updated = body.banner;
       setBanners((current) => ({ ...current, [targetId]: updated }));
       setSaved((current) => ({ ...current, [targetId]: updated }));
-      setMessage(updated.enabled ? "バナーを保存しました。公開画面に反映されます。" : "バナーを保存しました。公開表示はオフです。");
+      setMessage(updated.mode === "inherit" ? "全記事共通のバナーを使う設定を保存しました。" : updated.enabled ? "バナーを保存しました。公開画面に反映されます。" : "バナーを保存しました。公開表示はオフです。");
     } catch (error) { setIsError(true); setMessage(error instanceof Error ? error.message : "バナーを保存できませんでした。"); }
     finally { setSaving(false); }
   }
@@ -77,7 +77,7 @@ export function RakutenBannerManager({ definitions, initialBanners, setupError }
               {definitions.map((entry) => <option key={entry.id} value={entry.id}>{entry.label}</option>)}
             </select>
           </div>
-          <span className={`rounded-full px-3 py-1.5 text-xs font-bold ${saved[placementId].enabled ? "bg-green-50 text-green-800" : "bg-ink/5 text-ink/65"}`}>{saved[placementId].enabled ? "公開表示中" : "公開表示オフ"}</span>
+          <span className={`rounded-full px-3 py-1.5 text-xs font-bold ${saved[placementId].enabled ? "bg-green-50 text-green-800" : "bg-ink/5 text-ink/65"}`}>{saved[placementId].mode === "inherit" ? "共通設定を使用" : saved[placementId].enabled ? "公開表示中" : "公開表示オフ"}</span>
         </div>
         <p className="mt-3 text-[13px] leading-6 text-ink/70">{definition.location}に表示します。画像を中央に配置し、スマホでは画面幅に合わせて縮小します。</p>
         {setupError && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm leading-6 text-red-700">{setupError}</p>}
@@ -86,6 +86,14 @@ export function RakutenBannerManager({ definitions, initialBanners, setupError }
         <form onSubmit={(event) => void save(event)} className="min-w-0 rounded-[22px] border border-pink/10 bg-white p-4 sm:p-6">
           <fieldset disabled={saving || Boolean(setupError)}>
             <legend className="text-xl font-black text-ink">バナーの掲載内容</legend>
+            {definition.allowInheritance && <div className="mt-4">
+              <label htmlFor="rakuten-banner-mode" className="text-sm font-bold text-ink">バナーの使い方</label>
+              <select id="rakuten-banner-mode" value={banner.mode} onChange={(event) => { change({ mode: event.target.value as "inherit" | "custom" }); setCode(""); }} className="mt-2 min-h-11 w-full rounded-xl border border-ink/15 bg-white px-3 text-sm outline-none focus:border-pink focus:ring-2 focus:ring-pink/20">
+                <option value="inherit">全記事共通のバナーを使う</option><option value="custom">この記事だけ個別に設定する</option>
+              </select>
+              <p className="mt-2 text-xs leading-6 text-ink/65">共通設定を使う場合は、全記事共通のバナー変更がこの記事にも反映されます。個別設定を公開オフで保存すると、この記事のバナーを非表示にします。</p>
+            </div>}
+            {banner.mode !== "inherit" && <>
             <label htmlFor="rakuten-banner-code" className="mt-4 block text-sm font-bold text-ink">楽天のバナーコード</label>
             <p id="rakuten-banner-code-help" className="mt-1 text-xs leading-6 text-ink/65">楽天アフィリエイトの画像バナーコードを貼り付けて取り込めます。</p>
             <textarea id="rakuten-banner-code" aria-describedby="rakuten-banner-code-help" value={code} maxLength={16384} rows={4} onChange={(event) => setCode(event.target.value)} placeholder={'<a href="..."><img src="..."></a>'} className="mt-2 w-full rounded-xl border border-ink/15 p-3 text-xs leading-5 outline-none focus:border-pink focus:ring-2 focus:ring-pink/20" />
@@ -96,6 +104,7 @@ export function RakutenBannerManager({ definitions, initialBanners, setupError }
               <div><label htmlFor="rakuten-banner-alt" className="text-sm font-bold text-ink">画像の説明</label><input id="rakuten-banner-alt" value={banner.alt} maxLength={160} required onChange={(event) => change({ alt: event.target.value })} className="mt-2 min-h-11 w-full rounded-xl border border-ink/15 px-3 text-sm outline-none focus:border-pink focus:ring-2 focus:ring-pink/20" /><p className="mt-1 text-xs leading-5 text-ink/65">読み上げや、画像を表示できないときに使います。</p></div>
             </div>
             <label className="mt-5 flex min-h-11 items-center gap-3 rounded-xl bg-[#fff8fb] p-3 text-sm font-bold text-ink"><input type="checkbox" checked={banner.enabled} onChange={(event) => change({ enabled: event.target.checked })} className="h-4 w-4 accent-[#c94372]" />このバナーを公開表示する</label>
+            </>}
             {inputError && <p role="alert" className="mt-2 text-xs leading-6 text-red-700">{inputError}</p>}
             {banner.updatedAt && <p className="mt-4 text-xs leading-5 text-ink/55">最終保存：{new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", dateStyle: "medium", timeStyle: "short" }).format(new Date(banner.updatedAt))}</p>}
             {code.trim() && <p className="mt-3 text-xs leading-6 text-ink/65">貼り付けたコードは「コードから取り込む」を押してから保存してください。</p>}
@@ -108,13 +117,13 @@ export function RakutenBannerManager({ definitions, initialBanners, setupError }
           <p className="mt-2 text-xs leading-6 text-ink/65">保存前のバナーを確認できます。公開表示オフでもプレビューは表示します。</p>
           <div className="mt-4 overflow-hidden rounded-xl bg-[#fff8fb]">
             {preview?.imageUrl && preview.linkUrl ? <RakutenBanner banner={preview} preview onImageSize={(width, height) => {
-              if (saving || width > 4000 || height > 4000) return;
+              if (banner.mode === "inherit" || saving || width > 4000 || height > 4000) return;
               setBanners((current) => {
                 const selected = current[placementId];
                 if (selected.imageUrl !== preview?.imageUrl || (selected.width === width && selected.height === height)) return current;
                 return { ...current, [placementId]: { ...selected, width, height } };
               });
-            }} /> : <p className="p-5 text-sm leading-6 text-ink/65">楽天の画像URLとリンク先を入力するとプレビューが表示されます。</p>}
+            }} /> : <p className="p-5 text-sm leading-6 text-ink/65">{banner.mode === "inherit" ? "全記事共通の上部バナーは公開オフ、または未設定です。" : "楽天の画像URLとリンク先を入力するとプレビューが表示されます。"}</p>}
           </div>
         </section>
       </div>

@@ -940,6 +940,16 @@ export function ArticleEditor({
               onSelectTarget={focusQualityTarget}
             />
 
+            <section className="mt-6 rounded-xl border border-pink/15 bg-white p-4" aria-labelledby="article-rakuten-heading">
+              <h2 id="article-rakuten-heading" className="text-sm font-black text-ink">楽天PR</h2>
+              <p className="mt-2 text-xs leading-6 text-ink/65">本文途中はこの記事専用の2件、記事末尾はTOPと共通の4件を表示します。</p>
+              {articleId && !demoMode ? <a href={`/admin/rakuten-pr?type=article&articleId=${articleId}`} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#c94372] px-3 text-xs font-bold text-white">この記事の商品・挿入位置を設定 ↗</a> : <p className="mt-3 text-xs leading-6 text-ink/65">下書きを保存すると、この記事の商品を設定できます。</p>}
+              <p className="mt-2 text-xs leading-6 text-ink/55">本文の変更を保存してから、別タブで設定してください。</p>
+              {articleId && !demoMode && <a href={`/admin/rakuten-pr?type=article-banner&articleId=${articleId}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 text-xs font-bold text-[#b43e68] hover:underline">この記事の上部バナーを個別設定 ↗</a>}
+              <a href="/admin/rakuten-pr?type=banner&placementId=article-top" target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 text-xs font-bold text-[#b43e68] hover:underline">全記事共通の上部バナーを設定 ↗</a>
+              <a href="/admin/rakuten-pr" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 text-xs font-bold text-[#b43e68] hover:underline">TOP・記事末尾の共通商品を設定 ↗</a>
+            </section>
+
             <h2 className="mt-7 text-[14px] font-black text-ink">公開設定</h2>
 
             <fieldset className="mt-5">

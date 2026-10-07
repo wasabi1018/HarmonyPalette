@@ -6,6 +6,12 @@ import { ArrowLeft, ArrowRight, BookCopy, BookOpen } from "lucide-react";
 import { ArticlePreview } from "@/components/admin/article-preview";
 import { ArticleViewTracker } from "@/components/article-view-tracker";
 import { OfficialNotice } from "@/components/official-notice";
+import { RakutenBanner } from "@/components/rakuten-banner";
+import { RakutenPrSection } from "@/components/rakuten-pr-section";
+import { ArticleRakutenBody } from "@/components/article-rakuten-body";
+import { getPublicRakutenPrPlacement } from "@/lib/rakuten-pr-data";
+import { getPublicArticleRakutenPr } from "@/lib/rakuten-article-data";
+import { getPublicArticleRakutenBanner } from "@/lib/rakuten-article-banner-data";
 import {
   getPublishedArticle,
   listRelatedArticles,
@@ -110,6 +116,9 @@ export default async function ArticleDetailPage({
   const articleUrl = siteUrl(`/articles/${article.slug}`);
   const coverImageUrl = publicArticleImageUrl(article.coverImageUrl);
   const preparedContent = prepareArticleContent(article.contentHtml, article.title);
+  const [topBanner, inlineProducts, sharedProducts] = await Promise.all([
+    getPublicArticleRakutenBanner(article), getPublicArticleRakutenPr(article), getPublicRakutenPrPlacement("home-pickup"),
+  ]);
   const datedStatus = datedArticleStatus(article.slug);
   const datedContentNotice = datedStatus
     ? datedStatus.isPast
@@ -206,6 +215,9 @@ export default async function ArticleDetailPage({
         authorHref="/about"
         authorDescription={SITE_AUTHOR_DESCRIPTION}
         datedContentNotice={datedContentNotice}
+        topContent={topBanner ? <RakutenBanner banner={topBanner} /> : undefined}
+        bodyContent={<ArticleRakutenBody html={preparedContent.html} promotion={inlineProducts} />}
+        endContent={sharedProducts ? <RakutenPrSection placement={sharedProducts} twoColumns className="" /> : undefined}
       />
       <div className="article-print-hidden mx-auto max-w-[920px] px-4 pb-12 sm:px-7">
         {seriesContext && (

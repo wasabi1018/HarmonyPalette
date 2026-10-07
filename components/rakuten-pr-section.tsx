@@ -1,9 +1,10 @@
 import Image from "next/image";
 import type { RakutenPrDisplay } from "@/lib/rakuten-pr";
 
-export function RakutenPrSection({ placement, compact = false, className = "mx-auto max-w-[1200px] px-4 pt-10 sm:px-6 lg:px-8" }: {
+export function RakutenPrSection({ placement, compact = false, twoColumns = false, className = "mx-auto max-w-[1200px] px-4 pt-10 sm:px-6 lg:px-8" }: {
   placement: RakutenPrDisplay | null;
   compact?: boolean;
+  twoColumns?: boolean;
   className?: string;
 }) {
   if (!placement?.items.length) return null;
@@ -17,7 +18,7 @@ export function RakutenPrSection({ placement, compact = false, className = "mx-a
         </div>
         {placement.description && <p className={`mt-2 break-words text-[13px] leading-6 text-ink/65 [overflow-wrap:anywhere] ${compact ? "" : "sm:text-sm"}`}>{placement.description}</p>}
       </div>
-      <div className={`grid grid-cols-2 gap-2.5 ${compact ? "" : "lg:grid-cols-4 lg:gap-4"}`}>
+      <div className={`grid grid-cols-2 gap-2.5 ${compact ? "" : twoColumns ? "sm:gap-4" : "lg:grid-cols-4 lg:gap-4"}`}>
         {placement.items.map((item) => (
           <article key={item.itemCode} className="min-w-0 overflow-hidden rounded-2xl border border-pink/15 bg-white">
             <a href={item.affiliateUrl} target="_blank" rel="nofollow sponsored noopener noreferrer"

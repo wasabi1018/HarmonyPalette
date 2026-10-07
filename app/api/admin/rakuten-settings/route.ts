@@ -50,7 +50,7 @@ export async function PUT(request: Request) {
   try {
     const settings = await updateRakutenSettings(await input(request));
     revalidateTag(RAKUTEN_PR_PRODUCTS_CACHE_TAG);
-    for (const definition of RAKUTEN_PR_PLACEMENTS) definition.revalidatePaths.forEach((path) => revalidatePath(path));
+    for (const definition of RAKUTEN_PR_PLACEMENTS) definition.revalidatePaths.forEach((path) => path.includes("[") ? revalidatePath(path, "page") : revalidatePath(path));
     revalidatePath("/admin/rakuten-pr");
     return NextResponse.json({ ok: true, settings }, { headers });
   } catch (error) { return errorResponse(error); }

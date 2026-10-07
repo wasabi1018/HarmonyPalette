@@ -1,7 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getAdminAccess } from "@/lib/supabase/auth-server";
-import { getRakutenBannerDefinition, parseRakutenBanner } from "@/lib/rakuten-banner";
+import { parseRakutenBanner } from "@/lib/rakuten-banner";
+import { resolveAdminRakutenBannerDefinition } from "@/lib/rakuten-article-banner-data";
 import { getRakutenBanner, updateRakutenBanner } from "@/lib/rakuten-banner-settings";
 import { RakutenSettingsError } from "@/lib/rakuten-settings-input";
 
@@ -24,14 +25,14 @@ function errorResponse(error: unknown) {
 export async function GET(_request: Request, context: Context) {
   const denied = await authorize();
   if (denied) return denied;
-  try { return NextResponse.json({ banner: await getRakutenBanner(getRakutenBannerDefinition((await context.params).placementId)) }, { headers }); }
+  try { return NextResponse.json({ banner: await getRakutenBanner(await resolveAdminRakutenBannerDefinition((await context.params).placementId)) }, { headers }); }
   catch (error) { return errorResponse(error); }
 }
 export async function PUT(request: Request, context: Context) {
   const denied = await authorize();
   if (denied) return denied;
   try {
-    const definition = getRakutenBannerDefinition((await context.params).placementId);
+    const definition = await resolveAdminRakutenBannerDefinition((await context.params).placementId);
     const origin = request.headers.get("origin");
     if (origin && origin !== new URL(request.url).origin) throw new RakutenSettingsError("この画面からもう一度操作してください。", 403);
     if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) throw new RakutenSettingsError("バナーの掲載内容を確認してください。");
@@ -40,7 +41,7 @@ export async function PUT(request: Request, context: Context) {
     let input: unknown;
     try { input = JSON.parse(payload); } catch { throw new RakutenSettingsError("バナーの掲載内容を確認してください。"); }
     const banner = await updateRakutenBanner(definition, parseRakutenBanner(input, definition));
-    definition.revalidatePaths.forEach((path) => revalidatePath(path));
+    definition.revalidatePaths.forEach((path) => path.includes("[") ? revalidatePath(path, "page") : revalidatePath(path));
     revalidatePath("/admin/rakuten-pr");
     return NextResponse.json({ ok: true, banner }, { headers });
   } catch (error) { return errorResponse(error); }

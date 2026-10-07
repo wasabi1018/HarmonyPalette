@@ -1,0 +1,57 @@
+[
+  {
+    "step": "inline-save-reload",
+    "position": "当日の楽しみ方",
+    "items": 2,
+    "enabled": true
+  },
+  {
+    "step": "individual-banner-off",
+    "firstBannerOff": 0,
+    "secondBannerOn": 1
+  },
+  {
+    "step": "inherit-again",
+    "banner": "article-top"
+  },
+  {
+    "step": "common-banner-off",
+    "first": 0,
+    "second": 0
+  },
+  {
+    "step": "shared-copy-update",
+    "first": 1,
+    "second": 1,
+    "inlineUnaffected": 1
+  },
+  {
+    "step": "distinct-articles",
+    "first": [
+      "クロミ レジャーシートレジャーシートで休憩時間も楽しく",
+      "ハローキティ ミニマスコットホルダー レッドお気に入りのバッグにキティを添えて"
+    ],
+    "second": [
+      "クロミ キャラクターバースデーお祝いセット",
+      "【サンリオキャラクターズ】マイメロディ＆クロミ フードパーカー マイメロ 女の子 ガールズ AW 秋物 冬物 秋冬物 子供服 子ども服 ベビー キッズ 子供 子ども こども"
+    ]
+  },
+  {
+    "step": "shared-off",
+    "articleFooter": 0,
+    "top": 0,
+    "inline": 1
+  },
+  {
+    "step": "whole-card-tap",
+    "tabs": [
+      {
+        "id": "17",
+        "providerTabId": "01fe189c-0f02-42fd-ae8d-be126fa0d233",
+        "title": "New tab",
+        "url": "https://hb.afl.rakuten.co.jp/hgc/g00pq74n.7nlcycc1.g00pq74n.7nlcz161/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fsanrio%2Fn-2504-604275%2F&m=http%3A%2F%2Fm.rakuten.co.jp%2Fsanrio%2Fi%2F10093306%2F&rafcid=wsc_i_is_c94c0e6e-3c7f-4269-bf12-bef0675adf53",
+        "browserId": "2"
+      }
+    ]
+  }
+]

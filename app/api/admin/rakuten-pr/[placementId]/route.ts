@@ -4,7 +4,9 @@ import { getAdminAccess } from "@/lib/supabase/auth-server";
 import { getRakutenSettingsStatus } from "@/lib/rakuten-settings";
 import { getRakutenPrPlacement, updateRakutenPrPlacement } from "@/lib/rakuten-pr-settings";
 import { getRakutenPrProducts } from "@/lib/rakuten-pr-data";
-import { getRakutenPrDefinition, parseRakutenPrPlacement } from "@/lib/rakuten-pr";
+import { parseRakutenPrPlacement } from "@/lib/rakuten-pr";
+import { resolveAdminRakutenPrDefinition } from "@/lib/rakuten-article-data";
+import { validateArticleRakutenPosition } from "@/lib/rakuten-article";
 import { RakutenSettingsError } from "@/lib/rakuten-settings-input";
 
 export const runtime = "nodejs";
@@ -29,7 +31,7 @@ export async function GET(_request: Request, context: Context) {
   const denied = await authorize();
   if (denied) return denied;
   try {
-    const definition = getRakutenPrDefinition((await context.params).placementId);
+    const definition = await resolveAdminRakutenPrDefinition((await context.params).placementId);
     const placement = await getRakutenPrPlacement(definition);
     return NextResponse.json({ placement, ...await getRakutenPrProducts([placement]) }, { headers });
   } catch (error) { return errorResponse(error); }
@@ -39,7 +41,7 @@ export async function PUT(request: Request, context: Context) {
   const denied = await authorize();
   if (denied) return denied;
   try {
-    const definition = getRakutenPrDefinition((await context.params).placementId);
+    const definition = await resolveAdminRakutenPrDefinition((await context.params).placementId);
     const origin = request.headers.get("origin");
     if (origin && origin !== new URL(request.url).origin) throw new RakutenSettingsError("この画面からもう一度操作してください。", 403);
     if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) throw new RakutenSettingsError("掲載内容を確認してください。");
@@ -48,6 +50,7 @@ export async function PUT(request: Request, context: Context) {
     let input: unknown;
     try { input = JSON.parse(payload); } catch { throw new RakutenSettingsError("掲載内容を確認してください。"); }
     const parsed = parseRakutenPrPlacement(input, definition);
+    validateArticleRakutenPosition(parsed, definition);
     if (parsed.enabled) {
       const status = await getRakutenSettingsStatus();
       if (!status.configured || !status.hasAffiliateId) throw new RakutenSettingsError("公開するには楽天API設定とアフィリエイトIDを登録してください。");
@@ -58,7 +61,7 @@ export async function PUT(request: Request, context: Context) {
       }
     }
     const placement = await updateRakutenPrPlacement(definition, parsed);
-    definition.revalidatePaths.forEach((path) => revalidatePath(path));
+    definition.revalidatePaths.forEach((path) => path.includes("[") ? revalidatePath(path, "page") : revalidatePath(path));
     revalidatePath("/admin/rakuten-pr");
     return NextResponse.json({ ok: true, placement }, { headers });
   } catch (error) { return errorResponse(error); }
