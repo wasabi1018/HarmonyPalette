@@ -119,6 +119,11 @@ export function HomeTodaySections({
   const today = japanDate(now);
   const scheduleDate = mode === "home" ? today : selectedDate;
   const currentTime = japanTime(now);
+  const operatingDay = operatingDayState.operatingDays.find((day) => day.date === scheduleDate);
+  const isClosed = operatingDay?.operatingStatus === "closed";
+  const nextOpenDay = operatingDayState.operatingDays
+    .filter((day) => day.date > scheduleDate && day.operatingStatus === "open")
+    .sort((left, right) => left.date.localeCompare(right.date))[0];
   const todayAppearances = entries
     .filter((entry) => entry.date <= today && (entry.endDate ?? entry.date) >= today)
     .sort((left, right) => `${left.startTime}-${left.title}`.localeCompare(`${right.startTime}-${right.title}`, "ja"));
@@ -251,7 +256,11 @@ export function HomeTodaySections({
           eyebrow="TODAY'S CHARACTERS"
           title="今日会えるキャラクター"
         />
-        {characterSectionLoading ? (
+        {isClosed ? (
+          <p className="rounded-2xl border border-pink/10 bg-white px-4 py-6 text-center text-[12px] font-bold leading-6 text-ink/60">
+            本日は休園日のため、キャラクターの出演はありません。
+          </p>
+        ) : characterSectionLoading ? (
           <DataStatePanel state="loading" message="今日会えるキャラクターを読み込んでいます…" />
         ) : characterSectionProblem ? (
           <DataStatePanel
@@ -295,7 +304,9 @@ export function HomeTodaySections({
             <SectionHeading
               eyebrow="TODAY'S SCHEDULE"
               title="今日のスケジュール"
-              description={`${displayScheduleDate(today)}のイベントと、会えるキャラクターを時間順にまとめています。`}
+              description={isClosed
+                ? `${displayScheduleDate(today)}は休園日です。`
+                : `${displayScheduleDate(today)}のイベントと、会えるキャラクターを時間順にまとめています。`}
             />
           )}
           <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-pink/10 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
@@ -325,7 +336,30 @@ export function HomeTodaySections({
               </Link>
             )}
           </div>
-          {scheduleState.status === "loading" ? (
+          {isClosed ? (
+            <div className="overflow-hidden rounded-[18px] border border-pink/10 bg-white shadow-[0_8px_24px_rgba(118,73,86,0.05)]">
+              <ParkOperatingInfo
+                date={scheduleDate}
+                operatingDays={operatingDayState.operatingDays}
+                className="border-b border-pink/10 px-3 py-3 sm:px-4"
+              />
+              <div className="px-4 py-6 text-center">
+                <p className="text-[12px] font-bold leading-6 text-ink/60">
+                  {mode === "home" ? "本日" : displayScheduleDate(scheduleDate)}は休園日のため、イベント・グリーティングはありません。
+                </p>
+                <Link
+                  href={nextOpenDay ? `/daily-schedule?date=${nextOpenDay.date}` : "/daily-schedule"}
+                  onNavigate={() => {
+                    if (mode === "search" && nextOpenDay) setSelectedDate(nextOpenDay.date);
+                  }}
+                  className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-pink/20 bg-[#fffafd] px-4 py-2 text-[12px] font-black leading-5 text-pink transition-colors hover:border-pink/45 hover:bg-pink/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink focus-visible:ring-offset-2"
+                >
+                  {nextOpenDay ? `${displayScheduleDate(nextOpenDay.date)}の予定を見る` : "別の日の予定を調べる"}
+                  <ArrowRight size={14} className="shrink-0" aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+          ) : scheduleState.status === "loading" ? (
             <DataStatePanel state="loading" message="スケジュールを読み込んでいます…" />
           ) : scheduleSectionProblem ? (
             <DataStatePanel
@@ -546,7 +580,12 @@ export function HomeTodaySections({
               </p>
             </div>
           )}
-          {scheduleState.status !== "loading" && !scheduleSectionProblem && (
+          {isClosed && operatingDay?.updatedAt ? (
+            <p className="mt-4 flex items-center gap-2 text-[11px] font-bold text-ink/45">
+              <Clock3 size={13} className="shrink-0" aria-hidden="true" />
+              営業情報の更新：{displayUpdatedAt(operatingDay.updatedAt)}
+            </p>
+          ) : !isClosed && scheduleState.status !== "loading" && !scheduleSectionProblem && (
             <p className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-bold text-ink/45">
               {scheduleState.isRefreshing
                 ? <LoaderCircle size={13} className="animate-spin text-pink motion-reduce:animate-none" aria-hidden="true" />
