@@ -724,3 +724,9 @@ Verified real browser login, search, two-item selection, disabled/enabled save, 
 55 Rakuten integration tests, final full lint, TypeScript/production build and diff whitespace checks passed. Desktop 1280px and mobile 375px/320px retain the requested two-column article layouts without overflow; TOP remains four columns on desktop. All product and banner images loaded at 375px and 1280px. Mobile admin form verified at 375px. No application JavaScript errors; the existing external AdSense warning remains. Evidence and limits: `audit/article-rakuten-2026-10-07/qa.md`, metrics, browser-flow records and screenshots. Proportional delivery crops are `07-inline-mobile.png` and `08-footer-desktop.png`.
 
 P0/P1/P2: no unresolved issue in the local implementation and verification scope. P3: existing external warning and inherited 128px product thumbnails. Final result: passed locally. No commit, push or production deployment performed. The QA server ended after the environment changed; a running preview is not claimed.
+
+## Guide card backgrounds without stars — master integration, 2026-10-08
+
+Changed the three TOP guide backgrounds to pink, mint and lavender gradients, with faint corner circles and white circular arrows. Removed guide star decorations and retained keyboard focus and whole-card links. The shared admin preview uses the same component.
+
+Applied the approved guide component to master b28ac74, which already contains the TOP settings and Rakuten features. Only the guide component, its specification and QA evidence are included. Guide/settings tests passed (5); final lint/build results are recorded in `audit/guide-card-backgrounds-no-stars-2026-10-07/qa.md`. Prior production-preview evidence confirms the identical component at 390px and 1280px with no card/page overflow and no stars. No production data was written.

@@ -1,0 +1,78 @@
+[
+  {
+    "cards": [
+      {
+        "background": "linear-gradient(to right bottom, rgb(255, 240, 246), rgb(255, 247, 250), rgb(252, 235, 243))",
+        "href": "/articles/series/first-visit-guide",
+        "overflow": false,
+        "title": "初めての方へ"
+      },
+      {
+        "background": "linear-gradient(to right bottom, rgb(238, 249, 246), rgb(246, 252, 250), rgb(229, 244, 242))",
+        "href": "/articles/harmonyland-fan-studio-harmony-pass-guide",
+        "overflow": false,
+        "title": "整理券・ハーモニーパス"
+      },
+      {
+        "background": "linear-gradient(to right bottom, rgb(242, 239, 251), rgb(250, 247, 255), rgb(235, 229, 247))",
+        "href": "/articles/harmonyland-parade-seat-guide",
+        "overflow": false,
+        "title": "パレードの観覧場所"
+      }
+    ],
+    "decorativeSvgCount": 0,
+    "pageOverflow": false,
+    "rect": {
+      "bottom": 783.2500305175781,
+      "height": 417.5500183105469,
+      "left": 0,
+      "right": 375.2000122070313,
+      "top": 365.7000122070313,
+      "width": 375.2000122070313,
+      "x": 0,
+      "y": 365.7000122070313
+    },
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  {
+    "cards": [
+      {
+        "background": "linear-gradient(to right bottom, rgb(255, 240, 246), rgb(255, 247, 250), rgb(252, 235, 243))",
+        "href": "/articles/series/first-visit-guide",
+        "overflow": false,
+        "title": "初めての方へ"
+      },
+      {
+        "background": "linear-gradient(to right bottom, rgb(238, 249, 246), rgb(246, 252, 250), rgb(229, 244, 242))",
+        "href": "/articles/harmonyland-fan-studio-harmony-pass-guide",
+        "overflow": false,
+        "title": "整理券・ハーモニーパス"
+      },
+      {
+        "background": "linear-gradient(to right bottom, rgb(242, 239, 251), rgb(250, 247, 255), rgb(235, 229, 247))",
+        "href": "/articles/harmonyland-parade-seat-guide",
+        "overflow": false,
+        "title": "パレードの観覧場所"
+      }
+    ],
+    "decorativeSvgCount": 0,
+    "pageOverflow": false,
+    "rect": {
+      "bottom": 596.3000183105469,
+      "height": 203.3500061035156,
+      "left": 32.400001525878906,
+      "right": 1232.400001525879,
+      "top": 392.9500122070313,
+      "width": 1200,
+      "x": 32.400001525878906,
+      "y": 392.9500122070313
+    },
+    "viewport": {
+      "height": 900,
+      "width": 1280
+    }
+  }
+]
