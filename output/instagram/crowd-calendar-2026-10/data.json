@@ -1,0 +1,297 @@
+{
+  "draft": {
+    "month": "2026-10",
+    "overrides": {},
+    "annotations": {},
+    "updatedAt": null
+  },
+  "settings": {
+    "labels": {
+      "fanStudio": "ファンスタ3部屋",
+      "night": "ナイト営業",
+      "birthday": "誕生日",
+      "eventStart": "開始",
+      "eventEnd": "最終日"
+    },
+    "events": [],
+    "updatedAt": null
+  },
+  "facts": {
+    "2026-10-01": {
+      "rooms": [],
+      "night": false,
+      "closingTime": null,
+      "birthdays": []
+    },
+    "2026-10-02": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-03": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-04": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-05": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-06": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-07": {
+      "rooms": [],
+      "night": false,
+      "closingTime": null,
+      "birthdays": []
+    },
+    "2026-10-08": {
+      "rooms": [],
+      "night": false,
+      "closingTime": null,
+      "birthdays": []
+    },
+    "2026-10-09": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-10": {
+      "rooms": [
+        101,
+        102,
+        103
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-11": {
+      "rooms": [
+        101,
+        102,
+        103
+      ],
+      "night": true,
+      "closingTime": "20:00:00",
+      "birthdays": []
+    },
+    "2026-10-12": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-13": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-14": {
+      "rooms": [],
+      "night": false,
+      "closingTime": null,
+      "birthdays": []
+    },
+    "2026-10-15": {
+      "rooms": [],
+      "night": false,
+      "closingTime": null,
+      "birthdays": []
+    },
+    "2026-10-16": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-17": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-18": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-19": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-20": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-21": {
+      "rooms": [],
+      "night": false,
+      "closingTime": null,
+      "birthdays": []
+    },
+    "2026-10-22": {
+      "rooms": [],
+      "night": false,
+      "closingTime": null,
+      "birthdays": []
+    },
+    "2026-10-23": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-24": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-25": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-26": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-27": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-28": {
+      "rooms": [],
+      "night": false,
+      "closingTime": null,
+      "birthdays": []
+    },
+    "2026-10-29": {
+      "rooms": [],
+      "night": false,
+      "closingTime": null,
+      "birthdays": []
+    },
+    "2026-10-30": {
+      "rooms": [
+        101,
+        102
+      ],
+      "night": false,
+      "closingTime": "17:00:00",
+      "birthdays": []
+    },
+    "2026-10-31": {
+      "rooms": [
+        101,
+        102,
+        103
+      ],
+      "night": true,
+      "closingTime": "20:00:00",
+      "birthdays": [
+        "クロミ"
+      ]
+    }
+  },
+  "closedDates": [
+    "2026-10-01",
+    "2026-10-07",
+    "2026-10-08",
+    "2026-10-14",
+    "2026-10-15",
+    "2026-10-21",
+    "2026-10-22",
+    "2026-10-28",
+    "2026-10-29"
+  ],
+  "provenance": {
+    "fetchedAt": "2026-10-11T10:11:22.506Z",
+    "source": "Supabase published/verified records",
+    "savedDraftFound": false,
+    "savedSettingsFound": false,
+    "operatingDayCount": 31,
+    "scheduleCount": 652
+  }
+}
