@@ -1,7 +1,7 @@
 ---
 type: specification
 status: approved
-updated: 2026-10-04
+updated: 2026-10-11
 owner: project
 ---
 
@@ -12,6 +12,7 @@ owner: project
 - `/admin/instagram` は機能の入口。作成ツール5種類、DM運用、サイト表示設定を案内する。
 - `/admin/instagram/create/[tool]` は作成ツールの個別ページ。混雑予想、推しキャラおすすめ日、全体予定、週間・日別ファンスタジオを扱う。
 - `/admin/instagram/dm` はキャンペーン一覧、`dm/new` は下書き作成、`dm/[id]` は素材登録・確認・開始／一時停止、`dm/deliveries` は最近の送信状況。
+- DM下書き作成ではReelの共有URLを受け取り、管理者APIが接続済みアカウントの投稿一覧とpermalinkを照合してメディアIDを保存する。URLの短縮コードからIDを推測せず、アクセストークンをブラウザへ渡さない。
 - `/admin/instagram/settings` はサイトのトップページに掲載するInstagram投稿URLを設定する。
 - 共通メニューから各領域へ移動する。管理画面全体のサイドバー項目は「Instagram」1つとする。
 

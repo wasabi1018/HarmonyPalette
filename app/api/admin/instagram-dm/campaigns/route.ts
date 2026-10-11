@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAdminAccess } from "@/lib/supabase/auth-server";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
-import { getMetaConfig } from "@/lib/instagram-dm/meta";
+import { findOwnReelMedia, getMetaConfig, MetaApiError } from "@/lib/instagram-dm/meta";
+import { isInstagramReelUrl } from "@/lib/instagram-dm/reel";
 import { sameOriginAdminRequest } from "@/lib/instagram-dm/admin-request";
 
 export const runtime = "nodejs";
@@ -48,9 +49,39 @@ export async function POST(request: Request) {
   if (!db) return NextResponse.json({ error: "管理者ログインまたはSupabaseの設定が必要です。" }, { status: 401 });
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const month = typeof body?.month === "string" ? body.month.trim() : "";
-  const reelMediaId = typeof body?.reelMediaId === "string" ? body.reelMediaId.trim() : "";
-  if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month) || !/^\d{5,100}$/.test(reelMediaId)) {
-    return NextResponse.json({ error: "対象月またはReelのメディアIDが正しくありません。" }, { status: 400 });
+  const reelUrl = typeof body?.reelUrl === "string" ? body.reelUrl.trim() : "";
+  if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month)) {
+    return NextResponse.json({ error: "対象月が正しくありません。" }, { status: 400 });
+  }
+  if (!isInstagramReelUrl(reelUrl)) {
+    return NextResponse.json({ error: "InstagramのReel URLを入力してください。" }, { status: 400 });
+  }
+  let reelMediaId: string;
+  try {
+    const result = await findOwnReelMedia(reelUrl);
+    if (result.status === "not_found") {
+      return NextResponse.json({ error: "このReelを連携済みInstagramアカウントの投稿から見つけられませんでした。投稿アカウントとURLを確認してください。" }, { status: 404 });
+    }
+    if (result.status === "limit_reached") {
+      return NextResponse.json({ error: "投稿数が多く、Reelを確認しきれませんでした。管理者にお問い合わせください。" }, { status: 422 });
+    }
+    if (result.status === "timeout") {
+      return NextResponse.json({ error: "Reelの照合が時間内に終わりませんでした。時間をおいて再試行してください。" }, { status: 504 });
+    }
+    if (result.status !== "found") {
+      return NextResponse.json({ error: "Metaから投稿一覧を正しく取得できませんでした。" }, { status: 502 });
+    }
+    reelMediaId = result.id;
+  } catch (error) {
+    if (error instanceof MetaApiError) {
+      console.error("Instagram Reel lookup failed", { status: error.status });
+      const message = error.status === 503 ? "Meta APIの設定が不足しています。"
+        : error.status === 401 || error.status === 403 ? "Instagramアクセストークンまたは権限を確認してください。"
+          : "Meta APIからReelを確認できませんでした。時間をおいて再試行してください。";
+      return NextResponse.json({ error: message }, { status: error.status === 503 ? 503 : 502 });
+    }
+    console.error("Instagram Reel lookup failed", error);
+    return NextResponse.json({ error: "Reelの確認に失敗しました。" }, { status: 502 });
   }
   const { data, error } = await db.from("instagram_dm_campaigns")
     .insert({ month, reel_media_id: reelMediaId }).select("id").single();

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { postbackPayload } from "@/lib/instagram-dm/domain";
+import { findInstagramReelMedia, type InstagramMediaPage } from "@/lib/instagram-dm/reel";
 
 export function getMetaConfig() {
   const accountId = process.env.INSTAGRAM_ACCOUNT_ID;
@@ -55,6 +56,16 @@ async function metaRequest<T>(path: string, init: RequestInit = {}): Promise<T> 
     );
   }
   return json as T;
+}
+
+export async function findOwnReelMedia(reelUrl: string) {
+  const config = getMetaConfig();
+  if (!config) throw new MetaApiError("Instagramの環境変数が不足しています。", 503);
+  return findInstagramReelMedia(reelUrl, (after) => {
+    const query = new URLSearchParams({ fields: "id,permalink", limit: "100" });
+    if (after) query.set("after", after);
+    return metaRequest<InstagramMediaPage>(`${config.accountId}/media?${query.toString()}`);
+  });
 }
 
 async function sendMessage(recipient: Record<string, string>, message: object) {

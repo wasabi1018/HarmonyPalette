@@ -37,12 +37,12 @@ export function InstagramDmCampaignManager({ view = "list", campaignId, onAssetR
   const [feedback, setFeedback] = useState("");
   const [failed, setFailed] = useState(false);
   const [prepared, setPrepared] = useInstagramSessionState<PreparedInstagramDmAsset | null>("dm.prepared-asset", null);
-  const [newCampaign, setNewCampaign] = useInstagramSessionState("dm.new-campaign", { month: "", reelMediaId: "" });
+  const [newCampaign, setNewCampaign] = useInstagramSessionState("dm.new-campaign", { month: "", reelUrl: "" });
   const [selectedId, setSelectedId] = useInstagramSessionState("dm.asset-campaign", "");
   const [manualAsset, setManualAsset] = useInstagramSessionState<ManualAsset>(`dm.manual-asset.${campaignId ?? "new"}`, { characterName: "", keywords: "", dmText: "", file: null });
   const [deliveryFilter, setDeliveryFilter] = useInstagramSessionState<"all" | "review">("dm.delivery-filter", "review");
   useInstagramUnsavedChanges("dm.prepared-asset", Boolean(prepared));
-  useInstagramUnsavedChanges("dm.new-campaign", Boolean(newCampaign.month || newCampaign.reelMediaId));
+  useInstagramUnsavedChanges("dm.new-campaign", Boolean(newCampaign.month || newCampaign.reelUrl));
   useInstagramUnsavedChanges(`dm.manual-asset.${campaignId ?? "new"}`, Boolean(manualAsset.characterName || manualAsset.keywords || manualAsset.dmText || manualAsset.file));
 
   const listingUrl = `/api/admin/instagram-dm/campaigns${campaignId ? `?id=${encodeURIComponent(campaignId)}` : ""}`;
@@ -74,8 +74,8 @@ export function InstagramDmCampaignManager({ view = "list", campaignId, onAssetR
   function createCampaign(event: FormEvent) {
     event.preventDefault();
     void run(async () => {
-      const result = await requestJson<{ id: string }>("/api/admin/instagram-dm/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ month: newCampaign.month || prepared?.month, reelMediaId: newCampaign.reelMediaId }) });
-      setNewCampaign({ month: "", reelMediaId: "" });
+      const result = await requestJson<{ id: string }>("/api/admin/instagram-dm/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ month: newCampaign.month || prepared?.month, reelUrl: newCampaign.reelUrl }) });
+      setNewCampaign({ month: "", reelUrl: "" });
       setSelectedId(result.id);
       router.push(`/admin/instagram/dm/${result.id}`);
     });
@@ -126,8 +126,8 @@ export function InstagramDmCampaignManager({ view = "list", campaignId, onAssetR
     {view === "new" && <form onSubmit={createCampaign} className="max-w-[620px]">
       <h2 className="text-[18px] font-black text-ink">Reelの下書きを作成</h2><p className="mt-2 text-[12px] leading-6 text-ink/60">対象月とReelを指定します。作成後にキャラクターの画像とDM文章を登録してください。</p>
       <label className="mt-5 block text-[12px] font-bold text-ink/70">対象月<input className={inputClass} type="month" value={newCampaign.month || prepared?.month || ""} onChange={(event) => setNewCampaign((current) => ({ ...current, month: event.target.value }))} required disabled={busy} /></label>
-      <label className="mt-4 block text-[12px] font-bold text-ink/70">ReelのメディアID<input className={inputClass} value={newCampaign.reelMediaId} onChange={(event) => setNewCampaign((current) => ({ ...current, reelMediaId: event.target.value }))} pattern="[0-9]{5,100}" placeholder="1784…" required disabled={busy} /><span className="mt-2 block text-[11px] text-ink/60">Instagram投稿のURLではなく、数字のメディアIDを入力します。</span></label>
-      <button className={`${buttonClass} mt-5`} disabled={busy}>下書きを作成</button>
+      <label className="mt-4 block text-[12px] font-bold text-ink/70">ReelのURL<input className={inputClass} type="url" inputMode="url" value={newCampaign.reelUrl || ""} onChange={(event) => setNewCampaign((current) => ({ ...current, reelUrl: event.target.value }))} placeholder="https://www.instagram.com/reel/…/" maxLength={2048} required disabled={busy} /><span className="mt-2 block text-[11px] text-ink/60">連携済みアカウントのReelリンクを貼ってください。作成時にMeta APIでメディアIDを確認します。</span></label>
+      <button className={`${buttonClass} mt-5`} disabled={busy}>{busy && <LoaderCircle size={16} className="animate-spin" aria-hidden="true" />}{busy ? "Reelを確認中…" : "下書きを作成"}</button>
     </form>}
     {view === "list" && listing && <div className="grid gap-3">
       <p className="text-[11px] text-ink/60">最近作成したキャンペーンを最大30件表示します。</p>
