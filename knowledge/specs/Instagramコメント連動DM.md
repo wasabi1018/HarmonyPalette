@@ -1,7 +1,7 @@
 ---
 type: specification
 status: draft
-updated: 2026-09-30
+updated: 2026-10-12
 owner: project
 ---
 
@@ -23,8 +23,8 @@ owner: project
 2. 管理者が開始すると対象ReelのコメントWebhookだけを処理する。キーワードが複数一致する場合は最長一致を選び、同長で別キャラクターに一致した場合は送らない。
 3. コメントIDと「同一キャンペーン・同一利用者」で重複排除し、最初の該当コメントへボタン付きプライベート返信を送る。
 4. ボタン押下後にフォローを照会する。フォロワーなら画像・文言を順番に送る。非フォロワーならDM内でフォローと「フォローしました」ボタンを案内し、再照会する。照会結果が不明なら送信する。
-5. 画像と文言の両方を送った後、元コメントに「DMでお送りしました！」と返信する。
-6. 送信の各段階、MetaメッセージID、判定、失敗を記録する。曖昧な送信失敗は `needs_review` とし、自動で再送しない。
+5. 初回案内DMの送信成功後、元コメントに「コメントありがとうございます🎀\nDMに案内を送りました♡」と公開返信する。画像・文言の送信完了は待たない。
+6. 公開返信はDM配信とは別に再試行し、公開返信の失敗でボタン操作や画像・文言の送信を止めない。送信の各段階、MetaメッセージID、判定、失敗を記録する。曖昧な送信失敗は `needs_review` とし、自動で再送しない。
 7. 一時停止したキャンペーンは新規受付と次の残作業を止める（既に実行中のMeta APIリクエストは取り消せない）。再開後に処理を再開する。
 
 ## 状態
@@ -36,12 +36,12 @@ owner: project
 | paused | 受付・送信を止める |
 | awaiting_tap | 初回DMを送信済み。利用者のボタン押下待ち |
 | awaiting_follow | 非フォロワーへの案内送信済み。確認ボタン待ち |
-| complete | 画像、文言、公開返信を完了 |
+| complete | 画像・文言のDM送信を完了。公開返信の状態は別途記録 |
 | failed / needs_review | 管理画面でエラーを確認し、手動調査が必要 |
 
 ## データ
 
-- 正本：`instagram_dm_campaigns`、`instagram_dm_assets`、`instagram_dm_deliveries`、Storage `instagram-dm-images`
+- 正本：`instagram_dm_campaigns`、`instagram_dm_assets`、`instagram_dm_deliveries`（公開返信の独立状態を含む）、Storage `instagram-dm-images`
 - 読み取り：Meta署名検証済みWebhook、管理API、ワーカー
 - 変更：コメント・ボタンイベントで送信状態を更新。PNG・文言は登録時点のスナップショット
 - 権限：管理者セッションまたはサーバーのservice roleのみ。公開Storageの画像URLは知っていれば閲覧できるため、厳密なフォロワー限定公開ではない
@@ -53,6 +53,7 @@ owner: project
 - `lib/instagram-dm/`
 - `components/admin/instagram-dm-campaign-manager.tsx`
 - `supabase/migrations/202609300001_instagram_dm_campaigns.sql`
+- `supabase/migrations/202610120001_instagram_dm_initial_comment_reply.sql`
 
 ## 受け入れ条件
 

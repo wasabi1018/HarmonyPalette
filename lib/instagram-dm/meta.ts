@@ -1,6 +1,6 @@
 import "server-only";
 
-import { postbackPayload } from "@/lib/instagram-dm/domain";
+import { INSTAGRAM_COMMENT_REPLY, postbackPayload } from "@/lib/instagram-dm/domain";
 import { findInstagramReelMedia, type InstagramMediaPage } from "@/lib/instagram-dm/reel";
 
 export function getMetaConfig() {
@@ -131,6 +131,6 @@ export async function sendText(userId: string, message: string) {
 export async function replyToComment(commentId: string) {
   return metaRequest<{ id: string }>(`${encodeURIComponent(commentId)}/replies`, {
     method: "POST",
-    body: JSON.stringify({ message: "DMでお送りしました！" }),
+    body: JSON.stringify({ message: INSTAGRAM_COMMENT_REPLY }),
   });
 }

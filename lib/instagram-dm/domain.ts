@@ -3,6 +3,14 @@ export type DeliveryStatus =
   | "pending_image" | "pending_text" | "pending_reply" | "complete"
   | "failed" | "needs_review";
 
+export type CommentReplyStatus = "not_ready" | "pending" | "sent" | "failed" | "needs_review";
+
+export const INSTAGRAM_COMMENT_REPLY = "コメントありがとうございます🎀\nDMに案内を送りました♡";
+
+export function statusAfterTextSent(commentReplyStatus: CommentReplyStatus): "complete" | "pending_reply" {
+  return commentReplyStatus === "not_ready" ? "pending_reply" : "complete";
+}
+
 export type Campaign = {
   id: string;
   month: string;
@@ -33,6 +41,8 @@ export type Delivery = {
   image_message_id: string | null;
   text_message_id: string | null;
   comment_reply_id: string | null;
+  comment_reply_status: CommentReplyStatus;
+  comment_reply_attempt_count: number;
   attempt_count: number;
 };
 

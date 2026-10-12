@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   const { data: campaigns, error } = await campaignQuery;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   let deliveryQuery = db.from("instagram_dm_deliveries")
-    .select("id,campaign_id,status,comment_id,created_at,last_error,follow_status")
+    .select("id,campaign_id,status,comment_id,created_at,last_error,follow_status,comment_reply_status,comment_reply_last_error")
     .order("created_at", { ascending: false }).limit(100);
   if (campaignId) deliveryQuery = deliveryQuery.eq("campaign_id", campaignId);
   const { data: deliveries, error: deliveryError } = await deliveryQuery;
@@ -117,6 +117,10 @@ export async function PATCH(request: Request) {
       .eq("campaign_id", id).is("last_error", null)
       .in("status", ["pending_intro", "pending_check", "pending_image", "pending_text", "pending_reply"]);
     if (wakeError) console.error("Instagram pending deliveries could not be woken", wakeError);
+    const { error: replyWakeError } = await db.from("instagram_dm_deliveries")
+      .update({ comment_reply_next_attempt_at: new Date().toISOString() })
+      .eq("campaign_id", id).eq("comment_reply_status", "pending");
+    if (replyWakeError) console.error("Instagram pending comment replies could not be woken", replyWakeError);
   }
   return NextResponse.json(data);
 }

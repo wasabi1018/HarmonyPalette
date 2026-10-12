@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { followDecision, matchAsset, parseInstagramEvents, parsePostbackPayload, type Asset } from "./domain";
+import { followDecision, INSTAGRAM_COMMENT_REPLY, matchAsset, parseInstagramEvents, parsePostbackPayload, statusAfterTextSent, type Asset } from "./domain";
 
 const kuromi: Asset = {
   id: "kuromi", campaign_id: "one", character_name: "クロミ",
@@ -26,6 +26,18 @@ test("unknown follow result sends the image, explicit nonfollow waits", () => {
   assert.equal(followDecision("following"), "pending_image");
   assert.equal(followDecision("unknown"), "pending_image");
   assert.equal(followDecision("not_following"), "awaiting_follow");
+});
+
+test("public reply thanks the commenter and points to the initial DM", () => {
+  assert.equal(INSTAGRAM_COMMENT_REPLY, "コメントありがとうございます🎀\nDMに案内を送りました♡");
+});
+
+test("new deliveries complete after the DM text without waiting for the independent comment reply", () => {
+  assert.equal(statusAfterTextSent("pending"), "complete");
+  assert.equal(statusAfterTextSent("sent"), "complete");
+  assert.equal(statusAfterTextSent("failed"), "complete");
+  assert.equal(statusAfterTextSent("needs_review"), "complete");
+  assert.equal(statusAfterTextSent("not_ready"), "pending_reply");
 });
 
 test("comment and button events are parsed from a signed webhook body", () => {
