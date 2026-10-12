@@ -210,7 +210,7 @@ select cron.schedule(
 );
 ```
 
-5. Create and publish the target Reel. In `/admin/instagram/dm/new`, paste its Instagram Reel URL; the server lists media owned by the connected account and saves the numeric **media ID** only when the permalink matches. The access token stays server-side. Add each generated character ranking with "自動DM用にセット" (or upload a saved PNG and paste its DM text). Review keywords and test the flow with a test account before public launch.
+5. Create and publish the target Reel. In `/admin/instagram/dm/new`, choose the target month, paste its Instagram Reel URL, and add one or more characters. The page automatically prepares each character's ranking image, comment keywords, and DM text; review or edit the text, then save the campaign and assets together as a draft. The server lists media owned by the connected account and saves the numeric **media ID** only when the permalink matches. The access token stays server-side. Review the saved draft and test the flow with a test account before starting automatic replies.
 6. In the admin status table, inspect `failed` and `needs_review`. Do not blindly retry `needs_review`: Meta may have accepted the send before a timeout. Pausing stops both new comments and pending sends. A same-user second comment is not the designed retry mechanism; the DM button is.
 
 The worker claims up to three deliveries concurrently per pass and makes up to three passes per invocation. Each delivery completes one stage per pass; the next stage is claimed only after the previous stage is recorded. The webhook starts an immediate pass after persisting events, while the one-minute Cron is the durable fallback. Meta and Supabase rate limits still apply.

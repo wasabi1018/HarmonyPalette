@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import { InstagramDmCampaignManager } from "@/components/admin/instagram-dm-campaign-manager";
+import dynamic from "next/dynamic";
 import { InstagramPageHeading } from "@/components/admin/instagram-workspace";
+import { getInitialCharacterData, getInitialParkOperatingDayData, getInitialScheduleData } from "@/lib/supabase/initial-data";
+
+const InstagramDmNewCampaign = dynamic(() => import("@/components/admin/instagram-dm-new-campaign").then((module) => module.InstagramDmNewCampaign));
+
 export const metadata: Metadata = { title: "DMキャンペーンを作成" };
-export default function InstagramDmNewPage() {
-  return <><InstagramPageHeading title="DMキャンペーンを作成" description="対象月とReelを指定して、送信前の下書きを準備します。" category="dm" /><InstagramDmCampaignManager view="new" /></>;
+export default async function InstagramDmNewPage() {
+  const [initialScheduleData, initialCharacterData, initialParkOperatingDayData] = await Promise.all([
+    getInitialScheduleData(), getInitialCharacterData(), getInitialParkOperatingDayData(),
+  ]);
+  return <><InstagramPageHeading title="DMキャンペーンを作成" description="Reelとキャラクターを選び、画像・DM文をまとめて下書きに登録します。" category="dm" /><InstagramDmNewCampaign initialScheduleData={initialScheduleData} initialCharacterData={initialCharacterData} initialParkOperatingDayData={initialParkOperatingDayData} /></>;
 }

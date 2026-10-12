@@ -66,7 +66,7 @@ function validAccent(value: string) {
   return /^#[0-9a-f]{6}$/i.test(value) ? value : "#eb6e98";
 }
 
-function scheduleUrl(month: string, characterName: string) {
+export function scheduleUrl(month: string, characterName: string) {
   const [year, monthNumber] = month.split("-").map(Number);
   const lastDay = new Date(Date.UTC(year, monthNumber, 0)).toISOString().slice(0, 10);
   const params = new URLSearchParams({
@@ -89,7 +89,7 @@ function downloadBlob(blob: Blob, fileName: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-async function captureCard(node: HTMLElement) {
+export async function captureCard(node: HTMLElement) {
   const images = Array.from(node.querySelectorAll("img"));
   await Promise.all(images.map(async (image) => {
     if (!image.complete) {
@@ -112,11 +112,12 @@ async function captureCard(node: HTMLElement) {
   return blob;
 }
 
-function usePreviewScale() {
+export function usePreviewScale(enabled = true) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.5);
 
   useEffect(() => {
+    if (!enabled) return;
     const container = containerRef.current;
     if (!container) return;
     const update = () => setScale(Math.min(1, container.clientWidth / CARD_WIDTH));
@@ -124,7 +125,7 @@ function usePreviewScale() {
     const observer = new ResizeObserver(update);
     observer.observe(container);
     return () => observer.disconnect();
-  }, []);
+  }, [enabled]);
 
   return { containerRef, scale };
 }
