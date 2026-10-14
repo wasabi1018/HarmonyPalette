@@ -48,6 +48,8 @@ export type ArticleAnalyticsPoint = {
   planShares: number;
 };
 
+export type ArticleAnalyticsTotals = Omit<ArticleAnalyticsPoint, "date">;
+
 export type SiteAnalyticsEvent =
   | "home_view"
   | "plan_created"
@@ -60,10 +62,12 @@ export type ArticleAnalyticsItem = {
   slug: string;
   coverImageUrl: string;
   views: number;
+  cumulativeViews: number;
 };
 
 export type ArticleAnalyticsData = {
   rangeDays: number;
+  cumulative: ArticleAnalyticsTotals;
   totalDailyUniqueVisitors: number;
   todayUniqueVisitors: number;
   averageDailyUniqueVisitors: number;
