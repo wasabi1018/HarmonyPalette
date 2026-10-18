@@ -13,6 +13,7 @@ import {
 } from "@/lib/crowd-forecast/types";
 import { formatForecastTime } from "@/components/crowd-forecast/weather";
 import { japanDay } from "@/lib/crowd-forecast/date";
+import { displayedScore } from "@/lib/crowd-forecast/score";
 
 type Character = {
   id: string;
@@ -114,8 +115,7 @@ export function CrowdForecastSettings() {
   const [tab, setTab] = useState(0),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [message, setMessage] = useState(""),
-    [query, setQuery] = useState("");
+    [message, setMessage] = useState("");
   const [previewMonth, setPreviewMonth] = useState(() =>
     japanDay().slice(0, 7),
   );
@@ -512,59 +512,68 @@ export function CrowdForecastSettings() {
           {tab === 1 && (
             <div className={card}>
               <h2 className="mb-3 text-sm font-black">キャラクターの誕生日</h2>
-              <label className="block max-w-sm text-xs text-ink/65">
-                キャラクターを検索
-                <input
-                  className={`${field} mt-1`}
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </label>
               <p className="my-3 text-xs leading-6 text-ink/50">
-                誕生日はキャラクター台帳を参照します。未評価は暫定0点。複数の誕生日が重なった場合は最大値を使います。
+                キャラクターごとに誕生日の加点を設定できます。誕生日はキャラクター台帳を参照します。未評価は暫定0点。複数の誕生日が重なった場合は最大値を使います。
               </p>
-              <div className="divide-y divide-pink/10">
-                {data.characters
-                  .filter((c) => c.name.includes(query))
-                  .map((c) => (
-                    <label
+              {data.characters.length > 0 ? (
+                <ul
+                  className="grid max-h-[500px] gap-2 overflow-y-auto pr-1 lg:grid-cols-2"
+                  aria-label="キャラクター別の誕生日加点"
+                >
+                  {data.characters.map((c) => (
+                    <li
                       key={c.id}
-                      className="flex items-center justify-between gap-3 py-3 text-sm"
+                      className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-pink/10 bg-[#fffdfd] p-3"
                     >
-                      <span>
-                        {c.name}
-                        <small className="ml-2 text-ink/40">
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-sm font-bold">{c.name}</p>
+                        <p className="mt-1 text-xs text-ink/50">
                           {c.birthdayMonth && c.birthdayDay
-                            ? `${c.birthdayMonth}/${c.birthdayDay}`
+                            ? `誕生日：${c.birthdayMonth}/${c.birthdayDay}`
                             : "誕生日未登録"}
-                        </small>
-                      </span>
-                      <select
-                        className={`${field} !w-36`}
-                        value={
-                          config.birthdays[c.id] ??
-                          (c.name === "クロミ" ? 10 : "")
-                        }
-                        onChange={(e) =>
-                          update((v) => {
-                            if (e.target.value === "") delete v.birthdays[c.id];
-                            else
-                              v.birthdays[c.id] = Number(e.target.value) as
-                                0 | 5 | 10;
-                          })
-                        }
-                      >
-                        <option value="">未評価（暫定0）</option>
-                        {[0, 5, 10].map((n) => (
-                          <option key={n} value={n}>
-                            {n}点
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                        </p>
+                      </div>
+                      <label className="block w-40 max-w-[50%] shrink-0 text-xs text-ink/65">
+                        誕生日の加点
+                        <select
+                          className={`${field} mt-1 min-h-11`}
+                          aria-label={`${c.name}の誕生日加点`}
+                          value={
+                            config.birthdays[c.id] ??
+                            (c.name === "クロミ" ? 10 : "")
+                          }
+                          onChange={(e) =>
+                            update((v) => {
+                              if (e.target.value === "") delete v.birthdays[c.id];
+                              else
+                                v.birthdays[c.id] = Number(e.target.value) as
+                                  0 | 5 | 10;
+                            })
+                          }
+                        >
+                          <option value="">未評価（暫定0）</option>
+                          {[0, 5, 10].map((n) => (
+                            <option key={n} value={n}>
+                              {n}点
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </li>
                   ))}
-              </div>
+                </ul>
+              ) : (
+                <p className="rounded-xl border border-dashed border-pink/20 p-6 text-center text-xs text-ink/50">
+                  登録済みのキャラクターがいません。
+                </p>
+              )}
+              <p className="mt-3 text-xs leading-6 text-ink/50">
+                名前・誕生日の登録や変更は
+                <Link href="/admin/characters" className="ml-1 font-bold text-pink underline underline-offset-4">
+                  キャラクター管理
+                </Link>
+                で行えます。
+              </p>
             </div>
           )}
           {tab === 2 && (
@@ -891,7 +900,7 @@ export function CrowdForecastSettings() {
                           "誕生日",
                           "調整",
                           "天気係数",
-                          "上限前",
+                          "丸め前",
                         ].map((t) => (
                           <th key={t} className="px-2 py-3">
                             {t}
@@ -910,7 +919,9 @@ export function CrowdForecastSettings() {
                             {LEVEL_LABELS[d.level]}
                             {d.provisional ? "（基本予想）" : ""}
                           </td>
-                          <td className="px-2 font-bold">{d.score ?? "—"}</td>
+                          <td className="px-2 font-bold">
+                            {displayedScore(d) ?? "—"}
+                          </td>
                           {[
                             "weekday",
                             "calendar",
@@ -937,7 +948,7 @@ export function CrowdForecastSettings() {
                   )}
                 </div>
                 <p className="mt-4 text-xs leading-6 text-ink/50">
-                  営業時間とファンスタ加点は大きい方だけ適用します。未公開の予定は反映しない基本予想とし、固定レベル・休園・営業状況未確認の日は点数を表示しません。
+                  点数は100点を超えてもそのまま表示します（小数点以下は四捨五入、0点未満は0点）。営業時間とファンスタ加点は大きい方だけ適用します。未公開の予定は反映しない基本予想とし、固定レベル・休園・営業状況未確認の日は点数を表示しません。
                 </p>
               </div>
               <div className={card}>

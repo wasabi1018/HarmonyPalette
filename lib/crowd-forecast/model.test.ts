@@ -19,6 +19,7 @@ import {
   parseBulletin,
 } from "./weather";
 import type { DayInput, Weather } from "./types";
+import { displayedScore } from "./score";
 const now = new Date("2026-10-18T19:00:00+09:00");
 const input = (date = "2026-10-19"): DayInput => ({
   date,
@@ -95,6 +96,53 @@ test("通常平日25、土日祝の前後の平日は基準30", () => {
     25,
   );
   assert.equal(calculate(input(), config(), s.holidays, null, now).score, 30);
+});
+test("100点を超える合計も天気補正後の点数で保持し、90点以上は大混雑", () => {
+  const d = calculate(
+    {
+      ...input("2026-10-31"),
+      closing: "21:00",
+      birthdays: [{ id: "kuromi", name: "クロミ" }],
+    },
+    config(),
+    {},
+    null,
+    now,
+  );
+  assert.equal(d.score, 110);
+  assert.equal(d.raw, 110);
+  assert.equal(d.level, "veryBusy");
+  assert.equal(d.fallbackLevel, "veryBusy");
+
+  const c = config();
+  c.weekday.adjacent = 100;
+  const rainy = calculate(
+    {
+      ...input(),
+      closing: "21:00",
+      birthdays: [{ id: "kuromi", name: "クロミ" }],
+    },
+    c,
+    {},
+    weather(),
+    now,
+  );
+  assert.equal(rainy.score, 120);
+  assert.equal(rainy.factor, 0.8);
+  const state = emptyState();
+  state.days[d.input.date] = d;
+  const publicDay = projectPublic(state, now).days[0];
+  assert.equal(publicDay.level, "veryBusy");
+  assert.doesNotMatch(JSON.stringify(publicDay), /score|raw|breakdown|factor/);
+});
+test("保存済みの100点上限の予想も書き換えずに丸め前の値から表示する", () => {
+  const saved = { score: 100, raw: 120.5 };
+  assert.equal(displayedScore(saved), 121);
+  assert.deepEqual(saved, { score: 100, raw: 120.5 });
+  assert.equal(displayedScore({ score: 100, raw: 120.4 }), 120);
+  assert.equal(displayedScore({ score: 70, raw: null }), 70);
+  assert.equal(displayedScore({ score: 0, raw: -20 }), 0);
+  assert.equal(displayedScore({ score: null, raw: null }), null);
 });
 test("7時間・10時間・11時間の加点は0・30・40、分単位で境界を判定", () => {
   const scores = ["17:00", "17:59", "18:00", "19:00", "20:00", "21:00"].map(
@@ -280,6 +328,17 @@ test("公開DTOから点数・係数・内部メモを除外、期限切れは�
     JSON.stringify(publicValue),
     /score|breakdown|factor|SECRET_NOTE|threshold/,
   );
+});
+test("予想未作成でも公開月の保存済み祝日を返し、範囲外の祝日は含めない", () => {
+  const state = emptyState();
+  state.holidays["2026-10-31"] = "追加の祝日（テスト）";
+  const result = projectPublic(state, now);
+  assert.equal(result.days.length, 0);
+  assert.equal(result.holidays["2026-10-12"], "スポーツの日");
+  assert.equal(result.holidays["2026-10-31"], "追加の祝日（テスト）");
+  assert.equal(result.holidays["2026-11-03"], "文化の日");
+  assert.equal(result.holidays["2026-09-22"], undefined);
+  assert.equal(result.holidays["2027-01-01"], undefined);
 });
 test("気象庁の実XMLで大分県中部・大分地点・6時間降水確率を読む", () => {
   const short = readFileSync(
