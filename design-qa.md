@@ -799,3 +799,10 @@ Master integration preserves the existing `/logo-compact.png` image and combines
 - evidence: `audit/crowd-forecast-2026-10-18/footer-gap-mobile.jpg`、`footer-gap-desktop.jpg`。
 - scope: セレクターは混雑予想ページだけを対象とし、既存TOPの調整も保持。Instagram画像の固定サイズには適用しない。
 - final result: passed
+
+## ファンスタ加点の回数基準への変更（2026-10-18）
+
+- request: 時間当たりの開催密度ではなく、設定した基準回数以上でファンスタを加点する。
+- implementation: 基準回数以上の加点、高加点の倍率と点数、共通基準回数を管理画面に表示。密度比の入力を廃止。3部屋表示の「3部屋使用かつ基準回数超過」は維持。
+- verification: ローカル管理画面で新しい項目名と保存済みの値を確認。スマホ396pxとPC1425pxでページ横幅超過なし、console errorなし。境界21・22・32・33回、未公開、過去実績なし、営業時間による非変動、10/31のファンスタ5点・合計85点は計算・APIの29件のテストで確認。
+- evidence: `audit/fan-count-points-2026-10-18/mobile.png`、`desktop.png`。ローカルfixtureの設定画面であり、本番の保存済み予想の更新を証明する画像ではない。
