@@ -6,7 +6,7 @@ import { HARMONYLAND_OFFICIAL_URL } from "@/lib/site-config";
 
 export function Footer() {
   return (
-    <footer className="mt-12 border-t border-pink/10 bg-white [main:has(#home-about)+&]:mt-0 [main:has(#home-about)+&]:pb-24 lg:[main:has(#home-about)+&]:pb-0">
+    <footer className="mt-12 border-t border-pink/10 bg-white [main:has(#home-about)+&]:mt-0 [main:has(#home-about)+&]:pb-24 lg:[main:has(#home-about)+&]:pb-0 [main:has(#crowd-forecast)+&]:mt-0 [main:has(#crowd-forecast)+&]:pb-24 lg:[main:has(#crowd-forecast)+&]:pb-0">
       <div className="mx-auto grid max-w-[1200px] gap-7 px-4 py-8 sm:grid-cols-2 sm:px-6 lg:grid-cols-[1.15fr_.7fr_.9fr_1fr] lg:px-8">
         <div>
           <div className="relative h-14 w-[220px] overflow-hidden" aria-label="Harmony Palette ロゴ">

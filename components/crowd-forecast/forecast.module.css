@@ -1,7 +1,7 @@
 .page {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 40px 24px 52px;
+  padding: 40px 24px 24px;
   color: #302d39;
 }
 .pageHeading {
@@ -644,7 +644,7 @@
 @media (max-width: 1023px) {
   .page {
     max-width: 850px;
-    padding: 26px 20px 34px;
+    padding: 26px 20px 24px;
   }
   .pageHeading {
     align-items: flex-start;
@@ -684,7 +684,7 @@
 }
 @media (max-width: 540px) {
   .page {
-    padding: 22px 12px 30px;
+    padding: 22px 12px 24px;
   }
   .pageHeading h1 {
     font-size: 26px;
