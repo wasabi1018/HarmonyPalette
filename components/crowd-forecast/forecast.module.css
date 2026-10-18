@@ -1,0 +1,831 @@
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 40px 24px 52px;
+  color: #302d39;
+}
+.pageHeading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+.pageHeading h1 {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1.4;
+}
+.pageHeading > div > p:last-child {
+  color: #77717d;
+  font-size: 14px;
+  margin-top: 4px;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: #a57386;
+  font-weight: 700;
+  margin-bottom: 7px;
+}
+.update {
+  font-size: 12px;
+  line-height: 1.9;
+  color: #716b77;
+}
+.update span {
+  color: #8a828e;
+}
+.update [role="status"] {
+  color: #a65865;
+}
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid #edc3d1;
+  background: #fff8fb;
+  border-radius: 16px;
+  padding: 17px 20px;
+  margin-bottom: 24px;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.notice > svg {
+  flex-shrink: 0;
+  color: #d57798;
+  margin-top: 2px;
+}
+.notice > div {
+  min-width: 0;
+}
+.notice h2 {
+  font-size: 14px;
+  font-weight: 800;
+  border-bottom: 1px solid #f1d6df;
+  padding-bottom: 6px;
+  margin-bottom: 7px;
+}
+.notice p {
+  overflow-wrap: anywhere;
+}
+.notice strong {
+  font-weight: 600;
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 28px;
+  align-items: start;
+}
+.calendar {
+  min-width: 0;
+  border: 1px solid #efcfdb;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+}
+.calendarTop {
+  padding: 20px 20px 16px;
+  background: #fffcfd;
+}
+.monthHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.monthHeading h2 {
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+.monthHeading > div {
+  display: flex;
+  gap: 10px;
+}
+.monthHeading button {
+  border: 1px solid #efb7ca;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: #d96f95;
+  background: white;
+}
+.monthHeading button:disabled {
+  opacity: 0.3;
+  border-color: #e1dce0;
+  cursor: default;
+}
+.monthHeading button:focus-visible,
+.day:focus-visible,
+.close:focus-visible {
+  outline: 3px solid #9d476b;
+  outline-offset: -3px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 21px;
+  margin-top: 17px;
+  list-style: none;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 23px;
+  height: 23px;
+  border: 1px solid rgba(90, 80, 90, 0.12);
+  border-radius: 6px;
+}
+.quiet {
+  background: #e7f3e8 !important;
+  border-color: #c4dfc9 !important;
+}
+.normal {
+  background: #ddf1f8 !important;
+  border-color: #b7dfed !important;
+}
+.moderate {
+  background: #fff4d2 !important;
+  border-color: #f1df9f !important;
+}
+.busy {
+  background: #ffdea6 !important;
+  border-color: #edc285 !important;
+}
+.veryBusy {
+  background: #f3cdd5 !important;
+  border-color: #e9afbf !important;
+}
+.closed {
+  background: repeating-linear-gradient(
+    135deg,
+    #f3f1f3,
+    #f3f1f3 6px,
+    #e7e3e8 6px,
+    #e7e3e8 11px
+  ) !important;
+  border-color: #d8d3da !important;
+}
+.pending {
+  background: #fff !important;
+  border-color: #e9e2e7 !important;
+}
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  text-align: center;
+  background: #fff8fb;
+  border-top: 1px solid #efd8e1;
+  border-bottom: 1px solid #efd8e1;
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #77717f;
+}
+.sunday {
+  color: #dc7796;
+}
+.saturday {
+  color: #4288a7;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  padding: 6px;
+}
+.day,
+.blank {
+  min-height: 103px;
+  border-radius: 10px;
+}
+.blank {
+  background: #f8f6f8;
+}
+.day {
+  position: relative;
+  padding: 7px 8px;
+  text-align: left;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+  color: #3c3644;
+  transition: box-shadow 0.15s;
+}
+.day:hover {
+  box-shadow: inset 0 0 0 2px #db92ad;
+}
+.selected {
+  box-shadow: inset 0 0 0 3px #e7769b !important;
+}
+.today {
+  outline: 1px solid #db688f;
+  outline-offset: -1px;
+}
+.cellTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2px;
+}
+.cellTop b {
+  font-size: 21px;
+  line-height: 1.2;
+}
+.cellTop svg {
+  flex-shrink: 0;
+}
+.noWeather {
+  font-size: 13px;
+  color: #a79ea8;
+  line-height: 1.4;
+}
+.todayLabel {
+  align-self: flex-start;
+  background: #df7b9e;
+  color: white;
+  font-size: 8px;
+  line-height: 1.4;
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-top: 3px;
+}
+.cellTopics {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.cellTopics > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.calendarFoot {
+  font-size: 10px;
+  color: #8c828d;
+  line-height: 1.9;
+  padding: 9px 12px;
+  border-top: 1px solid #f3e5ec;
+}
+.mobileBreak {
+  display: none;
+}
+.sidebar {
+  border-left: 1px solid #efccdb;
+  padding-left: 24px;
+  min-width: 0;
+}
+.selectedDate {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.5;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #edcfdb;
+  letter-spacing: -0.03em;
+}
+.detailLevel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  font-size: 19px;
+  border-bottom: 1px solid #efcfdb;
+}
+.detailLevel .swatch {
+  width: 35px;
+  height: 35px;
+  border-radius: 9px;
+}
+.weatherDetails {
+  font-size: 12px;
+}
+.weatherHeadline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.weather_clear {
+  color: #ee9828;
+}
+.weather_cloud {
+  color: #8990a8;
+}
+.weather_occasionalRain,
+.weather_mixedRain,
+.weather_rain,
+.weather_heavyRain {
+  color: #489cc0;
+}
+.temperatures {
+  display: flex;
+  padding: 13px 0;
+  border-top: 1px solid #f1dce6;
+  border-bottom: 1px solid #f1dce6;
+}
+.temperatures > span {
+  flex: 1;
+  font-size: 11px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+.temperatures > span + span {
+  border-left: 1px solid #e1dce5;
+}
+.temperatures b {
+  font-size: 27px;
+  color: #dd7095;
+}
+.temperatures > span + span b {
+  color: #488bc2;
+}
+.temperatures small,
+.precipitation small {
+  font-size: 0.55em;
+}
+.precipitation {
+  padding: 13px 0;
+}
+.precipitation > p {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: #7c7584;
+  font-size: 11px;
+  font-weight: 700;
+}
+.precipitation > div {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+}
+.precipitation > div > span {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+}
+.precipitation b {
+  display: block;
+  font-size: 24px;
+  line-height: 1.5;
+}
+.source {
+  font-size: 10px;
+  color: #8e8391;
+  line-height: 1.8;
+  padding-bottom: 13px;
+}
+.source a,
+.about a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.dayFacts {
+  border-top: 1px solid #efcfdb;
+}
+.dayFacts > div {
+  padding: 13px 0;
+  border-bottom: 1px solid #efcfdb;
+}
+.dayFacts dt {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: #8b808d;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.dayFacts dd {
+  font-size: 15px;
+  font-weight: 700;
+}
+.topic {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 4px;
+  color: #957086;
+}
+.topics {
+  list-style: none;
+  padding-top: 12px;
+  font-size: 11px;
+  color: #9b687c;
+  line-height: 1.8;
+}
+.scheduleLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  background: #e9789d;
+  color: white;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 16px;
+  padding: 10px;
+}
+.scheduleLink:hover {
+  background: #d9658e;
+}
+.about {
+  border-top: 1px solid #efcfdb;
+  margin-top: 32px;
+  padding-top: 17px;
+  font-size: 12px;
+  color: #817685;
+  line-height: 1.9;
+}
+.about h2 {
+  font-size: 15px;
+  color: #534657;
+  font-weight: 800;
+  margin-bottom: 5px;
+}
+.muted {
+  font-size: 12px;
+  color: #8b808d;
+  line-height: 1.9;
+  padding: 15px 0;
+}
+.dialog {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  max-width: none;
+  max-height: 90dvh;
+  margin: auto 0 0;
+  overflow: visible;
+  color: #302d39;
+}
+.dialog::backdrop {
+  background: rgba(49, 40, 56, 0.4);
+  backdrop-filter: blur(1px);
+}
+.sheet {
+  position: relative;
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+  max-height: 90dvh;
+  overflow-y: auto;
+  padding: 30px 22px max(24px, env(safe-area-inset-bottom));
+  box-shadow: 0 -10px 50px rgba(63, 39, 65, 0.12);
+}
+.handle {
+  position: absolute;
+  width: 42px;
+  height: 5px;
+  border-radius: 5px;
+  background: #e0dce3;
+  top: 9px;
+  left: calc(50% - 21px);
+}
+.close {
+  position: absolute;
+  right: 14px;
+  top: 16px;
+  color: #84788b;
+  min-height: 44px;
+  min-width: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+.sheet .eyebrow {
+  margin-right: 48px;
+}
+.sheet .selectedDate {
+  font-size: 26px;
+}
+.sheet .detailLevel {
+  padding: 12px 0;
+}
+.sheet .weatherHeadline {
+  padding: 12px 0;
+}
+.sheet .temperatures b {
+  font-size: 31px;
+}
+.sheet .precipitation b {
+  font-size: 25px;
+}
+.sheet .scheduleLink {
+  font-size: 13px;
+}
+.daily {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 16px;
+  border: 1px solid #f1dce6;
+  border-radius: 14px;
+  background: #fffcfd;
+  margin: 12px 0 16px;
+  font-size: 12px;
+}
+.daily h3 {
+  font-size: 10px;
+  color: #8f7d8c;
+  margin-bottom: 5px;
+}
+.dailyLevel {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-weight: 700;
+}
+.dailyLevel .swatch {
+  width: 18px;
+  height: 18px;
+}
+.dailyWeather {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dailyWeather p {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.dailyRain {
+  font-size: 10px;
+  color: #7f7382;
+}
+.daily > a {
+  font-size: 11px;
+  color: #c96d91;
+  text-decoration: underline;
+}
+.dailyError {
+  font-size: 11px;
+  color: #8c808f;
+}
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 245px;
+    gap: 20px;
+  }
+  .sidebar {
+    padding-left: 20px;
+  }
+  .legend {
+    gap: 12px 15px;
+  }
+  .day {
+    padding: 6px;
+  }
+  .cellTop b {
+    font-size: 17px;
+  }
+}
+@media (max-width: 1023px) {
+  .page {
+    max-width: 850px;
+    padding: 26px 20px 34px;
+  }
+  .pageHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 19px;
+  }
+  .pageHeading h1 {
+    font-size: 29px;
+  }
+  .layout {
+    display: block;
+  }
+  .sidebar {
+    display: none;
+  }
+  .notice {
+    margin-bottom: 18px;
+  }
+  .day,
+  .blank {
+    min-height: 95px;
+  }
+  .cellTopics {
+    font-size: 10px;
+  }
+  .legend {
+    gap: 14px 26px;
+  }
+  .cellTop b {
+    font-size: 20px;
+  }
+  .selectedDate {
+    font-size: 25px;
+  }
+}
+@media (max-width: 540px) {
+  .page {
+    padding: 22px 12px 30px;
+  }
+  .pageHeading h1 {
+    font-size: 26px;
+  }
+  .pageHeading > div > p:last-child {
+    font-size: 12px;
+  }
+  .pageHeading .eyebrow {
+    font-size: 9px;
+  }
+  .update {
+    font-size: 11px;
+  }
+  .notice {
+    border-radius: 13px;
+    padding: 12px 11px;
+    gap: 8px;
+    font-size: 10px;
+    line-height: 1.8;
+  }
+  .notice > svg {
+    width: 19px;
+    height: 19px;
+  }
+  .notice h2 {
+    font-size: 12px;
+  }
+  .calendar {
+    border-radius: 14px;
+  }
+  .calendarTop {
+    padding: 15px 12px 13px;
+  }
+  .monthHeading h2 {
+    font-size: 21px;
+  }
+  .monthHeading button {
+    width: 33px;
+    height: 33px;
+  }
+  .monthHeading > div {
+    gap: 8px;
+  }
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 7px;
+    margin-top: 15px;
+  }
+  .legend li {
+    font-size: 10px;
+    gap: 5px;
+  }
+  .swatch {
+    width: 21px;
+    height: 21px;
+    border-radius: 5px;
+  }
+  .weekdays {
+    font-size: 11px;
+    padding: 7px 0;
+  }
+  .grid {
+    gap: 3px;
+    padding: 4px;
+  }
+  .day,
+  .blank {
+    border-radius: 7px;
+    min-height: 76px;
+  }
+  .day {
+    padding: 5px 4px;
+  }
+  .cellTop b {
+    font-size: 15px;
+  }
+  .cellTop svg {
+    width: 15px;
+    height: 15px;
+  }
+  .cellTopics {
+    font-size: 7px;
+    gap: 1px;
+    margin-top: 4px;
+    letter-spacing: -0.03em;
+  }
+  .noWeather {
+    font-size: 10px;
+  }
+  .calendarFoot {
+    font-size: 9px;
+    line-height: 1.8;
+    padding: 8px;
+  }
+  .mobileBreak {
+    display: block;
+  }
+  .todayLabel {
+    font-size: 7px;
+    padding: 0 3px;
+  }
+  .about {
+    margin-top: 23px;
+    font-size: 10px;
+  }
+  .about h2 {
+    font-size: 13px;
+  }
+  .daily {
+    gap: 9px;
+    padding: 11px 12px;
+  }
+  .dailyWeather {
+    gap: 5px;
+  }
+  .dailyWeather > p {
+    font-size: 11px;
+  }
+}
+
+.mobileWeather {
+  display: none;
+}
+.sheet .mobileWeather {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  max-width: 52%;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.sheet .mobileWeather svg {
+  flex-shrink: 0;
+}
+.sheet .weatherHeadline {
+  display: none;
+}
+.sheet .temperatures {
+  padding: 9px 0;
+}
+.sheet .temperatures b {
+  line-height: 1.2;
+}
+.sheet .temperatures > span {
+  font-size: 12px;
+}
+.sheet .precipitation {
+  padding: 8px 0;
+}
+.sheet .precipitation > p {
+  font-size: 12px;
+}
+.sheet .precipitation > div {
+  padding-top: 4px;
+}
+.sheet .precipitation > div > span {
+  font-size: 12px;
+}
+.sheet .precipitation b {
+  line-height: 1.25;
+}
+.sheet .dayFacts > div {
+  padding: 9px 0;
+}
+.sheet .dayFacts dt {
+  font-size: 12px;
+}
+.sheet .selectedDate {
+  padding-bottom: 10px;
+}

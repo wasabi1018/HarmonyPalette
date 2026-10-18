@@ -221,3 +221,13 @@ The worker claims up to three deliveries concurrently per pass and makes up to t
 - Published attraction operations: `/api/operations?date=YYYY-MM-DD`
 
 The operations API is ready for a future “today's operation status” section.
+
+# 混雑予想カレンダー（2026-10-18追加）
+
+`supabase/migrations/20261018043350_crowd_forecast.sql` を、明示的な本番反映の依頼時に適用します。この実装作業ではリモートDBに適用していません。`crowd_forecast_state` と更新用RPCは `service_role` 専用で、公開クライアントから点数や内部設定を直接読めない構成です。
+
+デプロイ後、`CRON_SECRET` を設定し、`/admin/crowd-forecast` で加点・誕生日・イベント・予定の公開状況を確認します。プレビューして保存すると、保存済みの天気で翌日以降の予想を作ります。初回の気象庁取得は「プレビュー・履歴」内の「本日分の天気取得と更新」で実行できます（同日の定期取得も実行済みとなります）。
+
+`vercel.json` に `/api/cron/crowd-forecast`（UTC 10:00＝JST 19:00）と `/api/cron/crowd-forecast-cleanup`（UTC 15:00＝JST 00:00）を追加しています。既存Cronは保持しています。CronはBearerの `CRON_SECRET` で認証します。既存運用との互換用に `ADMIN_IMPORT_SECRET` のフォールバックもあります。実行精度・利用可能数は利用中のVercelプランで確認してください。
+
+天気は無料の気象庁公開XML PULL、大分県中部の天気・降水確率と大分地点の気温を使います。公開閲覧による天気取得・計算はありません。実際の混雑を記録する管理フォームもありません。詳細は [混雑予想ページ](knowledge/specs/混雑予想ページ.md) を参照してください。

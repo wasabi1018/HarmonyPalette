@@ -2,6 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
+      "path": "/api/cron/crowd-forecast",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/crowd-forecast-cleanup",
+      "schedule": "0 15 * * *"
+    },
+    {
       "path": "/api/cron/publish-articles",
       "schedule": "10 21 * * *"
     }
