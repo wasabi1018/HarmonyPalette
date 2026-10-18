@@ -120,10 +120,10 @@ test("営業が確定し予定が未公開の日は、未反映の情報を明�
 test("通常平日25、土日祝の前後の平日は基準30", () => {
   const s = emptyState();
   assert.equal(
-    calculate(input("2026-10-20"), config(), s.holidays, null, now).score,
+    calculate(input("2026-10-20"), config(), s.holidays, null, now).breakdown.weekday,
     25,
   );
-  assert.equal(calculate(input(), config(), s.holidays, null, now).score, 30);
+  assert.equal(calculate(input(), config(), s.holidays, null, now).breakdown.weekday, 30);
 });
 test("100点を超える合計も天気補正後の点数で保持し、90点以上は大混雑", () => {
   const d = calculate(
@@ -180,7 +180,31 @@ test("7時間・10時間・11時間の加点は0・30・40、分単位で境界�
   );
   assert.deepEqual(scores, [0, 0, 10, 20, 30, 40]);
 });
-test("営業時間とファンスタ密度は大きい加点だけを使う", () => {
+test("ファンスタは基準回数以上で加点し、営業時間・過去密度・部屋数に依存しない", () => {
+  const c = config();
+  assert.deepEqual([21, 22, 32, 33].map((slots) =>
+    calculate({ ...input(), slots }, c, {}, null, now).breakdown.fan), [0, 3, 3, 5]);
+  for (const closing of ["17:00", "20:00", "21:00"]) {
+    for (const baselineDensities of [[], [100, 100, 100, 100]]) {
+      const d = calculate({ ...input(), closing, slots: 33, rooms: [101, 102, 103],
+        baselineDensities }, c, {}, null, now);
+      assert.equal(d.breakdown.fan, 5);
+      assert.equal(d.threeRooms, true);
+    }
+  }
+  assert.equal(calculate({ ...input(), fan: "unpublished", slots: 33 }, c, {}, null, now).breakdown.fan, 0);
+  c.fan.baselineSlots = 30;
+  c.fan.highRatio = 2;
+  c.fan.medium = 4;
+  c.fan.high = 8;
+  assert.deepEqual([29, 30, 59, 60].map((slots) =>
+    calculate({ ...input(), slots }, c, {}, null, now).breakdown.fan), [0, 4, 4, 8]);
+  // Saved settings may retain the old density threshold; it must not block the baseline boundary.
+  const legacy = { ...c, fan: { ...c.fan, mediumRatio: 1.2 } };
+  assert.equal(calculate({ ...input(), slots: 30 }, validateConfig(legacy), {}, null, now).breakdown.fan, 4);
+});
+
+test("営業時間とファンスタ回数は大きい加点だけを使う", () => {
   const d = calculate(
     {
       ...input(),
@@ -203,8 +227,19 @@ test("営業時間とファンスタ密度は大きい加点だけを使う", ()
       null,
       now,
     ).breakdown.fan,
-    0,
+    5,
   );
+});
+
+test("10月31日の33回・3部屋は5点で、営業時間15点との大きい方を合計に反映", () => {
+  const c = config();
+  c.hours.ten = 15;
+  const d = calculate({ ...input("2026-10-31"), closing: "20:00", slots: 33,
+    rooms: [101, 102, 103], birthdays: [{ id: "kuromi", name: "クロミ" }] }, c, {}, null, now);
+  assert.equal(d.breakdown.fan, 5);
+  assert.equal(d.breakdown.hours, 15);
+  assert.equal(d.threeRooms, true);
+  assert.equal(d.score, 85);
 });
 test("誕生日は0・5・10、複数は最大値で、雨の係数も共通", () => {
   const c = config();
@@ -223,7 +258,7 @@ test("誕生日は0・5・10、複数は最大値で、雨の係数も共通", (
     now,
   );
   assert.equal(d.breakdown.birthday, 10);
-  assert.equal(d.score, 32);
+  assert.equal(d.score, 34);
   assert.throws(() => validateConfig({ ...c, birthdays: { a: 15 } }));
 });
 test("連休日数と初日・最終日の減点、月境界、国民の休日も判定", () => {
@@ -324,13 +359,13 @@ test("当日と当月の過去日は凍結、過去月は削除、未来だけ�
   assert.deepEqual(next.days["2026-10-18"], old);
   assert.ok(next.days["2026-10-17"]);
   assert.equal(next.days["2026-09-30"], undefined);
-  assert.equal(next.days["2026-10-19"].score, 80);
+  assert.equal(next.days["2026-10-19"].score, 83);
   assert.equal(Object.keys(pruneState(next, "2026-11-01").days).length, 0);
 });
 test("公開DTOから点数・係数・内部メモを除外、期限切れは保存済みの天気補正なしレベル", () => {
   const s = emptyState(),
     c = config();
-  c.weekday.adjacent = 60;
+  c.weekday.adjacent = 55;
   c.overrides = [
     {
       date: input().date,

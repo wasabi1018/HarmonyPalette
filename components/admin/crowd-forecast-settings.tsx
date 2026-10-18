@@ -399,7 +399,7 @@ export function CrowdForecastSettings() {
                   </div>
                   {group.key === "hours" && (
                     <p className="mt-3 text-xs leading-6 text-ink/50">
-                      8時間未満は加点なし。該当する1段階のみ適用し、ファンスタ密度の加点と大きい方を使います。
+                      8時間未満は加点なし。該当する1段階のみ適用し、ファンスタ回数の加点と大きい方を使います。
                     </p>
                   )}
                   {group.key === "event" && (
@@ -415,19 +415,7 @@ export function CrowdForecastSettings() {
                 </h2>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   <NumberField
-                    label="中程度の密度比"
-                    step={0.1}
-                    min={1}
-                    max={10}
-                    value={config.fan.mediumRatio}
-                    set={(n) =>
-                      update((c) => {
-                        c.fan.mediumRatio = n;
-                      })
-                    }
-                  />
-                  <NumberField
-                    label="高い密度比"
+                    label="高加点になる基準回数の倍率"
                     step={0.1}
                     min={1}
                     max={10}
@@ -439,7 +427,7 @@ export function CrowdForecastSettings() {
                     }
                   />
                   <NumberField
-                    label="中程度の加点"
+                    label="基準回数以上の加点"
                     value={config.fan.medium}
                     set={(n) =>
                       update((c) => {
@@ -448,7 +436,7 @@ export function CrowdForecastSettings() {
                     }
                   />
                   <NumberField
-                    label="高い密度の加点"
+                    label="高加点の点数"
                     value={config.fan.high}
                     set={(n) =>
                       update((c) => {
@@ -457,7 +445,7 @@ export function CrowdForecastSettings() {
                     }
                   />
                   <label className="text-xs font-bold leading-6 text-ink/65">
-                    3部屋表示の比較基準日
+                    比較基準日
                     <input
                       className={field}
                       type="date"
@@ -470,7 +458,7 @@ export function CrowdForecastSettings() {
                     />
                   </label>
                   <NumberField
-                    label="比較基準日の回数"
+                    label="加点・3部屋表示の基準回数"
                     min={1}
                     max={1000}
                     value={config.fan.baselineSlots}
@@ -482,7 +470,7 @@ export function CrowdForecastSettings() {
                   />
                 </div>
                 <p className="mt-3 text-xs leading-6 text-ink/50">
-                  3部屋を使用し、1日の枠数が比較基準を超える場合だけ「3部屋」と表示します。基準は固定値です。同室・同時刻の複数キャラクターは1枠。密度は過去8週間の同区分、4日以上の中央値と比較します。
+                  公開済みの1日の回数が基準回数以上なら加点し、設定倍率以上なら高加点の点数を使います。営業時間や過去の開催実績では割りません。同室・同時刻の複数キャラクターは1回。3部屋を使用し、回数が基準を超える場合だけ「ファンスタ3部屋」と表示します。
                 </p>
               </div>
               <div className={card}>

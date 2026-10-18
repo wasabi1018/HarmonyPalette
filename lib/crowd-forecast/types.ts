@@ -62,7 +62,6 @@ export type ForecastConfig = {
   };
   hours: { eight: number; nine: number; ten: number; eleven: number };
   fan: {
-    mediumRatio: number;
     highRatio: number;
     medium: number;
     high: number;

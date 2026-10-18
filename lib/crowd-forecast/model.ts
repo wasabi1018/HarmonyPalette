@@ -33,7 +33,6 @@ export const DEFAULT_CONFIG: ForecastConfig = {
   holiday: { three: 8, four: 12, five: 16, six: 20, edgeReduction: 5, cap: 25 },
   hours: { eight: 10, nine: 20, ten: 30, eleven: 40 },
   fan: {
-    mediumRatio: 1.2,
     highRatio: 1.5,
     medium: 3,
     high: 5,
@@ -84,8 +83,7 @@ export function validateConfig(value: unknown): ForecastConfig {
       throw new Error("加点は0〜100で入力してください。");
   if (
     !c.fan ||
-    !numeric(c.fan.mediumRatio, 1, 10) ||
-    !numeric(c.fan.highRatio, c.fan.mediumRatio, 10) ||
+    !numeric(c.fan.highRatio, 1, 10) ||
     !numeric(c.fan.medium) ||
     !numeric(c.fan.high) ||
     !Number.isInteger(c.fan.baselineSlots) ||
@@ -302,23 +300,14 @@ export function calculate(
           : duration >= 8
             ? c.hours.eight
             : 0;
-  const baseline = [...input.baselineDensities].sort((a, b) => a - b);
-  const median = baseline.length
-    ? (baseline[Math.floor((baseline.length - 1) / 2)] +
-        baseline[Math.floor(baseline.length / 2)]) /
-      2
-    : 0;
   const ratio =
-    input.fan === "published" &&
-    duration > 0 &&
-    median > 0 &&
-    baseline.length >= 4
-      ? input.slots / duration / median
+    input.fan === "published"
+      ? input.slots / c.fan.baselineSlots
       : 0;
   const fan =
     ratio >= c.fan.highRatio
       ? c.fan.high
-      : ratio >= c.fan.mediumRatio
+      : ratio >= 1
         ? c.fan.medium
         : 0;
   const birthday = Math.max(
