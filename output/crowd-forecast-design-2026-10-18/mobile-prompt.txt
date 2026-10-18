@@ -1,0 +1,35 @@
+Use case: ui-mockup.
+Create ONE high-fidelity mobile public webpage screenshot for Harmony Palette's Harmonyland crowd forecast. This is the mobile responsive counterpart of the user-selected DESKTOP REFERENCE attached. Preserve its pink-and-white brand, gentle rounded calendar tiles, pastel colors, Japanese Gothic sans-serif type and quiet product styling. Do not create alternative designs or multiple panels. The desktop's RIGHT selected-day panel becomes a full-width section BELOW the calendar on mobile.
+Target dimensions: 390 x 1160 CSS pixels, a naturally scrollable full-page mobile screenshot. Render crisp high-resolution type. No phone body, bezel, status bar, browser chrome, notch, rounded device mask, or perspective. No horizontal overflow. The reference is a visual language and information hierarchy source, NOT an image to shrink to phone width.
+
+CRITICAL USER REVISION: ALL unpublished-schedule sentences must be REMOVED from individual date cells. Instead aggregate them in ONE calm warning area ABOVE the calendar, each entry prefixed with a yellow warning triangle in the appearance of ⚠️. Render these exact two Japanese lines legibly:
+「⚠️ スケジュール未公開：10/27」
+「⚠️ ファンスタスケジュール未公開：10/26」
+The full sentences occur in the warning area only, never on 26/27 or other day cells. This is the single most important change from the attached desktop reference.
+
+Current date anchor: 2026-10-18 Asia/Tokyo. Show October 2026 with correct Sunday-first dates. All weather and crowd fills are illustrative sample data, not live forecasts. Add a discreet readable footer label 「画面イメージ・データはサンプル」. Last update sample 「最終更新 10/17 19:05」 and note 「翌日以降の予想を毎日19時ごろに更新」.
+
+PAGE ORDER, compact purposeful vertical rhythm:
+1. Small existing H rounded-square pink mark + Harmony Palette wordmark. Near-white #fffbfd page, ink #3e3540, accent #eb6e98. Side margins around 16px.
+2. Bold 23–25px Japanese title 「混雑予想カレンダー」, one small subtitle 「お出かけ前に、混み具合をチェック。」 and update metadata.
+3. The single warning block with the two exact ⚠️ lines above. Light warm cream tint, subtle border, comfortable line height. Long lines can wrap naturally; no clipped text.
+4. One month heading 「2026年10月」, muted disabled previous-month chevron and one next-month chevron, normal touch-sized controls. No repeated month headings.
+5. Compact color legend in THREE columns and TWO rows with six square swatches: 「ゆったり」 mint #E7F3E8; 「普通」 pale blue #DDF1F8; 「やや混雑」 cream #FFF4D2; 「混雑」 amber #FFDEA6; 「大混雑」 rose #F3CDD5; 「休園日」 gray diagonal hatching. Categories appear here and in selected-day detail, NEVER as text inside day cells.
+6. The main 7-column five-week month calendar, filling available width around 358px. Rounded date cells ~46–49px wide, ~68–76px tall, 2–3px gutters, date numbers 16–18px. Weekday header 日 月 火 水 木 金 土, Sunday pink and Saturday blue. Keep numbers and tiny weather icons readable; use short labels / tiny topic icons rather than squeezing long text into the cells. No dense paragraphs in cells.
+EXACT DATE ROWS:
+blank blank blank blank 1 2 3
+4 5 6 7 8 9 10
+11 12 13 14 15 16 17
+18 19 20 21 22 23 24
+25 26 27 28 29 30 31
+No missing or duplicate dates. Outside-month tiles muted and empty.
+CLOSED with diagonal hatching: 1,7,8,14,15,21,22,28,29.
+PASTEL FILLS: blue on 2,5,9,13,16,19,23,26,27,30; mint on 6,20; cream on 3,4,17,18,24,25; amber on 10,12; rose on 11,31.
+Selected date19 has a clear pink border. Today18 has a modest small indicator or tiny dot, distinguish from selected19.
+Small sun/cloud/rain weather illustrations within top-right of open cells only:18 cloudy,19 sun,20 rain,23 cloud,24 sun-behind-cloud. Dates25,26,27,30,31 use an em dash instead of invented weather. No decorative sun on dates outside the forecast coverage.
+Short cell topics: 10: 「3部屋」;11: 「3部屋」 and tiny moon icon;31: 「3部屋」 plus small moon and birthday-cake icons. Keep these abbreviated and readable; they mean Fan Studio and birthday topics, full names live in selected-day details. Cells26 and27 have date/weather-dash only, absolutely NO unpublished-status text.
+7. Under calendar, quiet small key 「— 天気予報対象外」 and brief hint 「日付をタップして詳細を確認」.
+8. The former desktop RIGHT detail panel is now BELOW calendar at full mobile width, separated with a fine pale-pink divider, no card-in-card: small label 「選択した日」 then heading 「10月19日（月）」. Blue swatch and 「普通」 beside a sun icon and 「晴れ」 on a balanced row. Then 「営業時間 10:00〜17:00」, 「ファンスタ予定 公開済み」, one full-width pink primary button 「この日のスケジュールを見る」. Body type around14–16px, button44px tall. No sidebars.
+9. Compact heading 「混雑予想について」 and concise overview 「曜日・連休・営業時間・イベント・誕生日などをもとに予想しています。直近の日程は天気予報も考慮しています。」 Then small 「予想は目安です。天気の出典：気象庁」 and sample-data notice. Do not cramp the layout; this is a scrolling page.
+
+Hard constraints: no crowd point scores, numbers for score thresholds, calculation factors, formulas, greeting slot counts, popularity ranks, analytics, observations forms, charts, or unrelated feature inventory. Dates and operating hours are allowed numbers. Keep the selected desktop design's restrained style. Preserve mobile legibility and whole 7-column calendar; do NOT shrink the entire desktop screen, do NOT force everything into a short phone viewport, do NOT clip the bottom content. This is ONE coherent mobile screen concept reflecting the user's selected desktop direction.

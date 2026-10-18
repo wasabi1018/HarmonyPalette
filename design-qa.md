@@ -740,3 +740,24 @@ Verified five simultaneous short entries in a six-week month, five-week months, 
 The requested October sample uses a read-only snapshot of published/verified Supabase records and registered birthdays. Saved crowd overrides and common settings were absent, so open days retain the initial normal level and no seasonal event or daily note is invented. The actual 1080×1350px PNG is in `output/instagram/crowd-calendar-2026-10/`. Before commit, an isolated HEAD-plus-calendar snapshot passed all 13 focused tests, full lint and the production build including type validation without production environment variables. Unrelated working changes are excluded.
 
 Master integration preserves the existing `/logo-compact.png` image and combines it with the expanded daily-information layout. Applied the calendar change to master 4b73d24 while retaining its existing QA records and specification logo requirement. All 13 focused tests, full lint and the production build including type validation passed again. Verified actual logo loading, no daily-text overflow and successful 1080×1350px PNG download in the browser; the final verification load/export had no application errors or warnings. Evidence: `audit/crowd-calendar-details-2026-10-11/master-integration-export.png`. Production Storage writes remain untested.
+
+## 混雑予想ページ（2026-10-18）
+
+- source visual truth: `output/crowd-forecast-design-2026-10-18/desktop-selected.png`（1422×1106）、`mobile-weather-v3.png`（826×1905）。
+- implementation: `audit/crowd-forecast-2026-10-18/desktop-top-final.png`（1440×1100 CSS px・等倍）、`mobile-modal-final.png`（390×899、390×900 CSS px・等倍）。
+- full-view comparison: `audit/crowd-forecast-2026-10-18/desktop-comparison-final.png`、`mobile-comparison-final.png`。PCは双方700px幅へ比例縮小、モバイルは390×900へ密度正規化して同じ比較画像内で確認。
+- focused comparison: モバイル比較の下部シートで、日付、混雑度・天気の横並び、気温、時間帯別降水確率、営業情報、スケジュールへの導線を確認。PCの本文・カレンダーと右側パネルは元の等倍画像でも確認。
+- state: PC初回18日選択、個別操作では19日選択を確認。ユーザー確認用の最終キャプチャは23日選択。スマホは19日のモーダル。気象庁の実XMLを使うテスト用データのため、見本の晴れ・24/17℃とは異なる。スケジュールは検証用。末日のスクロール、10月・11月の切り替え、未公開日の基本予想も確認。
+- fonts/typography: サイト既存の和文フォントを継承。PC見出し38px、日付21px、PCトピックス11pxへ調整。モバイルは見出し26px、日付セル15px。点数・係数は公開しない。
+- spacing/layout: PCはカレンダー＋右詳細、スマホは下からのモーダル。見本にあった二重の月見出しは1つに統合。未公開の案内を上部へ集約する最新仕様を優先し、PCでもカレンダーの開始位置が下がる。既存ヘッダー・フッターを維持。
+- colors/tokens: ミント・ブルー・クリーム・アンバー・ローズの5色、休園の斜線。上部案内は淡いピンクと線画の丸囲み感嘆符。絵文字は使わない。
+- image quality/assets: 既存 `/logo-compact.png` を使用。見本の仮ロゴをHTMLで再現しない。天気・注意・操作アイコンは既存Lucideの線画。
+- copy/content: 数式・点数を公開文へ出さず概要のみ。地域・気温地点・気象庁の発表日時、6時間単位と日単位の降水確率を区別。未公開の予定は基本予想に未反映と明記。
+- iteration history: 初回 `mobile-comparison-before.png` で、天気と混雑度が別行になってシートが高い[P2]を確認。横並びへ変更、余白と数値の行高を調整し `mobile-comparison-final.png` で再確認。Tab末尾から先頭への循環も明示実装して再検証。
+- interactions: 月切替、スマホの日付モーダル、閉じる・背景タップ・Esc、Tab循環、背景スクロール固定と元の日付へのフォーカス復帰。管理画面の25→26の変更、プレビュー、保存、再取得。1日スケジュールの天気・気温・降水確率表示。
+- responsiveness: 1440px・1024px・390pxで文書の横幅がビューポートを超えないことを確認。1024pxでは右詳細、390pxではモーダル。
+- console errors: 新機能のブラウザー検証でerror/warnなし。最初のプレビュー接続失敗はローカルサーバーの実行制限によるもので、非公開のローカル検証サーバーを再起動して解消。現在はHidden常駐プロセスでユーザーの確認用に起動。
+- verification: lint・production build・22件の計算/API/実SQLテスト成功。本番DBへの適用・デプロイは未実施。
+- accepted differences: サイト既存ロゴ・ヘッダー、上部の公開状況、実XMLの天気、地域・地点・出典の追加に伴うシート高、検証用の日別混雑色。すべて表示仕様・データに由来する差として区別した。
+- commit verification: HEAD＋今回の混雑予想差分だけを取り出した独立コピーでも、22件のテスト・lint・production build（型検証を含む）が成功。本番資格情報は使用せず、別作業の変更はコミットから除外。
+- final result: passed

@@ -1,0 +1,34 @@
+Use case: ui-mockup / precise UI revision.
+Create ONE revised mobile screenshot from the attached previous Harmony Palette mobile mockup. Preserve its soft off-white and pink brand, H logo and wordmark, Japanese Gothic typography, pastel five-level crowd colors, rounded calendar grid, and date/weather information. Change ONLY the notice styling and how the selected-day details are presented, as required below. This is a product design image, NOT a functional app.
+Target: a natural mobile viewport 390 x 900 CSS pixels, crisp high-resolution Japanese text. App webpage content only; NO phone bezel, device body, browser/OS chrome, home indicator, perspective, collage, or side-by-side screens. The underlying page can extend below the viewport; do NOT squash the whole original long page into this viewport. Show the selected-day modal in the OPEN state.
+
+REVISION A — NO EMOJI WARNING:
+Replace the old yellow emoji warning block ABOVE the calendar with a calm, designed notice that belongs to this site. Very pale pink tint #fff4f7, thin muted-pink border, 12px corner radius, generous readable spacing. Heading 「スケジュール公開状況」 with ONE small rose-colored outline circle-exclamation icon, line weight matching UI icons. Draw a real simple monochrome line icon, NOT an emoji, NOT a yellow/orange warning triangle, NOT glossy or colorful emoji artwork. Below the heading render two understated text rows:
+「スケジュール未公開：10/27」
+「ファンスタスケジュール未公開：10/26」
+Use charcoal text and subtle separators or spacing. No warning symbol repeated before the text rows. The notice remains in the top portion of the PAGE, above the month/calendar, and visible through a light backdrop so its new styling can be assessed. There are NO unpublished-status sentences inside any date cell.
+
+REVISION B — SELECTED DAY IN A MODAL:
+Remove the permanently placed selected-day section below the calendar. Instead show a real MOBILE BOTTOM-SHEET MODAL attached to the bottom of the viewport, full width with large 22–24px upper corner radii, near-white background, a very subtle shadow and a thin pale-pink top edge. A translucent neutral dark backdrop covers the underlying page (~14–18% opacity): clearly modal, but the top pink notice and calendar remain recognizable. The sheet is approximately 350–380 CSS pixels high and completely fits the viewport. Do not put it in the middle as a floating desktop dialog, do not show inline details as well, and do not reproduce the old entire long page under it.
+Sheet contents, all legible with comfortable padding:
+- small subtle drag handle at top center
+- clear close X button top-right, ~40px touch area
+- modest eyebrow 「選択した日」
+- heading 「10月19日（月）」 at about22px
+- a balanced row with pale-blue square swatch + 「普通」 on the left, warm thin-line sun icon + 「晴れ」 on the right
+- fine divider
+- row 「営業時間」 and 「10:00〜17:00」
+- row 「ファンスタ予定」 and 「公開済み」
+- one full-width pink rounded primary button 「この日のスケジュールを見る」, 44–48px high
+Everything above must fit inside the modal; no clipped button or text, no extra form fields. All icons in the modal are coherent simple line-style UI icons, NOT emoji.
+
+BACKGROUND PAGE:
+Small H + Harmony Palette brand header, title 「混雑予想カレンダー」, subtitle 「お出かけ前に、混み具合をチェック。」, small metadata 「最終更新 10/17 19:05」 and 「翌日以降の予想を毎日19時ごろに更新」, then the new designed notice, then one 「2026年10月」 month heading/navigation. Compact legend of 「ゆったり」「普通」「やや混雑」「混雑」「大混雑」「休園日」 in two rows of three, then the seven-column calendar. Keep the same pastel fills as the reference: quiet mint, normal blue, slight cream, busy amber, very busy rose, gray diagonal closed-day hatching.
+Current-date anchor 2026-10-18 Asia/Tokyo. Today18 has a small indicator and selected19 has a pink border if visible behind the modal. October 2026 is Sunday-first, starts on Thursday. Exact month rows:
+blank blank blank blank 1 2 3
+4 5 6 7 8 9 10
+11 12 13 14 15 16 17
+18 19 20 21 22 23 24
+25 26 27 28 29 30 31.
+The calendar naturally continues behind the bottom sheet; it is fine for lower rows to be occluded by the modal, not fine to rearrange dates. Closed days1,7,8,14,15,21,22,28,29 gray hatched; selected19 blue. Use small line-style weather icons where available, same data as reference. Keep short 「3部屋」 and moon/cake topic icons where they naturally appear. No unpublished text in date cells. Never show points, numeric crowd thresholds, coefficients, formulas, greeting-slot counts, analytics, observation forms, or popularity ranks.
+This is illustrative sample data, not a real forecast; put a discreet 「画面イメージ」 label in an unobtrusive visible position if room allows, without compromising the modal content. Maintain natural mobile product proportions, body text14–16px, generous whitespace, excellent alignment, and the original calm brand language. The visibly important changes are: a designed pink notice WITHOUT emoji, and a bottom-sheet modal INSTEAD OF permanent selected-day details.

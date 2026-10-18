@@ -39,6 +39,7 @@ const navigation = [
   { href: "/admin/analytics", label: "アクセス分析", icon: BarChart3, exact: false },
   { href: "/admin/backup", label: "バックアップ", icon: Archive, exact: false },
   { href: "/admin/schedule", label: "スケジュール", icon: CalendarDays, exact: false },
+  { href: "/admin/crowd-forecast", label: "混雑予想", icon: BarChart3, exact: false },
   { href: "/admin/official-updates", label: "公式更新監視", icon: BellRing, exact: false },
   { href: "/admin/instagram", label: "Instagram", icon: Instagram, exact: false },
   { href: "/admin/links", label: "リンク集設定", icon: Link2, exact: false },

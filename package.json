@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:crowd-forecast": "node --experimental-test-module-mocks --import tsx --test lib/crowd-forecast/model.test.ts lib/crowd-forecast/api.integration.test.ts",
     "test:birthday": "tsx --test lib/character-birthday.test.ts",
     "test:park-operating-days": "tsx --test lib/official-import/park-operating-days.test.ts",
     "test:official-monitor": "tsx --test lib/official-monitor/diff.test.ts lib/official-monitor/probe.test.ts lib/official-monitor/runner.test.ts lib/official-monitor/summary.test.ts",
@@ -46,6 +47,7 @@
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.3.10",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.17.0",
     "@types/node": "^22.10.2",

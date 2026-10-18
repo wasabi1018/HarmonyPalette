@@ -1,0 +1,20 @@
+Use case: ui-mockup / precise UI revision. Edit the attached existing Harmony Palette mobile calendar screenshot. Produce ONE revised mobile viewport, 390 x 900 CSS pixels, high-resolution crisp Japanese type. Preserve the existing brand, pink outline-circle-exclamation notice (NOT emoji), calendar colors, calendar dates, selected day, dimmed backdrop and bottom-sheet modal. Do not redesign the page.
+The requested change is to include useful weather information that was missing: high/low temperature and precipitation probability in the selected-day modal. All values below are illustrative sample data, NOT a real weather forecast.
+Current-date anchor: 2026-10-18 Asia/Tokyo. This mock represents AFTER the October18 19:00 daily update, so change the background update text to 「最終更新 10/18 19:05」. Selected date remains 「10月19日（月）」, tomorrow relative to that update. This date pairing is necessary because the 6-hour precipitation forecast is for the following day.
+Keep the pink notice above the calendar unchanged: heading 「スケジュール公開状況」 with a thin rose circle-exclamation line icon, rows 「スケジュール未公開：10/27」 and 「ファンスタスケジュール未公開：10/26」. No emoji and no unpublished text inside date cells.
+Increase the white bottom-sheet modal to approximately 490–530 CSS pixels high, anchored to the screen bottom with 24px top corner radii. It may cover more of the existing calendar; do NOT compress the whole background page to fit. Preserve the light dark backdrop, top drag handle and close X. The notice and upper calendar should remain recognizable behind the dimming.
+MODAL layout, from top to bottom, with readable14–16px body:
+small eyebrow 「選択した日」
+heading 「10月19日（月）」
+a row with pale-blue swatch + 「普通」 at left and coherent orange LINE-STYLE sun icon + 「晴れ」 at right
+NEW temperature row 「最高 24℃」 and 「最低 17℃」, with restrained warm/cool text accents and explicit labels
+NEW small heading 「降水確率」
+NEW clean two-column probability row, not nested cards: left column 「6〜12時」 over 「20％」, right column 「12〜18時」 over 「30％」. Add a subtle divider if useful. Keep times and percentages distinct and accurately spelled. These are the original six-hour forecast intervals overlapping opening hours. Do not call either one a daily probability or combine them.
+small quiet source text 「出典：気象庁／10/18 17:00発表」
+fine pink divider
+row 「営業時間」 with 「10:00〜17:00」
+row 「ファンスタ予定」 with 「公開済み」
+full-width pink44–48px primary button 「この日のスケジュールを見る」
+small discreet label 「画面イメージ・天気はサンプル」
+All modal contents must fit without clipping, with generous enough spacing to read. Recompose the layout naturally; do not stretch/squash text or imagery. The main action button must be fully visible. No permanent selected-day section below the calendar, only this open bottom-sheet dialog.
+No crowd scores, point thresholds, formulas, calculation coefficients, greeting slot counts, weather confidence percentages, observation forms, or new controls. Allowed numbers are calendar dates, hours, temperature, and precipitation probability. No phone body, browser/OS chrome, home indicator or collage. Retain the existing exact Japanese month/day arrangement and five-level palette behind the modal. Only add the temperature and precipitation block, update the sample publication/update timestamps consistently, and increase the modal height as needed.

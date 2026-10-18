@@ -9,6 +9,7 @@ import { fanStudioFallbackName, isFanStudioGreeting, shortFanStudioLocation, sor
 import { getEntryCharacterNames, type InitialScheduleData, type ScheduleEntry, useScheduleEntries } from "@/lib/schedule-store";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { ParkOperatingInfo } from "@/components/park-operating-info";
+import { DailyForecastSummary } from "@/components/crowd-forecast/daily-summary";
 import { SectionHeading } from "@/components/section-heading";
 import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
 import { type InitialParkOperatingDayData, useParkOperatingDays } from "@/lib/park-operating-day-store";
@@ -336,6 +337,7 @@ export function HomeTodaySections({
               </Link>
             )}
           </div>
+          <DailyForecastSummary date={scheduleDate} />
           {isClosed ? (
             <div className="overflow-hidden rounded-[18px] border border-pink/10 bg-white shadow-[0_8px_24px_rgba(118,73,86,0.05)]">
               <ParkOperatingInfo

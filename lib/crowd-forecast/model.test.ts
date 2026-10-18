@@ -1,0 +1,344 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { readFileSync } from "node:fs";
+import {
+  calculate,
+  DEFAULT_CONFIG,
+  emptyState,
+  holidayPoints,
+  levelFor,
+  mergeForUpdate,
+  projectPublic,
+  pruneState,
+  validateConfig,
+} from "./model";
+import {
+  bulletinUrls,
+  classifyWeather,
+  mergeWeather,
+  parseBulletin,
+} from "./weather";
+import type { DayInput, Weather } from "./types";
+const now = new Date("2026-10-18T19:00:00+09:00");
+const input = (date = "2026-10-19"): DayInput => ({
+  date,
+  status: "open",
+  opening: "10:00",
+  closing: "17:00",
+  schedule: "published",
+  fan: "published",
+  slots: 22,
+  rooms: [101, 102],
+  baselineDensities: [],
+  birthdays: [],
+});
+const config = () => structuredClone(DEFAULT_CONFIG);
+const weather = (kind: Weather["kind"] = "rain"): Weather => ({
+  date: "2026-10-19",
+  kind,
+  text: "雨",
+  region: "大分県 中部",
+  station: "大分",
+  high: 24,
+  low: 17,
+  rain: [
+    { from: 6, to: 12, probability: 20 },
+    { from: 12, to: 18, probability: 30 },
+  ],
+  dailyRain: null,
+  issuedAt: "2026-10-18T17:00:00+09:00",
+  fetchedAt: now.toISOString(),
+  validUntil: "2026-10-20T05:00:00Z",
+  sourceUrl: "https://example.test",
+});
+
+test("混雑レベルは25・50・70・90の境界で切り替わる", () => {
+  assert.deepEqual(
+    [0, 24, 25, 49, 50, 69, 70, 89, 90, 100].map((n) => levelFor(n, config())),
+    [
+      "quiet",
+      "quiet",
+      "normal",
+      "normal",
+      "moderate",
+      "moderate",
+      "busy",
+      "busy",
+      "veryBusy",
+      "veryBusy",
+    ],
+  );
+});
+test("営業が確定し予定が未公開の日は、未反映の情報を明示する基本予想", () => {
+  const d = calculate(
+    { ...input(), fan: "unpublished" },
+    config(),
+    {},
+    null,
+    now,
+  );
+  assert.equal(d.level, "normal");
+  assert.equal(d.provisional, true);
+  assert.equal(d.threeRooms, false);
+  const s = emptyState();
+  s.days[d.input.date] = d;
+  assert.equal(projectPublic(s, now).days[0].provisional, true);
+  assert.equal(
+    calculate({ ...input(), status: "unknown" }, config(), {}, null, now).level,
+    "pending",
+  );
+});
+test("通常平日25、土日祝の前後の平日は基準30", () => {
+  const s = emptyState();
+  assert.equal(
+    calculate(input("2026-10-20"), config(), s.holidays, null, now).score,
+    25,
+  );
+  assert.equal(calculate(input(), config(), s.holidays, null, now).score, 30);
+});
+test("7時間・10時間・11時間の加点は0・30・40、分単位で境界を判定", () => {
+  const scores = ["17:00", "17:59", "18:00", "19:00", "20:00", "21:00"].map(
+    (closing) =>
+      calculate({ ...input(), closing }, config(), {}, null, now).breakdown
+        .hours,
+  );
+  assert.deepEqual(scores, [0, 0, 10, 20, 30, 40]);
+});
+test("営業時間とファンスタ密度は大きい加点だけを使う", () => {
+  const d = calculate(
+    {
+      ...input(),
+      closing: "20:00",
+      slots: 60,
+      baselineDensities: [2, 2, 2, 2],
+    },
+    config(),
+    {},
+    null,
+    now,
+  );
+  assert.equal(d.breakdown.fan, 5);
+  assert.equal(d.basic, 60);
+  assert.equal(
+    calculate(
+      { ...input(), slots: 60, baselineDensities: [2, 2, 2] },
+      config(),
+      {},
+      null,
+      now,
+    ).breakdown.fan,
+    0,
+  );
+});
+test("誕生日は0・5・10、複数は最大値で、雨の係数も共通", () => {
+  const c = config();
+  c.birthdays = { a: 5, b: 10 };
+  const d = calculate(
+    {
+      ...input(),
+      birthdays: [
+        { id: "a", name: "A" },
+        { id: "b", name: "B" },
+      ],
+    },
+    c,
+    {},
+    weather(),
+    now,
+  );
+  assert.equal(d.breakdown.birthday, 10);
+  assert.equal(d.score, 32);
+  assert.throws(() => validateConfig({ ...c, birthdays: { a: 15 } }));
+});
+test("連休日数と初日・最終日の減点、月境界、国民の休日も判定", () => {
+  const s = emptyState();
+  assert.deepEqual(
+    [19, 20, 21, 22, 23].map((d) =>
+      holidayPoints(`2026-09-${d}`, config(), s.holidays),
+    ),
+    [11, 16, 16, 16, 11],
+  );
+  assert.equal(s.holidays["2026-09-22"], "休日");
+  const h = { "2026-11-02": "休", "2026-11-03": "休" };
+  assert.deepEqual(
+    ["2026-10-31", "2026-11-01", "2026-11-02", "2026-11-03"].map((d) =>
+      holidayPoints(d, config(), h),
+    ),
+    [7, 12, 12, 7],
+  );
+});
+test("開催期間全体の加点はなく、開始・終了と初週・最終週の土日のみ", () => {
+  const c = config();
+  c.events = [
+    { id: "a", name: "Halloween", from: "2026-10-01", to: "2026-10-31" },
+  ];
+  assert.deepEqual(
+    ["2026-10-01", "2026-10-03", "2026-10-04", "2026-10-17", "2026-10-31"].map(
+      (d) => calculate(input(d), c, {}, null, now).breakdown.event,
+    ),
+    [12, 10, 10, 0, 12],
+  );
+});
+test("天気は2日先まで全量、3〜6日半量、7日以降なし", () => {
+  const c = config(),
+    w = weather();
+  assert.deepEqual(
+    [19, 20, 21, 24, 25].map(
+      (n) =>
+        calculate(
+          input(`2026-10-${n}`),
+          c,
+          {},
+          { ...w, date: `2026-10-${n}` },
+          now,
+        ).factor,
+    ),
+    [0.8, 0.8, 0.9, 0.9, 1],
+  );
+  assert.equal(
+    calculate(input(), c, {}, { ...w, validUntil: now.toISOString() }, now)
+      .factor,
+    1,
+  );
+});
+test("3部屋でも22枠なら表示なし、23枠以上のみ表示", () => {
+  assert.equal(
+    calculate({ ...input(), rooms: [101, 102, 103] }, config(), {}, null, now)
+      .threeRooms,
+    false,
+  );
+  assert.equal(
+    calculate(
+      { ...input(), rooms: [101, 102, 103], slots: 23 },
+      config(),
+      {},
+      null,
+      now,
+    ).threeRooms,
+    true,
+  );
+});
+test("休園＞固定レベル＞自動、固定レベルは架空の点数を持たない", () => {
+  const c = config();
+  c.overrides = [
+    {
+      date: input().date,
+      level: "veryBusy",
+      points: 0,
+      reason: "特別営業",
+      note: "内部限定",
+      weather: "",
+    },
+  ];
+  const fixed = calculate(input(), c, {}, weather(), now);
+  assert.equal(fixed.level, "veryBusy");
+  assert.equal(fixed.score, null);
+  assert.equal(
+    calculate({ ...input(), status: "closed" }, c, {}, weather(), now).level,
+    "closed",
+  );
+});
+test("当日と当月の過去日は凍結、過去月は削除、未来だけ設定を再計算", () => {
+  const s = emptyState();
+  for (const date of ["2026-09-30", "2026-10-17", "2026-10-18", "2026-10-19"])
+    s.days[date] = calculate(input(date), config(), {}, null, now);
+  const old = s.days["2026-10-18"];
+  s.config.weekday.adjacent = 80;
+  const next = mergeForUpdate(s, [input("2026-10-18"), input()], null, now);
+  assert.deepEqual(next.days["2026-10-18"], old);
+  assert.ok(next.days["2026-10-17"]);
+  assert.equal(next.days["2026-09-30"], undefined);
+  assert.equal(next.days["2026-10-19"].score, 80);
+  assert.equal(Object.keys(pruneState(next, "2026-11-01").days).length, 0);
+});
+test("公開DTOから点数・係数・内部メモを除外、期限切れは保存済みの天気補正なしレベル", () => {
+  const s = emptyState(),
+    c = config();
+  c.weekday.adjacent = 60;
+  c.overrides = [
+    {
+      date: input().date,
+      level: "",
+      points: 0,
+      reason: "公開理由",
+      note: "SECRET_NOTE",
+      weather: "",
+    },
+  ];
+  s.days[input().date] = calculate(
+    input(),
+    c,
+    {},
+    { ...weather(), validUntil: "2026-10-19T00:00:00Z" },
+    now,
+  );
+  assert.equal(projectPublic(s, now).days[0].level, "normal");
+  const publicValue = projectPublic(s, new Date("2026-10-19T01:00:00Z"));
+  assert.equal(publicValue.days[0].level, "moderate");
+  assert.equal(publicValue.days[0].weather, null);
+  assert.doesNotMatch(
+    JSON.stringify(publicValue),
+    /score|breakdown|factor|SECRET_NOTE|threshold/,
+  );
+});
+test("気象庁の実XMLで大分県中部・大分地点・6時間降水確率を読む", () => {
+  const short = readFileSync(
+      new URL("./fixtures/short.xml", import.meta.url),
+      "utf8",
+    ),
+    weekly = readFileSync(
+      new URL("./fixtures/weekly.xml", import.meta.url),
+      "utf8",
+    );
+  const a = parseBulletin(
+      short,
+      "https://www.data.jma.go.jp/VPFD51",
+      now.toISOString(),
+    ),
+    b = parseBulletin(
+      weekly,
+      "https://www.data.jma.go.jp/VPFW50",
+      now.toISOString(),
+    );
+  const tomorrow = a.find((w) => w.date === "2026-10-19")!;
+  assert.equal(tomorrow.region, "大分県 中部");
+  assert.equal(tomorrow.text, "くもり");
+  assert.equal(tomorrow.high, 29);
+  assert.equal(tomorrow.low, 20);
+  assert.deepEqual(
+    tomorrow.rain.map((r) => [r.from, r.to]),
+    [
+      [0, 6],
+      [6, 12],
+      [12, 18],
+      [18, 24],
+    ],
+  );
+  assert.equal(b.find((w) => w.date === "2026-10-20")?.dailyRain, 30);
+  const merged = mergeWeather({ VPFD51: a, VPFW50: b }, ["VPFD51", "VPFW50"]);
+  assert.equal(merged["2026-10-19"].high, 29);
+  assert.equal(
+    parseBulletin(
+      short.replace("<InfoType>発表</InfoType>", "<InfoType>取消</InfoType>"),
+      "VPFD51",
+      now.toISOString(),
+    ).length,
+    0,
+  );
+  assert.equal(classifyWeather("くもり一時雨"), "occasionalRain");
+  assert.equal(classifyWeather("雨で雷を伴い激しく降る"), "rain");
+});
+test("フィードの取得URLは気象庁の大分県2電文に限定", () => {
+  const entries = ["VPFD51", "VPFW50"]
+    .map(
+      (t) =>
+        `<entry><id>https://www.data.jma.go.jp/developer/xml/data/20261018000000_0_${t}_440000.xml</id><updated>2026-10-18T00:00:00Z</updated></entry>`,
+    )
+    .join("");
+  assert.equal(
+    bulletinUrls(
+      `<feed>${entries}<entry><id>https://evil.test/VPFD51_440000.xml</id></entry></feed>`,
+    ).length,
+    2,
+  );
+});
