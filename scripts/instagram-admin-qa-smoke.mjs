@@ -19,7 +19,7 @@ async function main() {
   for (const [path, title] of [
     ["/admin/instagram", "Instagram"],
     ["/admin/instagram/create", "作成ツール"],
-    ["/admin/instagram/create/crowd-calendar", "混雑予想カレンダー"],
+    ["/admin/instagram/create/crowd-calendar", "混雑予想"],
     ["/admin/instagram/create/character-recommendations", "推しキャラおすすめ日"],
     ["/admin/instagram/create/schedule", "全体スケジュール"],
     ["/admin/instagram/create/fan-studio-weekly", "ファンスタジオ・週間"],
