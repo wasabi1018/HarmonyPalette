@@ -20,6 +20,7 @@ import {
 } from "./weather";
 import type { DayInput, Weather } from "./types";
 import { displayedScore } from "./score";
+import { forecastMonth, placeholderDay, topicsFor } from "./presentation";
 const now = new Date("2026-10-18T19:00:00+09:00");
 const input = (date = "2026-10-19"): DayInput => ({
   date,
@@ -34,6 +35,33 @@ const input = (date = "2026-10-19"): DayInput => ({
   birthdays: [],
 });
 const config = () => structuredClone(DEFAULT_CONFIG);
+test("画像と公開カレンダーは保存済みの混雑・天気・トピックスを共用し、6週と欠損も扱う", () => {
+  const state = emptyState();
+  const saved = calculate({ ...input("2026-10-31"), closing: "21:00", rooms: [101, 102, 103], slots: 33,
+    birthdays: [{ id: "kuromi", name: "クロミ" }] }, config(), state.holidays, null, now);
+  state.days[saved.input.date] = saved;
+  const published = projectPublic(state, now);
+  const before = structuredClone(published);
+  const month = forecastMonth(published, "2026-10");
+  assert.equal(month.byDate.get("2026-10-31"), published.days[0]);
+  assert.deepEqual(topicsFor(published.days[0]).map((topic) => topic.text),
+    ["ファンスタ3部屋", "ナイト営業日", "クロミ誕生日"]);
+  assert.equal(placeholderDay("2026-10-30").level, "pending");
+  assert.equal(month.ready, false);
+  assert.equal(forecastMonth({ ...published, months: ["2026-08"] }, "2026-08").cells.length, 42);
+  assert.throws(() => forecastMonth(published, "2026-09"));
+  assert.deepEqual(published, before);
+});
+test("画像の公開状況も連続する未公開日をまとめ、休園日と別状態を区別する", () => {
+  const state = emptyState();
+  for (const date of ["2026-10-26", "2026-10-27", "2026-10-28", "2026-10-30"]) {
+    state.days[date] = calculate({ ...input(date), schedule: "unpublished",
+      status: date.endsWith("28") ? "closed" : "open" }, config(), state.holidays, null, now);
+  }
+  const month = forecastMonth(projectPublic(state, now), "2026-10");
+  assert.equal(month.notices.find((notice) => notice.key === "schedule-unpublished")?.dates,
+    "10/26～10/27、10/30");
+});
 const weather = (kind: Weather["kind"] = "rain"): Weather => ({
   date: "2026-10-19",
   kind,

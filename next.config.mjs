@@ -4,6 +4,7 @@ const tesseractRuntimeAssets = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  distDir: process.env.HARMONY_PREVIEW_DIST_DIR || ".next",
   async redirects() {
     return [
       { source: "/guide", destination: "/articles", permanent: true },

@@ -928,3 +928,59 @@
   font-size: 11px;
   line-height: 1.6;
 }
+
+.imageCard {
+  box-sizing: border-box;
+  width: 1080px;
+  height: 1350px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 36px 40px 26px;
+  overflow: hidden;
+  background: #fffbfd;
+  color: #302d39;
+  font-family: "Yu Gothic", Meiryo, sans-serif;
+}
+.imageHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.imageHeading img { width: 300px; height: 80px; object-fit: contain; }
+.imageHeading > div { text-align: right; }
+.imageHeading p { color: #a57386; font-size: 14px; letter-spacing: 0.15em; }
+.imageHeading h1 { font-size: 42px; line-height: 1.4; font-weight: 900; }
+.imageCard .imageNotice {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 12px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.imageCard .imageNotice h2 { font-size: 16px; margin-bottom: 5px; padding-bottom: 5px; }
+.imageCard .imageNotice > svg { width: 24px; height: 24px; }
+.imageDelay { font-size: 14px; color: #a65865; }
+.imageCard .imageCalendar {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.imageCalendar .calendarTop { padding: 16px 20px 14px; }
+.imageCalendar .monthHeading h2 { font-size: 32px; }
+.imageCalendar .legend { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.imageCalendar .legend li { font-size: 15px; gap: 7px; }
+.imageCalendar .legend .swatch { width: 16px; height: 16px; border-radius: 4px; }
+.imageCalendar .weekdays { padding: 9px 0; font-size: 18px; }
+.imageCalendar .grid { flex: 1; min-height: 0; gap: 5px; padding: 6px; }
+.imageCalendar .day, .imageCalendar .blank { min-height: 0; border-radius: 10px; }
+.imageCalendar .day { padding: 8px 7px; }
+.imageCalendar .cellTop b { font-size: 27px; }
+.imageCalendar .cellTop svg { width: 26px; height: 26px; }
+.imageCalendar .cellTopics { font-size: 15px; gap: 3px; margin-top: 8px; }
+.imageCalendar .todayLabel { font-size: 10px; padding: 1px 4px; }
+.imageCalendar .calendarFoot { padding: 8px 14px; font-size: 12px; }
+.imageFooter { flex-shrink: 0; color: #817685; font-size: 13px; line-height: 1.7; }
+.imageFooter span { display: block; margin-top: 7px; font-size: 14px; color: #a57386; }

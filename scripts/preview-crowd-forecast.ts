@@ -154,7 +154,9 @@ async function main() {
   }
   await db.query(
     "update public.crowd_forecast_state set payload=$1::jsonb,last_attempt_day=$2::date",
-    [JSON.stringify(state), today],
+    [process.env.CROWD_FORECAST_FIXTURE_STATE
+      ? await readFile(process.env.CROWD_FORECAST_FIXTURE_STATE, "utf8")
+      : JSON.stringify(state), today],
   );
   const user = {
     id: "00000000-0000-4000-8000-000000000001",
@@ -296,6 +298,7 @@ async function main() {
         windowsHide: true,
         env: {
           ...process.env,
+          HARMONY_PREVIEW_DIST_DIR: ".tmp/crowd-forecast-preview-next",
           NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:3401",
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_local_fixture",
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "",

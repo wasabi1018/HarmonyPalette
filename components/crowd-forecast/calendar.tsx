@@ -4,86 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
-  CakeSlice,
   ChevronLeft,
   ChevronRight,
-  CircleAlert,
   Clock3,
-  Moon,
   X,
 } from "lucide-react";
 import {
-  addDays,
-  datesBetween,
-  formatDateRanges,
-  weekday,
-} from "@/lib/crowd-forecast/date";
-import {
-  LEVELS,
   LEVEL_LABELS,
   type PublicDay,
   type PublicForecast,
 } from "@/lib/crowd-forecast/types";
-import { WeatherDetails, WeatherIcon, formatForecastTime } from "./weather";
+import { WeatherDetails, WeatherIcon } from "./weather";
+import { fullDate, placeholderDay, topicsFor } from "@/lib/crowd-forecast/presentation";
+import { ForecastMonthCalendar, ForecastPublicationNotice, TopicLabel } from "./month";
 import styles from "./forecast.module.css";
 
-function placeholder(date: string): PublicDay {
-  return {
-    date,
-    level: "pending",
-    opening: null,
-    closing: null,
-    schedule: "unconfirmed",
-    fan: "unconfirmed",
-    threeRooms: false,
-    topics: [],
-    weather: null,
-    archived: false,
-    updatedAt: "",
-  };
-}
-function fullDate(date: string) {
-  return new Intl.DateTimeFormat("ja-JP", {
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T00:00:00Z`));
-}
-function TopicLabel({
-  text,
-  night = false,
-  compact = false,
-}: {
-  text: string;
-  night?: boolean;
-  compact?: boolean;
-}) {
-  const label = text.replace(/のお誕生日$/, "誕生日");
-  const Icon = night ? Moon : label.endsWith("誕生日") ? CakeSlice : null;
-  const units = Math.max(1, Array.from(label).length + (Icon ? 1.4 : 0));
-  return (
-    <span
-      className={styles.topicLine}
-      title={label}
-      style={compact ? { fontSize: `min(1em, ${96 / units}cqi)` } : undefined}
-    >
-      {Icon && <Icon size={13} aria-hidden="true" />}
-      <span>{label}</span>
-    </span>
-  );
-}
-function topicsFor(day: PublicDay) {
-  const topics: { key: string; text: string; night?: boolean }[] = [];
-  if (day.threeRooms)
-    topics.push({ key: "fan", text: "ファンスタ3部屋" });
-  if (day.closing && day.closing >= "18:00" && day.level !== "closed")
-    topics.push({ key: "night", text: "ナイト営業日", night: true });
-  day.topics.forEach((text, index) =>
-    topics.push({ key: `topic-${index}`, text }),
-  );
-  return topics;
-}
 function DayDetail({ day, titleId }: { day: PublicDay; titleId: string }) {
   const topics = topicsFor(day);
   return (
@@ -157,19 +92,9 @@ export function CrowdForecastCalendar({
     [open, setOpen] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null),
     selectedButton = useRef<HTMLButtonElement | null>(null);
-  const first = `${month}-01`,
-    last = new Date(
-      Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0),
-    )
-      .toISOString()
-      .slice(0, 10);
-  const dates = datesBetween(first, last),
-    byDate = new Map(forecast.days.map((d) => [d.date, d]));
-  const selectedDay = byDate.get(selected) ?? placeholder(selected);
-  const start = addDays(first, -weekday(first)),
-    end = addDays(last, 6 - weekday(last));
-  const cells = datesBetween(start, end),
-    monthIndex = forecast.months.indexOf(month);
+  const byDate = new Map(forecast.days.map((day) => [day.date, day]));
+  const selectedDay = byDate.get(selected) ?? placeholderDay(selected);
+  const monthIndex = forecast.months.indexOf(month);
   useEffect(() => {
     if (!open) return;
     const el = dialog.current,
@@ -201,24 +126,6 @@ export function CrowdForecastCalendar({
       );
     }
   }
-  const notices = (["schedule", "fan"] as const)
-    .flatMap((key) =>
-      (["unpublished", "unconfirmed", "failed"] as const).map((state) => {
-        const matches = dates.filter(
-          (date) =>
-            (byDate.get(date)?.[key] ?? "unconfirmed") === state &&
-            byDate.get(date)?.level !== "closed",
-        );
-        return matches.length
-          ? {
-              key: `${key}-${state}`,
-              label: `${key === "schedule" ? "スケジュール" : "ファンスタスケジュール"}${state === "unpublished" ? "未公開" : state === "failed" ? "取得遅延" : "公開状況確認中"}`,
-              dates: formatDateRanges(matches),
-            }
-          : null;
-      }),
-    )
-    .filter(Boolean);
   return (
     <div className={styles.page}>
       <header className={styles.pageHeading}>
@@ -236,137 +143,14 @@ export function CrowdForecastCalendar({
           </div>
         )}
       </header>
-      {notices.length > 0 && (
-        <section className={styles.notice} aria-labelledby="publication-title">
-          <CircleAlert size={24} aria-hidden="true" />
-          <div>
-            <h2 id="publication-title">スケジュール公開状況</h2>
-            {notices.map(
-              (n) =>
-                n && (
-                  <p key={n.key}>
-                    <strong>{n.label}：</strong>
-                    {n.dates}
-                  </p>
-                ),
-            )}
-            {dates.some((date) => byDate.get(date)?.provisional) && (
-              <p>未公開・未確認の予定は反映しない基本予想を表示しています。</p>
-            )}
-          </div>
-        </section>
-      )}
+      <ForecastPublicationNotice forecast={forecast} month={month} />
       <div className={styles.layout}>
-        <section className={styles.calendar} aria-label="月別の混雑予想">
-          <div className={styles.calendarTop}>
-            <div className={styles.monthHeading}>
-              <h2 aria-live="polite">
-                {month.slice(0, 4)}年 {Number(month.slice(5, 7))}月
-              </h2>
-              <div>
-                <button
-                  disabled={monthIndex === 0}
-                  onClick={() => changeMonth(monthIndex - 1)}
-                  aria-label="前の月"
-                >
-                  <ChevronLeft size={22} />
-                </button>
-                <button
-                  disabled={monthIndex === forecast.months.length - 1}
-                  onClick={() => changeMonth(monthIndex + 1)}
-                  aria-label="次の月"
-                >
-                  <ChevronRight size={22} />
-                </button>
-              </div>
-            </div>
-            <ul className={styles.legend} aria-label="混雑度の凡例">
-              {[...LEVELS, "closed" as const].map((level) => (
-                <li key={level}>
-                  <span className={`${styles.swatch} ${styles[level]}`} />
-                  {LEVEL_LABELS[level]}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className={styles.weekdays}>
-            {["日", "月", "火", "水", "木", "金", "土"].map((day, i) => (
-              <span
-                key={day}
-                className={
-                  i === 0 ? styles.sunday : i === 6 ? styles.saturday : ""
-                }
-              >
-                {day}
-              </span>
-            ))}
-          </div>
-          <div className={styles.grid}>
-            {cells.map((date) => {
-              if (date.slice(0, 7) !== month)
-                return (
-                  <div key={date} className={styles.blank} aria-hidden="true" />
-                );
-              const day = byDate.get(date) ?? placeholder(date);
-              const holiday = forecast.holidays?.[date];
-              const dateColor =
-                holiday || weekday(date) === 0
-                  ? styles.holidayDate
-                  : weekday(date) === 6
-                    ? styles.saturdayDate
-                    : undefined;
-              return (
-                <button
-                  key={date}
-                  type="button"
-                  className={`${styles.day} ${styles[day.level]} ${date === selected ? styles.selected : ""} ${date === forecast.today ? styles.today : ""}`}
-                  aria-label={`${fullDate(date)}${holiday ? `（${holiday}）` : ""}、${LEVEL_LABELS[day.level]}${day.weather ? `、${day.weather.text}` : ""}`}
-                  aria-pressed={date === selected}
-                  onClick={(e) => choose(date, e.currentTarget)}
-                >
-                  <span className={styles.cellTop}>
-                    <b className={dateColor} title={holiday}>
-                      {Number(date.slice(8, 10))}
-                    </b>
-                    {day.weather ? (
-                      <WeatherIcon weather={day.weather} size={20} />
-                    ) : (
-                      <span
-                        className={styles.noWeather}
-                        aria-label="天気予報対象外"
-                      >
-                        —
-                      </span>
-                    )}
-                  </span>
-                  {date === forecast.today && (
-                    <span className={styles.todayLabel}>今日</span>
-                  )}
-                  <span className={styles.cellTopics}>
-                    {topicsFor(day).map((topic) => (
-                      <TopicLabel
-                        key={topic.key}
-                        text={topic.text}
-                        night={topic.night}
-                        compact
-                      />
-                    ))}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          <div className={styles.calendarFoot}>
-            <p>
-              — 天気予報対象外　・　白色は予想準備中
-              <br className={styles.mobileBreak} />
-              日付を選ぶと、その日の詳細を確認できます。
-            </p>
-            <p className={styles.lastUpdated}>
-              最終更新 {formatForecastTime(forecast.updatedAt)}
-            </p>
-          </div>
-        </section>
+        <ForecastMonthCalendar forecast={forecast} month={month} selected={selected} onSelect={choose}
+          controls={<div>
+            <button disabled={monthIndex === 0} onClick={() => changeMonth(monthIndex - 1)} aria-label="前の月"><ChevronLeft size={22} /></button>
+            <button disabled={monthIndex === forecast.months.length - 1} onClick={() => changeMonth(monthIndex + 1)} aria-label="次の月"><ChevronRight size={22} /></button>
+          </div>}
+        />
         <aside className={styles.sidebar} aria-label="選択日の詳細">
           <DayDetail day={selectedDay} titleId="desktop-day-title" />
         </aside>

@@ -777,3 +777,16 @@ Master integration preserves the existing `/logo-compact.png` image and combines
 - update note placement follow-up: 「翌日以降の予想を毎日19時ごろに更新します。」をヘッダーから下部「混雑予想について」の先頭段落へ移動。更新遅延がある場合のstatus表示は上部に保持。スマホ363px・PC1440pxで案内が下部だけに1件表示され、横幅超過なしを確認。`audit/crowd-forecast-2026-10-18/update-note-about-mobile.jpg`、`update-note-about-desktop.jpg`。ブラウザーerror/warnなし。
 - refinement commit verification: 今回の混雑予想の実装ファイルが、独立コピーで全体lint・production buildを通過した内容と一致することを確認。独立コピーの計算・API・実SQLテスト25件も再実行し成功。共有QA文書は混雑予想の節だけをコミット対象とし、ほかの作業の変更を保持。
 - final result: passed
+
+## Instagram混雑予想画像の公開カレンダー統合（2026-10-18）
+
+- source visual truth: ユーザーが指定した現在の `/crowd-forecast`。5段階の混雑色、休園斜線、日付色、線画の天気・月・ケーキ、枠なしで左揃えの凡例、上部の未公開案内を基準とする。
+- implementation: `audit/crowd-forecast-2026-10-18/instagram-forecast-export-2026-10.png`（ブラウザーの「PNGを保存」で出力した実PNG、1080×1350px）。管理画面は `instagram-generator-mobile.jpg`、`instagram-generator-desktop.jpg`。
+- shared rendering: 公開ページ・画像で `month.tsx` と `presentation.ts` を共用。10月31日分について日付・祝日名・混雑度・天気のラベルと混雑色が一致することをDOMで照合し、保存済みの予想を利用することを確認。生成・閲覧で外部天気の取得や予想の再計算は行わない。
+- typography/layout: 画像は既存ロゴとYu Gothic／Meiryoを使い、固定サイズの専用余白・文字サイズで出力。凡例は6列、日付は7列、月の週数に応じて行高を配分。スマホ幅でも画像内部の幅1080px・高さ1350pxを保ち、プレビューのみ縮小する。本文の点数・係数・非公開メモは出力しない。
+- states/interactions: 10月→11月→10月の選択、月切替で古いPNGの保存リンクを非表示にすること、画像生成・生成結果表示・実ファイル保存を確認。旧手塗り・下書きUIと旧保存APIを撤去し、旧2エンドポイントのPUTが404であることも確認。Supabase上の過去データや出力画像は削除しない。
+- responsiveness: 363pxと1440pxでページの横幅超過なし、スマホから生成したPNGの自然寸法も1080×1350px。画像内の全日付セルで文字の縦横超過なし。共通化後の公開カレンダーも誕生日モーダル、Esc、前後月の切替を確認（`public-calendar-after-image-refactor-mobile.jpg`）。
+- verification: 計算・API・実SQLの27件、独立コピーの全体lint・production build成功。React Best Practicesの観点で画像生成ライブラリの遅延読込、fetchのabort、ResizeObserverとBlob URLの後始末、月切替での生成結果の破棄、44px以上の操作領域を確認。復旧後に新しいタブで行った生成時のconsole error/warnなし。
+- local preview: 既存の開発キャッシュに不整合が出たため、3018番のローカルプレビュー専用distDirへ分離。メモリ上の設定は保存・復元し、日本語をUTF-8で照合後、現在のpayloadが保存したローカル設定と一致することを確認。プレビューの再起動による本番データ変更はない。
+- limitations: 6週の月・欠損日は純粋関数のテストで確認。6週の実PNG、予想が全くない月の管理画面、意図的に極端に長いトピックスを入れた生成エラーの実画面は未確認。実画像のデータはローカルfixtureであり、本番の正確な予想を示す証跡ではない。デプロイ・リモートStorage操作は未実施。
+- final result: passed（上記未確認範囲を除く）
