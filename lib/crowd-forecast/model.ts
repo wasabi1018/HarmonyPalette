@@ -378,7 +378,10 @@ export function calculate(
     },
     topics: [
       ...input.birthdays.map((b) => `${b.name}のお誕生日`),
-      ...events.filter((e) => e.points > 0).map((e) => e.name),
+      ...c.events.flatMap(({ name, from, to }) => [
+        ...(date === from ? [`${name}開始`] : []),
+        ...(date === to ? [`${name}終了`] : []),
+      ]),
       ...(override?.reason ? [override.reason] : []),
     ],
     threeRooms:

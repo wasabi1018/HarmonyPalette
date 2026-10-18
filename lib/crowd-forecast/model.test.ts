@@ -290,6 +290,48 @@ test("開催期間全体の加点はなく、開始・終了と初週・最終�
     [12, 10, 10, 0, 12],
   );
 });
+
+test("イベント名は開始日と終了日だけに表示し、初週・最終週の土日は加点だけ行う", () => {
+  const c = config();
+  c.events = [
+    { id: "halloween", name: "ハロウィン🎃", from: "2026-09-18", to: "2026-11-10" },
+    { id: "christmas", name: "クリスマス🎄", from: "2026-11-13", to: "2026-12-25" },
+  ];
+  const cases: [string, string[]][] = [
+    ["2026-09-18", ["ハロウィン🎃開始"]],
+    ["2026-09-19", []],
+    ["2026-10-31", []],
+    ["2026-11-07", []],
+    ["2026-11-10", ["ハロウィン🎃終了"]],
+    ["2026-11-13", ["クリスマス🎄開始"]],
+    ["2026-11-14", []],
+    ["2026-12-25", ["クリスマス🎄終了"]],
+    ["2026-12-26", []],
+  ];
+  for (const [date, topics] of cases)
+    assert.deepEqual(calculate(input(date), c, {}, null, now).topics, topics);
+  assert.equal(calculate(input("2026-09-19"), c, {}, null, now).breakdown.event, 10);
+  assert.equal(calculate(input("2026-11-07"), c, {}, null, now).breakdown.event, 10);
+  c.event.boundary = 0;
+  const state = emptyState();
+  for (const date of ["2026-11-10", "2026-11-13", "2026-12-25"])
+    state.days[date] = calculate(input(date), c, {}, null, now);
+  const published = projectPublic(state, now);
+  assert.deepEqual(published.days.flatMap((day) => topicsFor(day).map((topic) => topic.text)),
+    ["ハロウィン🎃終了", "クリスマス🎄開始", "クリスマス🎄終了"]);
+  assert.equal(forecastMonth(published, "2026-11").byDate.get("2026-11-13")?.topics[0], "クリスマス🎄開始");
+});
+
+test("同日開催とイベントの切替日も開始・終了を区別し、誕生日と日別理由を保持", () => {
+  const c = config();
+  c.events = [
+    { id: "a", name: "前のイベント", from: "2026-10-01", to: "2026-10-31" },
+    { id: "b", name: "当日イベント", from: "2026-10-31", to: "2026-10-31" },
+  ];
+  c.overrides = [{ date: "2026-10-31", points: 0, level: "", weather: "", reason: "特別営業", note: "" }];
+  const d = calculate({ ...input("2026-10-31"), birthdays: [{ id: "kuromi", name: "クロミ" }] }, c, {}, null, now);
+  assert.deepEqual(d.topics, ["クロミのお誕生日", "前のイベント終了", "当日イベント開始", "当日イベント終了", "特別営業"]);
+});
 test("天気は2日先まで全量、3〜6日半量、7日以降なし", () => {
   const c = config(),
     w = weather();

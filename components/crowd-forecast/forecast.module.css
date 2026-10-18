@@ -159,12 +159,12 @@
   border-radius: 6px;
 }
 .quiet {
-  background: #e7f3e8 !important;
-  border-color: #c4dfc9 !important;
-}
-.normal {
   background: #ddf1f8 !important;
   border-color: #b7dfed !important;
+}
+.normal {
+  background: #e7f3e8 !important;
+  border-color: #c4dfc9 !important;
 }
 .moderate {
   background: #fff4d2 !important;

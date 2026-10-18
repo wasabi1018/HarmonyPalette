@@ -670,3 +670,22 @@ The requested October sample uses a read-only snapshot of published/verified Sup
 - implementation: 基準回数以上の加点、高加点の倍率と点数、共通基準回数を管理画面に表示。密度比の入力を廃止。3部屋表示の「3部屋使用かつ基準回数超過」は維持。
 - verification: ローカル管理画面で新しい項目名と保存済みの値を確認。スマホ396pxとPC1425pxでページ横幅超過なし、console errorなし。境界21・22・32・33回、未公開、過去実績なし、営業時間による非変動、10/31のファンスタ5点・合計85点は計算・APIの29件のテストで確認。
 - evidence: `audit/fan-count-points-2026-10-18/mobile.png`、`desktop.png`。ローカルfixtureの設定画面であり、本番の保存済み予想の更新を証明する画像ではない。
+
+## イベントの開始・終了ラベル（2026-10-18）
+
+- request: イベント設定の開始日・終了日だけに「イベント名＋開始／終了」を表示する。
+- implementation: 保存するトピックスをイベント加点から分離。初週・最終週の土日の加点は維持し、境界以外にはイベント名を含めない。絵文字付きの名称、0点の境界日、同日開催、誕生日・日別理由との併記を扱う。
+- verification: ローカル管理画面で添付と同じハロウィン（9/18〜11/10）とクリスマス（11/13〜12/25）を一時保存。PC1425pxのカレンダー・詳細、スマホ390pxのモーダルで11/10「ハロウィン🎃終了」、11/13「クリスマス🎄開始」を確認。11/7にはイベント名がない。横幅超過なし、公開画面console errorなし。
+- instagram: 11月のプレビューでも同じ文言を確認し、画像生成が成功。生成画像の自然寸法1080×1350pxを確認。ダウンロード操作は今回行っていない。
+- checks: 計算・API・SQLの31件、独立コピーのlint・production build成功。本番DBへ接続せず検証。ローカル検証用イベントは取り除き、元の設定で再保存した。当日・過去日の予想は更新しない。
+- evidence: `audit/event-boundary-labels-2026-10-18/mobile-modal.png`、`desktop-calendar.png`、`instagram-preview.png`。いずれもローカルfixtureの表示。
+- limitations: 9/18は公開対象の過去月なので画面では確認せず計算テストで確認。本番デプロイ・本番の保存済み予想の再計算は行っていない。
+
+## 混雑予想のゆったり・普通の配色交換（2026-10-18）
+
+- request: 「ゆったり」と「普通」の色を交換する。
+- implementation: 共通CSSの背景・枠線を交換。「ゆったり」は水色`#ddf1f8`／`#b7dfed`、「普通」は緑`#e7f3e8`／`#c4dfc9`。混雑レベル・点数・公開データの変更は行わない。
+- verification: PC1440px・スマホ390pxで凡例の色と枠線をcomputed styleで確認し、普通の日付セル・PC詳細・スマホモーダルも緑で一致。ページの横幅超過なし、公開画面console errorなし。他の4種類の凡例も従来の配色を保持。
+- instagram: 画像プレビューのゆったり・普通の凡例と普通の日付セルの色が公開画面と一致。画像生成成功と1080×1350pxの自然寸法を確認。ダウンロード操作は行っていない。
+- checks: 最新masterに今回の変更だけを取り込んだ専用環境で31件のテスト、lint、production build成功。本番の保存済み予想の再計算は実施していない。
+- evidence: `audit/forecast-color-swap-2026-10-18/desktop.png`、`mobile-modal.png`、`instagram-preview.png`。いずれもローカルfixtureの表示。
