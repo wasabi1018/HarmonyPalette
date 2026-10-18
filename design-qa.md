@@ -654,3 +654,12 @@ The requested October sample uses a read-only snapshot of published/verified Sup
 - local preview: 既存の開発キャッシュに不整合が出たため、3018番のローカルプレビュー専用distDirへ分離。メモリ上の設定は保存・復元し、日本語をUTF-8で照合後、現在のpayloadが保存したローカル設定と一致することを確認。プレビューの再起動による本番データ変更はない。
 - limitations: 6週の月・欠損日は純粋関数のテストで確認。6週の実PNG、予想が全くない月の管理画面、意図的に極端に長いトピックスを入れた生成エラーの実画面は未確認。実画像のデータはローカルfixtureであり、本番の正確な予想を示す証跡ではない。デプロイ・リモートStorage操作は未実施。
 - final result: passed（上記未確認範囲を除く）
+
+## 混雑予想ページのフッター前余白（2026-10-18）
+
+- source: ユーザー指定の `/crowd-forecast`。スマホ406pxで、説明末尾からフッターまでページ内30px・main下部96px・フッター上部48pxが重なり、計174pxの空白になっていた。
+- implementation: 混雑予想ページにIDを付け、既存TOPと同じhasセレクターの方式でmain下部・フッター上部の余白を解除。ページ末尾の余白は各画面幅で24pxへ統一。下部ナビ用96pxはフッターの後ろへ移し、PCでは不要な余白を付けない。
+- verification: スマホ406px・PC1440pxで説明末尾とフッターの間が24px、ページの横幅超過なし。スマホの著作権表示bottom555.75pxが固定ナビtop588.4pxより上に収まることを確認。ブラウザーerror/warnなし。独立コピーの全体lint・production build成功。
+- evidence: `audit/crowd-forecast-2026-10-18/footer-gap-mobile.jpg`、`footer-gap-desktop.jpg`。
+- scope: セレクターは混雑予想ページだけを対象とし、既存TOPの調整も保持。Instagram画像の固定サイズには適用しない。
+- final result: passed

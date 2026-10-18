@@ -127,7 +127,7 @@ export function CrowdForecastCalendar({
     }
   }
   return (
-    <div className={styles.page}>
+    <div id="crowd-forecast" className={styles.page}>
       <header className={styles.pageHeading}>
         <div>
           <p className={styles.eyebrow}>
