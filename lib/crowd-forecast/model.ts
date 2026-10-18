@@ -1,4 +1,5 @@
 import holidays from "./holidays.json";
+import { roundScore } from "./score";
 import {
   LEVELS,
   type DayInput,
@@ -342,7 +343,7 @@ export function calculate(
       1) *
       (age <= 2 ? 1 : age <= 6 ? 0.5 : 0);
   const raw = (basic + birthday) * factor,
-    score = Math.round(Math.min(100, Math.max(0, raw)));
+    score = roundScore(raw);
   const missing =
     input.status === "unknown" ||
     input.schedule !== "published" ||
@@ -366,7 +367,7 @@ export function calculate(
             : levelFor(
                 override?.weather
                   ? score
-                  : Math.min(100, Math.max(0, basic + birthday)),
+                  : Math.max(0, basic + birthday),
                 c,
               )),
     score:
@@ -426,6 +427,11 @@ export function projectPublic(
   return {
     today,
     months,
+    holidays: Object.fromEntries(
+      Object.entries(s.holidays).filter(([date]) =>
+        months.includes(date.slice(0, 7)),
+      ),
+    ),
     updatedAt: s.updatedAt,
     delayed:
       !!s.error ||

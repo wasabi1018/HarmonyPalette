@@ -32,6 +32,21 @@ export function datesBetween(from: string, to: string) {
   for (let d = from; d <= to; d = addDays(d, 1)) result.push(d);
   return result;
 }
+export function formatDateRanges(dates: string[]) {
+  const ranges: { from: string; to: string }[] = [];
+  for (const date of [...new Set(dates)].sort()) {
+    const previous = ranges.at(-1);
+    if (previous && addDays(previous.to, 1) === date) previous.to = date;
+    else ranges.push({ from: date, to: date });
+  }
+  const shortDate = (date: string) =>
+    `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+  return ranges
+    .map(({ from, to }) =>
+      from === to ? shortDate(from) : `${shortDate(from)}～${shortDate(to)}`,
+    )
+    .join("、");
+}
 export function minutes(time: string) {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { CalendarDays } from "lucide-react";
 import { LEVEL_LABELS, type PublicDay } from "@/lib/crowd-forecast/types";
 import { WeatherIcon, formatForecastTime } from "./weather";
 import { minutes } from "@/lib/crowd-forecast/date";
@@ -84,7 +85,10 @@ export function DailyForecastSummary({ date }: { date: string }) {
       ) : (
         <p className={styles.dailyError}>天気予報対象外・未取得</p>
       )}
-      <Link href="/crowd-forecast">混雑カレンダー</Link>
+      <Link href="/crowd-forecast" className={styles.calendarLink}>
+        <CalendarDays size={16} aria-hidden="true" />
+        混雑カレンダー
+      </Link>
     </section>
   );
 }

@@ -4,13 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
+  CakeSlice,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
   Clock3,
+  Moon,
   X,
 } from "lucide-react";
-import { addDays, datesBetween, weekday } from "@/lib/crowd-forecast/date";
+import {
+  addDays,
+  datesBetween,
+  formatDateRanges,
+  weekday,
+} from "@/lib/crowd-forecast/date";
 import {
   LEVELS,
   LEVEL_LABELS,
@@ -43,22 +50,42 @@ function fullDate(date: string) {
     timeZone: "UTC",
   }).format(new Date(`${date}T00:00:00Z`));
 }
-function ranges(dates: string[]) {
-  const chunks: { from: string; to: string }[] = [];
-  for (const date of dates) {
-    const prev = chunks.at(-1);
-    if (prev && addDays(prev.to, 1) === date) prev.to = date;
-    else chunks.push({ from: date, to: date });
-  }
-  const short = (d: string) =>
-    `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
-  return chunks
-    .map((c) =>
-      c.from === c.to ? short(c.from) : `${short(c.from)}〜${short(c.to)}`,
-    )
-    .join("、");
+function TopicLabel({
+  text,
+  night = false,
+  compact = false,
+}: {
+  text: string;
+  night?: boolean;
+  compact?: boolean;
+}) {
+  const label = text.replace(/のお誕生日$/, "誕生日");
+  const Icon = night ? Moon : label.endsWith("誕生日") ? CakeSlice : null;
+  const units = Math.max(1, Array.from(label).length + (Icon ? 1.4 : 0));
+  return (
+    <span
+      className={styles.topicLine}
+      title={label}
+      style={compact ? { fontSize: `min(1em, ${96 / units}cqi)` } : undefined}
+    >
+      {Icon && <Icon size={13} aria-hidden="true" />}
+      <span>{label}</span>
+    </span>
+  );
+}
+function topicsFor(day: PublicDay) {
+  const topics: { key: string; text: string; night?: boolean }[] = [];
+  if (day.threeRooms)
+    topics.push({ key: "fan", text: "ファンスタ3部屋" });
+  if (day.closing && day.closing >= "18:00" && day.level !== "closed")
+    topics.push({ key: "night", text: "ナイト営業日", night: true });
+  day.topics.forEach((text, index) =>
+    topics.push({ key: `topic-${index}`, text }),
+  );
+  return topics;
 }
 function DayDetail({ day, titleId }: { day: PublicDay; titleId: string }) {
+  const topics = topicsFor(day);
   return (
     <>
       <p className={styles.eyebrow}>選択した日</p>
@@ -95,29 +122,21 @@ function DayDetail({ day, titleId }: { day: PublicDay; titleId: string }) {
                 : "未公開・確認中"}
           </dd>
         </div>
-        <div>
-          <dt>ファンスタ予定</dt>
-          <dd>
-            {day.fan === "published"
-              ? "公開済み"
-              : day.fan === "failed"
-                ? "取得に遅れが生じています"
-                : day.fan === "unpublished"
-                  ? "未公開"
-                  : "公開状況確認中"}
-            {day.threeRooms && (
-              <span className={styles.topic}>ファンスタ3部屋</span>
-            )}
-          </dd>
-        </div>
+        {topics.length > 0 && (
+          <div>
+            <dt>この日のトピックス</dt>
+            <dd>
+              <ul className={styles.topics} aria-label="この日のトピックス">
+                {topics.map((topic) => (
+                  <li key={topic.key}>
+                    <TopicLabel text={topic.text} night={topic.night} />
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )}
       </dl>
-      {day.topics.length > 0 && (
-        <ul className={styles.topics}>
-          {day.topics.map((t) => (
-            <li key={t}>{t}</li>
-          ))}
-        </ul>
-      )}
       <Link
         href={`/daily-schedule?date=${day.date}`}
         className={styles.scheduleLink}
@@ -194,7 +213,7 @@ export function CrowdForecastCalendar({
           ? {
               key: `${key}-${state}`,
               label: `${key === "schedule" ? "スケジュール" : "ファンスタスケジュール"}${state === "unpublished" ? "未公開" : state === "failed" ? "取得遅延" : "公開状況確認中"}`,
-              dates: ranges(matches),
+              dates: formatDateRanges(matches),
             }
           : null;
       }),
@@ -208,14 +227,14 @@ export function CrowdForecastCalendar({
             <CalendarDays size={14} aria-hidden="true" />
             HARMONYLAND
           </p>
-          <h1>混雑予想カレンダー</h1>
+          <h1>混雑予想</h1>
           <p>お出かけ前に、混み具合をチェック。</p>
         </div>
-        <div className={styles.update}>
-          <p>最終更新 {formatForecastTime(forecast.updatedAt)}</p>
-          <span>翌日以降の予想を毎日19時ごろに更新</span>
-          {forecast.delayed && <p role="status">更新に遅れが生じています</p>}
-        </div>
+        {forecast.delayed && (
+          <div className={styles.update}>
+            <p role="status">更新に遅れが生じています</p>
+          </div>
+        )}
       </header>
       {notices.length > 0 && (
         <section className={styles.notice} aria-labelledby="publication-title">
@@ -289,17 +308,26 @@ export function CrowdForecastCalendar({
                   <div key={date} className={styles.blank} aria-hidden="true" />
                 );
               const day = byDate.get(date) ?? placeholder(date);
+              const holiday = forecast.holidays?.[date];
+              const dateColor =
+                holiday || weekday(date) === 0
+                  ? styles.holidayDate
+                  : weekday(date) === 6
+                    ? styles.saturdayDate
+                    : undefined;
               return (
                 <button
                   key={date}
                   type="button"
                   className={`${styles.day} ${styles[day.level]} ${date === selected ? styles.selected : ""} ${date === forecast.today ? styles.today : ""}`}
-                  aria-label={`${fullDate(date)}、${LEVEL_LABELS[day.level]}${day.weather ? `、${day.weather.text}` : ""}`}
+                  aria-label={`${fullDate(date)}${holiday ? `（${holiday}）` : ""}、${LEVEL_LABELS[day.level]}${day.weather ? `、${day.weather.text}` : ""}`}
                   aria-pressed={date === selected}
                   onClick={(e) => choose(date, e.currentTarget)}
                 >
                   <span className={styles.cellTop}>
-                    <b>{Number(date.slice(8, 10))}</b>
+                    <b className={dateColor} title={holiday}>
+                      {Number(date.slice(8, 10))}
+                    </b>
                     {day.weather ? (
                       <WeatherIcon weather={day.weather} size={20} />
                     ) : (
@@ -315,23 +343,29 @@ export function CrowdForecastCalendar({
                     <span className={styles.todayLabel}>今日</span>
                   )}
                   <span className={styles.cellTopics}>
-                    {day.threeRooms && <span>ファンスタ3部屋</span>}
-                    {day.closing &&
-                      day.closing >= "18:00" &&
-                      day.level !== "closed" && <span>ナイト営業</span>}
-                    {day.topics.map((t) => (
-                      <span key={t}>{t}</span>
+                    {topicsFor(day).map((topic) => (
+                      <TopicLabel
+                        key={topic.key}
+                        text={topic.text}
+                        night={topic.night}
+                        compact
+                      />
                     ))}
                   </span>
                 </button>
               );
             })}
           </div>
-          <p className={styles.calendarFoot}>
-            — 天気予報対象外　・　白色は予想準備中
-            <br className={styles.mobileBreak} />
-            日付を選ぶと、その日の詳細を確認できます。
-          </p>
+          <div className={styles.calendarFoot}>
+            <p>
+              — 天気予報対象外　・　白色は予想準備中
+              <br className={styles.mobileBreak} />
+              日付を選ぶと、その日の詳細を確認できます。
+            </p>
+            <p className={styles.lastUpdated}>
+              最終更新 {formatForecastTime(forecast.updatedAt)}
+            </p>
+          </div>
         </section>
         <aside className={styles.sidebar} aria-label="選択日の詳細">
           <DayDetail day={selectedDay} titleId="desktop-day-title" />
@@ -339,6 +373,7 @@ export function CrowdForecastCalendar({
       </div>
       <section className={styles.about}>
         <h2>混雑予想について</h2>
+        <p>翌日以降の予想を毎日19時ごろに更新します。</p>
         <p>
           曜日・連休・営業時間・グリーティングの予定・イベントの開始や終了・キャラクターのお誕生日などを参考に予想しています。直近の日程には天気予報も考慮しています。
         </p>

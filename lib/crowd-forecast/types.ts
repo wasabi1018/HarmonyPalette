@@ -139,6 +139,7 @@ export type PublicDay = {
 export type PublicForecast = {
   today: string;
   months: string[];
+  holidays: Record<string, string>;
   days: PublicDay[];
   updatedAt: string | null;
   delayed: boolean;
