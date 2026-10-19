@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { CircleAlert, Eye, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import {
-  LEVELS,
   LEVEL_LABELS,
   type ForecastConfig,
   type ForecastState,
@@ -14,6 +13,12 @@ import {
 import { formatForecastTime } from "@/components/crowd-forecast/weather";
 import { japanDay } from "@/lib/crowd-forecast/date";
 import { displayedScore } from "@/lib/crowd-forecast/score";
+import { CrowdDailyAdjustments } from "@/components/admin/crowd-daily-adjustments";
+import {
+  expandDailyAdjustments,
+  groupDailyAdjustments,
+  type DailyAdjustment,
+} from "@/lib/crowd-forecast/daily-adjustments";
 
 type Character = {
   id: string;
@@ -108,6 +113,7 @@ function removeButton(remove: () => void, label: string) {
   );
 }
 export function CrowdForecastSettings() {
+  const [dailyAdjustments, setDailyAdjustments] = useState<DailyAdjustment[]>([]);
   const [data, setData] = useState<ResponseData | null>(null),
     [config, setConfig] = useState<ForecastConfig | null>(null);
   const [preview, setPreview] = useState<ForecastState | null>(null),
@@ -129,6 +135,7 @@ export function CrowdForecastSettings() {
       if (!r.ok) throw new Error(body.error || "設定を読み込めませんでした。");
       setData(body);
       setConfig(body.state.config);
+      setDailyAdjustments(groupDailyAdjustments(body.state.config.overrides));
       setPreview(null);
       setPreviewKey("");
       setError("");
@@ -713,135 +720,15 @@ export function CrowdForecastSettings() {
             </>
           )}
           {tab === 3 && (
-            <div className={card}>
-              <h2 className="text-sm font-black">日別の調整</h2>
-              <p className="my-3 text-xs leading-6 text-ink/50">
-                当日の日別調整も保存時に反映されます。過ぎた日の予想は書き換えません。休園日を最優先し、その次に固定レベルを優先します。理由は公開されます。内部メモは管理画面のみです。
-              </p>
-              {config.overrides.map((p, i) => (
-                <div
-                  key={i}
-                  className="mb-4 grid items-end gap-3 rounded-xl border border-pink/10 bg-pink/[.03] p-4 sm:grid-cols-3"
-                >
-                  <label className="text-xs text-ink/65">
-                    日付
-                    <input
-                      className={field}
-                      type="date"
-                      value={p.date}
-                      onChange={(e) =>
-                        update((c) => {
-                          c.overrides[i].date = e.target.value;
-                        })
-                      }
-                    />
-                  </label>
-                  <NumberField
-                    label="加点・減点"
-                    min={-100}
-                    value={p.points}
-                    set={(n) =>
-                      update((c) => {
-                        c.overrides[i].points = n;
-                      })
-                    }
-                  />
-                  <label className="text-xs text-ink/65">
-                    混雑度を固定
-                    <select
-                      className={field}
-                      value={p.level}
-                      onChange={(e) =>
-                        update((c) => {
-                          c.overrides[i].level = e.target
-                            .value as typeof p.level;
-                        })
-                      }
-                    >
-                      <option value="">自動計算</option>
-                      {LEVELS.map((l) => (
-                        <option key={l} value={l}>
-                          {LEVEL_LABELS[l]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="text-xs text-ink/65">
-                    天気区分の調整
-                    <select
-                      className={field}
-                      value={p.weather}
-                      onChange={(e) =>
-                        update((c) => {
-                          c.overrides[i].weather = e.target
-                            .value as typeof p.weather;
-                        })
-                      }
-                    >
-                      <option value="">気象庁の予報を使用</option>
-                      {Object.entries(weatherLabels).map(([v, l]) => (
-                        <option key={v} value={v}>
-                          {l}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="text-xs text-ink/65 sm:col-span-2">
-                    調整理由（公開・必須）
-                    <input
-                      className={field}
-                      maxLength={120}
-                      required
-                      value={p.reason}
-                      onChange={(e) =>
-                        update((c) => {
-                          c.overrides[i].reason = e.target.value;
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="text-xs text-ink/65 sm:col-span-2">
-                    内部メモ（非公開）
-                    <input
-                      className={field}
-                      maxLength={500}
-                      value={p.note}
-                      onChange={(e) =>
-                        update((c) => {
-                          c.overrides[i].note = e.target.value;
-                        })
-                      }
-                    />
-                  </label>
-                  {removeButton(
-                    () =>
-                      update((c) => {
-                        c.overrides.splice(i, 1);
-                      }),
-                    p.date || "日別調整",
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                className={button}
-                onClick={() =>
-                  update((c) => {
-                    c.overrides.push({
-                      date: "",
-                      points: 0,
-                      level: "",
-                      weather: "",
-                      reason: "",
-                      note: "",
-                    });
-                  })
-                }
-              >
-                <Plus size={15} />
-                調整日を追加
-              </button>
-            </div>
+            <CrowdDailyAdjustments
+              groups={dailyAdjustments}
+              onChange={(groups) => {
+                setDailyAdjustments(groups);
+                update((c) => {
+                  c.overrides = expandDailyAdjustments(groups);
+                });
+              }}
+            />
           )}
           {tab === 4 && (
             <>
@@ -955,6 +842,7 @@ export function CrowdForecastSettings() {
                       type="button"
                       onClick={() => {
                         setConfig(structuredClone(h.config));
+                        setDailyAdjustments(groupDailyAdjustments(h.config.overrides));
                         setPreview(null);
                         setPreviewKey("");
                         setMessage(
