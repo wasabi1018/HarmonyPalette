@@ -133,6 +133,7 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
     uniqueVisitors: 0,
     views: 0,
     homeVisits: 0,
+    crowdForecastVisits: 0,
     planCreations: 0,
     planImageSaves: 0,
     planShares: 0,
@@ -140,6 +141,7 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
   const dateTotals = new Map<string, number>();
   const uniqueVisitorTotals = new Map<string, number>();
   const homeVisitTotals = new Map<string, number>();
+  const crowdForecastVisitTotals = new Map<string, number>();
   const planCreationTotals = new Map<string, number>();
   const planImageSaveTotals = new Map<string, number>();
   const planShareTotals = new Map<string, number>();
@@ -147,6 +149,8 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
   let todayViews = 0;
   let homeVisits = 0;
   let todayHomeVisits = 0;
+  let crowdForecastVisits = 0;
+  let todayCrowdForecastVisits = 0;
   let planCreations = 0;
   let todayPlanCreations = 0;
   let planImageSaves = 0;
@@ -173,6 +177,7 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
     const eventName = asText(row.event_name);
     if (eventName === "unique_visitor") cumulative.uniqueVisitors += count;
     if (eventName === "home_view") cumulative.homeVisits += count;
+    if (eventName === "crowd_forecast_view") cumulative.crowdForecastVisits += count;
     if (eventName === "plan_created") cumulative.planCreations += count;
     if (eventName === "plan_image_saved") cumulative.planImageSaves += count;
     if (eventName === "plan_shared") cumulative.planShares += count;
@@ -184,6 +189,11 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
       homeVisitTotals.set(date, (homeVisitTotals.get(date) || 0) + count);
       homeVisits += count;
       if (date === today) todayHomeVisits += count;
+    }
+    if (eventName === "crowd_forecast_view") {
+      crowdForecastVisitTotals.set(date, (crowdForecastVisitTotals.get(date) || 0) + count);
+      crowdForecastVisits += count;
+      if (date === today) todayCrowdForecastVisits += count;
     }
     if (eventName === "plan_created") {
       planCreationTotals.set(date, (planCreationTotals.get(date) || 0) + count);
@@ -209,6 +219,7 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
       uniqueVisitors: uniqueVisitorTotals.get(date) || 0,
       views: dateTotals.get(date) || 0,
       homeVisits: homeVisitTotals.get(date) || 0,
+      crowdForecastVisits: crowdForecastVisitTotals.get(date) || 0,
       planCreations: planCreationTotals.get(date) || 0,
       planImageSaves: planImageSaveTotals.get(date) || 0,
       planShares: planShareTotals.get(date) || 0,
@@ -235,6 +246,8 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
     averageViews: Math.round((totalViews / days) * 10) / 10,
     homeVisits,
     todayHomeVisits,
+    crowdForecastVisits,
+    todayCrowdForecastVisits,
     planCreations,
     todayPlanCreations,
     planImageSaves,

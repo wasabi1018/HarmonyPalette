@@ -43,6 +43,7 @@ export type ArticleAnalyticsPoint = {
   uniqueVisitors: number;
   views: number;
   homeVisits: number;
+  crowdForecastVisits: number;
   planCreations: number;
   planImageSaves: number;
   planShares: number;
@@ -52,6 +53,7 @@ export type ArticleAnalyticsTotals = Omit<ArticleAnalyticsPoint, "date">;
 
 export type SiteAnalyticsEvent =
   | "home_view"
+  | "crowd_forecast_view"
   | "plan_created"
   | "plan_image_saved"
   | "plan_shared";
@@ -77,6 +79,8 @@ export type ArticleAnalyticsData = {
   averageViews: number;
   homeVisits: number;
   todayHomeVisits: number;
+  crowdForecastVisits: number;
+  todayCrowdForecastVisits: number;
   planCreations: number;
   todayPlanCreations: number;
   planImageSaves: number;

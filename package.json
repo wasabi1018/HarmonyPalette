@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:site-analytics": "node --experimental-test-module-mocks --import tsx --test lib/articles/analytics-repository.integration.test.ts lib/analytics/site-events.integration.test.ts lib/analytics/daily-visitor.test.ts lib/analytics/unique-visitor.test.ts",
     "test:crowd-forecast": "node --experimental-test-module-mocks --import tsx --test lib/crowd-forecast/model.test.ts lib/crowd-forecast/api.integration.test.ts",
     "test:birthday": "tsx --test lib/character-birthday.test.ts",
     "test:park-operating-days": "tsx --test lib/official-import/park-operating-days.test.ts",

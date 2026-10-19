@@ -9,6 +9,7 @@ import {
   Eye,
   Home,
   ImageDown,
+  CalendarDays,
   Share2,
   UsersRound,
 } from "lucide-react";
@@ -18,6 +19,7 @@ type MetricKey =
   | "uniqueVisitors"
   | "views"
   | "homeVisits"
+  | "crowdForecastVisits"
   | "planCreations"
   | "planImageSaves"
   | "planShares";
@@ -45,6 +47,12 @@ const METRICS: Record<MetricKey, {
     shortLabel: "TOP訪問",
     barClass: "bg-[#75a7d8]/80 group-hover:bg-[#5687bd]",
     selectedClass: "bg-[#5687bd] ring-[#5687bd]/25",
+  },
+  crowdForecastVisits: {
+    label: "混雑予想ページ訪問",
+    shortLabel: "混雑予想",
+    barClass: "bg-[#62b5bf]/80 group-hover:bg-[#368995]",
+    selectedClass: "bg-[#368995] ring-[#368995]/25",
   },
   planCreations: {
     label: "マイプラン作成",
@@ -107,20 +115,21 @@ export function ArticleAnalyticsDashboard({
 
   const downloadCsv = () => {
     const rows = [
-      ["日付", "日次ユニークブラウザ数", "記事閲覧数", "TOPページ訪問数", "マイプラン作成数", "画像保存数", "共有数"],
+      ["日付", "日次ユニークブラウザ数", "記事閲覧数", "TOPページ訪問数", "混雑予想ページ訪問数", "マイプラン作成数", "画像保存数", "共有数"],
       ...data.daily.map((point) => [
         point.date,
         String(point.uniqueVisitors),
         String(point.views),
         String(point.homeVisits),
+        String(point.crowdForecastVisits),
         String(point.planCreations),
         String(point.planImageSaves),
         String(point.planShares),
       ]),
       [],
-      ["集計期間", "日次ユニークブラウザ数（延べ）", "記事閲覧数", "TOPページ訪問数", "マイプラン作成数", "画像保存数", "共有数"],
-      [`${data.rangeDays}日間合計`, String(data.totalDailyUniqueVisitors), String(data.totalViews), String(data.homeVisits), String(data.planCreations), String(data.planImageSaves), String(data.planShares)],
-      ["累計（計測開始から）", String(data.cumulative.uniqueVisitors), String(data.cumulative.views), String(data.cumulative.homeVisits), String(data.cumulative.planCreations), String(data.cumulative.planImageSaves), String(data.cumulative.planShares)],
+      ["集計期間", "日次ユニークブラウザ数（延べ）", "記事閲覧数", "TOPページ訪問数", "混雑予想ページ訪問数", "マイプラン作成数", "画像保存数", "共有数"],
+      [`${data.rangeDays}日間合計`, String(data.totalDailyUniqueVisitors), String(data.totalViews), String(data.homeVisits), String(data.crowdForecastVisits), String(data.planCreations), String(data.planImageSaves), String(data.planShares)],
+      ["累計（計測開始から）", String(data.cumulative.uniqueVisitors), String(data.cumulative.views), String(data.cumulative.homeVisits), String(data.cumulative.crowdForecastVisits), String(data.cumulative.planCreations), String(data.cumulative.planImageSaves), String(data.cumulative.planShares)],
       [],
       ["人気記事", "スラッグ", "期間内閲覧数", "累計閲覧数"],
       ...data.topArticles.map((article) => [article.title, article.slug, String(article.views), String(article.cumulativeViews)]),
@@ -160,6 +169,14 @@ export function ArticleAnalyticsDashboard({
       detail: `今日 ${data.todayHomeVisits.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.homeVisits, data.rangeDays).toLocaleString("ja-JP")}件`,
       icon: Home,
       tone: "text-[#5687bd] bg-[#eef5fc]",
+    },
+    {
+      label: `${data.rangeDays}日間の混雑予想訪問`,
+      value: data.crowdForecastVisits,
+      cumulative: data.cumulative.crowdForecastVisits,
+      detail: `今日 ${data.todayCrowdForecastVisits.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.crowdForecastVisits, data.rangeDays).toLocaleString("ja-JP")}件`,
+      icon: CalendarDays,
+      tone: "text-[#368995] bg-[#edf8fa]",
     },
     {
       label: `${data.rangeDays}日間のマイプラン作成`,
@@ -236,7 +253,7 @@ export function ArticleAnalyticsDashboard({
         累計は各項目の計測開始から今日までの合計です。集計期間を切り替えても変わりません。
       </p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {summaries.map(({ label, value, cumulative, detail, icon: Icon, tone }) => (
           <div key={label} className="min-w-0 rounded-2xl border border-ink/[0.07] bg-white p-5 shadow-soft">
             <span className={`grid h-10 w-10 place-items-center rounded-xl ${tone}`}>
@@ -262,7 +279,7 @@ export function ArticleAnalyticsDashboard({
         UUは同じブラウザを日本時間の同じ日に1回として数えます。別端末・別ブラウザ・保存データの削除後は別の訪問として集計されます。
         期間合計・累計は日次UUを足した延べ数です。同じブラウザが別の日に訪問した場合は、それぞれ1回として数えます。
         <br />
-        TOP訪問は同じタブ内の同じ日に1回、マイプラン作成は最初の予定追加時に1回として集計します。
+        TOP訪問・混雑予想訪問は各ページにつき同じタブ内の同じ日に1回、マイプラン作成は最初の予定追加時に1回として集計します。
         画像保存は保存開始時、共有は端末の共有操作が完了した時に数えます。
       </p>
 

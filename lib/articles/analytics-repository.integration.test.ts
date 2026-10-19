@@ -60,7 +60,7 @@ before(async () => {
 });
 beforeEach((context) => {
   // UTC is still October 13; the dashboard must include October 14 in Japan.
-  context.mock.timers.enable({ apis: ["Date"], now: new Date("2026-10-13T15:30:00Z") });
+  if ("mock" in context) context.mock.timers.enable({ apis: ["Date"], now: new Date("2026-10-13T15:30:00Z") });
   configured = true;
   failedTable = "";
   pages.length = 0;
@@ -78,7 +78,7 @@ beforeEach((context) => {
     { article_id: "deleted", view_date: "2026-10-14", view_count: 2 },
     { article_id: "a", view_date: "2026-10-15", view_count: 999 },
   ];
-  tables.site_daily_events = ["unique_visitor", "home_view", "plan_created", "plan_image_saved", "plan_shared"]
+  tables.site_daily_events = ["unique_visitor", "home_view", "crowd_forecast_view", "plan_created", "plan_image_saved", "plan_shared"]
     .flatMap((event_name) => [
       { event_name, event_date: "2026-07-01", event_count: 100 },
       { event_name, event_date: "2026-10-07", event_count: 20 },
@@ -88,18 +88,19 @@ beforeEach((context) => {
     ]);
 });
 
-test("all six cumulative totals stay unchanged across periods while daily totals and rankings use the selected period", async () => {
+test("all seven cumulative totals stay unchanged across periods while daily totals and rankings use the selected period", async () => {
   for (const days of [7, 30, 90]) {
     const data = await repository.getArticleAnalytics(days);
     const eventTotal = days === 7 ? 7 : 27;
     assert.deepEqual(data.cumulative, {
-      uniqueVisitors: 127, views: 139, homeVisits: 127,
+      uniqueVisitors: 127, views: 139, homeVisits: 127, crowdForecastVisits: 127,
       planCreations: 127, planImageSaves: 127, planShares: 127,
     });
     assert.equal(data.daily.length, days);
     assert.equal(data.daily.at(-1)?.date, "2026-10-14");
     assert.equal(data.totalDailyUniqueVisitors, eventTotal);
     assert.equal(data.homeVisits, eventTotal);
+    assert.equal(data.crowdForecastVisits, eventTotal);
     assert.equal(data.planCreations, eventTotal);
     assert.equal(data.planImageSaves, eventTotal);
     assert.equal(data.planShares, eventTotal);
@@ -107,11 +108,13 @@ test("all six cumulative totals stay unchanged across periods while daily totals
     assert.equal(data.todayUniqueVisitors, 4);
     assert.equal(data.todayViews, 16);
     assert.equal(data.todayHomeVisits, 4);
+    assert.equal(data.todayCrowdForecastVisits, 4);
     assert.equal(data.todayPlanCreations, 4);
     assert.equal(data.todayPlanImageSaves, 4);
     assert.equal(data.todayPlanShares, 4);
     assert.equal(data.daily.reduce((sum, point) => sum + point.views, 0), data.totalViews);
     assert.equal(data.daily.reduce((sum, point) => sum + point.uniqueVisitors, 0), eventTotal);
+    assert.equal(data.daily.reduce((sum, point) => sum + point.crowdForecastVisits, 0), eventTotal);
     assert.equal(data.averageDailyUniqueVisitors, Math.round(eventTotal / days * 10) / 10);
     assert.equal(data.topArticles[0].id, days === 7 ? "b" : "a");
     assert.equal(data.topArticles.find((article) => article.id === "a")?.cumulativeViews, 127);
@@ -142,9 +145,30 @@ test("empty data returns zero cumulative totals and invalid periods fall back to
   tables.site_daily_events = [];
   const data = await repository.getArticleAnalytics(365);
   assert.equal(data.rangeDays, 30);
-  assert.deepEqual(Object.values(data.cumulative), [0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(Object.values(data.cumulative), [0, 0, 0, 0, 0, 0, 0]);
   assert.equal(data.daily.length, 30);
   assert.deepEqual(data.topArticles, []);
+});
+
+test("crowd forecast visits stay separate from TOP visits and return zero before tracking starts", async () => {
+  tables.site_daily_events = tables.site_daily_events.filter((row) => row.event_name !== "crowd_forecast_view");
+  const beforeTracking = await repository.getArticleAnalytics(7);
+  assert.equal(beforeTracking.crowdForecastVisits, 0);
+  assert.equal(beforeTracking.todayCrowdForecastVisits, 0);
+  assert.equal(beforeTracking.cumulative.crowdForecastVisits, 0);
+  assert.ok(beforeTracking.daily.every((point) => point.crowdForecastVisits === 0));
+  tables.site_daily_events.push(
+    { event_name: "crowd_forecast_view", event_date: "2026-07-01", event_count: 50 },
+    { event_name: "crowd_forecast_view", event_date: "2026-10-08", event_count: 8 },
+    { event_name: "crowd_forecast_view", event_date: "2026-10-14", event_count: 9 },
+  );
+  const data = await repository.getArticleAnalytics(7);
+  assert.equal(data.crowdForecastVisits, 17);
+  assert.equal(data.todayCrowdForecastVisits, 9);
+  assert.equal(data.cumulative.crowdForecastVisits, 67);
+  assert.equal(data.homeVisits, beforeTracking.homeVisits);
+  assert.equal(data.cumulative.homeVisits, beforeTracking.cumulative.homeVisits);
+  assert.equal(data.totalDailyUniqueVisitors, beforeTracking.totalDailyUniqueVisitors);
 });
 
 test("failed cumulative reads surface an error rather than silently displaying incomplete totals", async () => {
