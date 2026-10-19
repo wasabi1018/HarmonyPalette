@@ -1,19 +1,18 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { CircleAlert, Eye, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
+import { CircleAlert, Eye, RefreshCw, Save } from "lucide-react";
 import {
   LEVEL_LABELS,
   type ForecastConfig,
   type ForecastState,
-  type Period,
-  type Publication,
   type WeatherKind,
 } from "@/lib/crowd-forecast/types";
 import { formatForecastTime } from "@/components/crowd-forecast/weather";
 import { japanDay } from "@/lib/crowd-forecast/date";
 import { displayedScore } from "@/lib/crowd-forecast/score";
 import { CrowdDailyAdjustments } from "@/components/admin/crowd-daily-adjustments";
+import { CrowdForecastPeriods } from "@/components/admin/crowd-forecast-periods";
 import {
   expandDailyAdjustments,
   groupDailyAdjustments,
@@ -45,12 +44,6 @@ const weatherLabels: Record<WeatherKind, string> = {
   mixedRain: "晴雨混在",
   rain: "雨中心",
   heavyRain: "長時間の大雨（手動判断）",
-};
-const publicationLabels: Record<Publication, string> = {
-  published: "公開済み（実施なしも確認済み）",
-  unpublished: "未公開",
-  unconfirmed: "確認中",
-  failed: "取得失敗",
 };
 const tabs = [
   "基本・天気",
@@ -98,18 +91,6 @@ function NumberField({
         onChange={(e) => set(e.currentTarget.valueAsNumber)}
       />
     </label>
-  );
-}
-function removeButton(remove: () => void, label: string) {
-  return (
-    <button
-      type="button"
-      className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-ink/45 hover:bg-red-50 hover:text-red-600"
-      aria-label={`${label}を削除`}
-      onClick={remove}
-    >
-      <Trash2 size={16} />
-    </button>
   );
 }
 export function CrowdForecastSettings() {
@@ -254,46 +235,6 @@ export function CrowdForecastSettings() {
       },
     },
   ];
-  const periodFields = <T extends Period>(
-    p: T,
-    change: (v: Partial<T>) => void,
-  ) => (
-    <>
-      <label className="text-xs text-ink/65">
-        名称
-        <input
-          className={field}
-          value={p.name}
-          maxLength={80}
-          onChange={(e) => change({ name: e.target.value } as Partial<T>)}
-        />
-      </label>
-      <label className="text-xs text-ink/65">
-        開始日
-        <input
-          className={field}
-          type="date"
-          value={p.from}
-          onChange={(e) => change({ from: e.target.value } as Partial<T>)}
-        />
-      </label>
-      <label className="text-xs text-ink/65">
-        終了日
-        <input
-          className={field}
-          type="date"
-          value={p.to}
-          onChange={(e) => change({ to: e.target.value } as Partial<T>)}
-        />
-      </label>
-    </>
-  );
-  const initialPeriod = () => ({
-    id: crypto.randomUUID(),
-    name: "",
-    from: "",
-    to: "",
-  });
   const allPreviewDays = Object.values(preview?.days ?? data.state.days).sort(
     (a, b) => a.input.date.localeCompare(b.input.date),
   );
@@ -572,152 +513,10 @@ export function CrowdForecastSettings() {
             </div>
           )}
           {tab === 2 && (
-            <>
-              <div className={card}>
-                <h2 className="text-sm font-black">イベントの開始・終了</h2>
-                <p className="my-3 text-xs leading-6 text-ink/50">
-                  開催初日・最終日と、最初・最後の土日のみ補正します。ハロウィンなどの開催期間全体への加点はありません。
-                </p>
-                {config.events.map((p, i) => (
-                  <div
-                    key={p.id}
-                    className="mb-4 grid items-end gap-3 rounded-xl bg-pink/[.03] p-3 sm:grid-cols-[1fr_150px_150px_40px]"
-                  >
-                    {periodFields(p, (v) =>
-                      update((c) => {
-                        Object.assign(c.events[i], v);
-                      }),
-                    )}
-                    {removeButton(
-                      () =>
-                        update((c) => {
-                          c.events.splice(i, 1);
-                        }),
-                      p.name || "イベント",
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className={`${button} mt-3`}
-                  onClick={() =>
-                    update((c) => {
-                      c.events.push(initialPeriod());
-                    })
-                  }
-                >
-                  <Plus size={15} />
-                  イベントを追加
-                </button>
-              </div>
-              <div className={card}>
-                <h2 className="mb-3 text-sm font-black">
-                  学校休暇・特別な休暇期間
-                </h2>
-                {config.vacations.map((p, i) => (
-                  <div
-                    key={p.id}
-                    className="mb-4 grid items-end gap-3 rounded-xl bg-pink/[.03] p-3 sm:grid-cols-3"
-                  >
-                    {periodFields(p, (v) =>
-                      update((c) => {
-                        Object.assign(c.vacations[i], v);
-                      }),
-                    )}
-                    <NumberField
-                      label="加点"
-                      value={p.points}
-                      set={(n) =>
-                        update((c) => {
-                          c.vacations[i].points = n;
-                        })
-                      }
-                    />
-                    {removeButton(
-                      () =>
-                        update((c) => {
-                          c.vacations.splice(i, 1);
-                        }),
-                      p.name || "休暇",
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className={button}
-                  onClick={() =>
-                    update((c) => {
-                      c.vacations.push({ ...initialPeriod(), points: 5 });
-                    })
-                  }
-                >
-                  <Plus size={15} />
-                  休暇期間を追加
-                </button>
-              </div>
-              <div className={card}>
-                <h2 className="text-sm font-black">スケジュールの公開状況</h2>
-                <p className="my-3 text-xs leading-6 text-ink/50">
-                  承認済みの予定が存在する日は公開済みとして扱います。予定がない日は未確認です。公式に実施なしと確認した日も、ここで公開済みにできます。重なる期間は下の設定が優先されます。
-                </p>
-                {config.publications.map((p, i) => (
-                  <div
-                    key={p.id}
-                    className="mb-4 grid items-end gap-3 rounded-xl bg-pink/[.03] p-3 sm:grid-cols-3"
-                  >
-                    {periodFields(p, (v) =>
-                      update((c) => {
-                        Object.assign(c.publications[i], v);
-                      }),
-                    )}
-                    {(["schedule", "fan"] as const).map((key) => (
-                      <label className="text-xs text-ink/65" key={key}>
-                        {key === "schedule" ? "スケジュール" : "ファンスタ"}
-                        <select
-                          className={field}
-                          value={p[key]}
-                          onChange={(e) =>
-                            update((c) => {
-                              c.publications[i][key] = e.target
-                                .value as Publication;
-                            })
-                          }
-                        >
-                          {Object.entries(publicationLabels).map(([v, l]) => (
-                            <option key={v} value={v}>
-                              {l}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    ))}
-                    {removeButton(
-                      () =>
-                        update((c) => {
-                          c.publications.splice(i, 1);
-                        }),
-                      p.name || "公開状況",
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className={button}
-                  onClick={() =>
-                    update((c) => {
-                      c.publications.push({
-                        ...initialPeriod(),
-                        schedule: "unconfirmed",
-                        fan: "unconfirmed",
-                      });
-                    })
-                  }
-                >
-                  <Plus size={15} />
-                  公開状況を追加
-                </button>
-              </div>
-            </>
+            <CrowdForecastPeriods
+              config={config}
+              onChange={(change) => update((c) => Object.assign(c, change))}
+            />
           )}
           {tab === 3 && (
             <CrowdDailyAdjustments
