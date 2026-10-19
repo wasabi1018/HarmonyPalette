@@ -9,6 +9,7 @@ import {
   Eye,
   Home,
   ImageDown,
+  CalendarDays,
   Share2,
   UsersRound,
 } from "lucide-react";
@@ -18,6 +19,7 @@ type MetricKey =
   | "uniqueVisitors"
   | "views"
   | "homeVisits"
+  | "crowdForecastVisits"
   | "planCreations"
   | "planImageSaves"
   | "planShares";
@@ -45,6 +47,12 @@ const METRICS: Record<MetricKey, {
     shortLabel: "TOP訪問",
     barClass: "bg-[#75a7d8]/80 group-hover:bg-[#5687bd]",
     selectedClass: "bg-[#5687bd] ring-[#5687bd]/25",
+  },
+  crowdForecastVisits: {
+    label: "混雑予想ページ訪問",
+    shortLabel: "混雑予想",
+    barClass: "bg-[#62b5bf]/80 group-hover:bg-[#368995]",
+    selectedClass: "bg-[#368995] ring-[#368995]/25",
   },
   planCreations: {
     label: "マイプラン作成",
@@ -107,19 +115,24 @@ export function ArticleAnalyticsDashboard({
 
   const downloadCsv = () => {
     const rows = [
-      ["日付", "日次ユニークブラウザ数", "記事閲覧数", "TOPページ訪問数", "マイプラン作成数", "画像保存数", "共有数"],
+      ["日付", "日次ユニークブラウザ数", "記事閲覧数", "TOPページ訪問数", "混雑予想ページ訪問数", "マイプラン作成数", "画像保存数", "共有数"],
       ...data.daily.map((point) => [
         point.date,
         String(point.uniqueVisitors),
         String(point.views),
         String(point.homeVisits),
+        String(point.crowdForecastVisits),
         String(point.planCreations),
         String(point.planImageSaves),
         String(point.planShares),
       ]),
       [],
-      ["人気記事", "スラッグ", "閲覧数"],
-      ...data.topArticles.map((article) => [article.title, article.slug, String(article.views)]),
+      ["集計期間", "日次ユニークブラウザ数（延べ）", "記事閲覧数", "TOPページ訪問数", "混雑予想ページ訪問数", "マイプラン作成数", "画像保存数", "共有数"],
+      [`${data.rangeDays}日間合計`, String(data.totalDailyUniqueVisitors), String(data.totalViews), String(data.homeVisits), String(data.crowdForecastVisits), String(data.planCreations), String(data.planImageSaves), String(data.planShares)],
+      ["累計（計測開始から）", String(data.cumulative.uniqueVisitors), String(data.cumulative.views), String(data.cumulative.homeVisits), String(data.cumulative.crowdForecastVisits), String(data.cumulative.planCreations), String(data.cumulative.planImageSaves), String(data.cumulative.planShares)],
+      [],
+      ["人気記事", "スラッグ", "期間内閲覧数", "累計閲覧数"],
+      ...data.topArticles.map((article) => [article.title, article.slug, String(article.views), String(article.cumulativeViews)]),
     ];
     const csv = `\uFEFF${rows.map((row) => (
       row.map((value) => `"${String(value || "").replace(/"/g, "\"\"")}"`).join(",")
@@ -136,6 +149,7 @@ export function ArticleAnalyticsDashboard({
     {
       label: `${data.rangeDays}日間のユニーク訪問`,
       value: data.totalDailyUniqueVisitors,
+      cumulative: data.cumulative.uniqueVisitors,
       detail: `今日 ${data.todayUniqueVisitors.toLocaleString("ja-JP")}件 ・ 1日平均 ${data.averageDailyUniqueVisitors.toLocaleString("ja-JP")}件 ・ 最大 ${data.peakDailyUniqueVisitors.toLocaleString("ja-JP")}件`,
       icon: UsersRound,
       tone: "text-[#248a85] bg-[#eaf8f7]",
@@ -143,6 +157,7 @@ export function ArticleAnalyticsDashboard({
     {
       label: `${data.rangeDays}日間の記事閲覧`,
       value: data.totalViews,
+      cumulative: data.cumulative.views,
       detail: `今日 ${data.todayViews.toLocaleString("ja-JP")}件 ・ 1日平均 ${data.averageViews.toLocaleString("ja-JP")}件`,
       icon: Eye,
       tone: "text-pink bg-pink/10",
@@ -150,13 +165,23 @@ export function ArticleAnalyticsDashboard({
     {
       label: `${data.rangeDays}日間のTOP訪問`,
       value: data.homeVisits,
+      cumulative: data.cumulative.homeVisits,
       detail: `今日 ${data.todayHomeVisits.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.homeVisits, data.rangeDays).toLocaleString("ja-JP")}件`,
       icon: Home,
       tone: "text-[#5687bd] bg-[#eef5fc]",
     },
     {
+      label: `${data.rangeDays}日間の混雑予想訪問`,
+      value: data.crowdForecastVisits,
+      cumulative: data.cumulative.crowdForecastVisits,
+      detail: `今日 ${data.todayCrowdForecastVisits.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.crowdForecastVisits, data.rangeDays).toLocaleString("ja-JP")}件`,
+      icon: CalendarDays,
+      tone: "text-[#368995] bg-[#edf8fa]",
+    },
+    {
       label: `${data.rangeDays}日間のマイプラン作成`,
       value: data.planCreations,
+      cumulative: data.cumulative.planCreations,
       detail: `今日 ${data.todayPlanCreations.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.planCreations, data.rangeDays).toLocaleString("ja-JP")}件`,
       icon: ClipboardCheck,
       tone: "text-[#4d987a] bg-mint/10",
@@ -164,6 +189,7 @@ export function ArticleAnalyticsDashboard({
     {
       label: `${data.rangeDays}日間の画像保存`,
       value: data.planImageSaves,
+      cumulative: data.cumulative.planImageSaves,
       detail: `今日 ${data.todayPlanImageSaves.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.planImageSaves, data.rangeDays).toLocaleString("ja-JP")}件`,
       icon: ImageDown,
       tone: "text-[#bd7f3f] bg-[#fff5e9]",
@@ -171,6 +197,7 @@ export function ArticleAnalyticsDashboard({
     {
       label: `${data.rangeDays}日間の共有`,
       value: data.planShares,
+      cumulative: data.cumulative.planShares,
       detail: `今日 ${data.todayPlanShares.toLocaleString("ja-JP")}件 ・ 1日平均 ${average(data.planShares, data.rangeDays).toLocaleString("ja-JP")}件`,
       icon: Share2,
       tone: "text-[#8264a6] bg-[#f4effa]",
@@ -222,10 +249,13 @@ export function ArticleAnalyticsDashboard({
           </Link>
         ))}
       </div>
+      <p className="mt-3 text-[10px] font-bold leading-5 text-ink/45">
+        累計は各項目の計測開始から今日までの合計です。集計期間を切り替えても変わりません。
+      </p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {summaries.map(({ label, value, detail, icon: Icon, tone }) => (
-          <div key={label} className="rounded-2xl border border-ink/[0.07] bg-white p-5 shadow-soft">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {summaries.map(({ label, value, cumulative, detail, icon: Icon, tone }) => (
+          <div key={label} className="min-w-0 rounded-2xl border border-ink/[0.07] bg-white p-5 shadow-soft">
             <span className={`grid h-10 w-10 place-items-center rounded-xl ${tone}`}>
               <Icon size={18} aria-hidden="true" />
             </span>
@@ -233,6 +263,12 @@ export function ArticleAnalyticsDashboard({
             <strong className="mt-1 block font-display text-[30px] font-semibold text-ink">
               {value.toLocaleString("ja-JP")}
             </strong>
+            <div className="mt-3 border-t border-ink/[0.07] pt-3">
+              <p className="text-[9px] font-black text-ink/40">累計</p>
+              <strong className="mt-1 block break-words font-display text-[22px] font-semibold tabular-nums text-ink/70">
+                {cumulative.toLocaleString("ja-JP")}
+              </strong>
+            </div>
             <p className="mt-1 text-[9px] font-bold text-ink/35">
               {detail}
             </p>
@@ -241,9 +277,9 @@ export function ArticleAnalyticsDashboard({
       </div>
       <p className="mt-3 text-[9px] font-bold leading-5 text-ink/35">
         UUは同じブラウザを日本時間の同じ日に1回として数えます。別端末・別ブラウザ・保存データの削除後は別の訪問として集計されます。
-        期間合計は日次UUを足した延べ数です。同じブラウザが別の日に訪問した場合は、それぞれ1回として数えます。
+        期間合計・累計は日次UUを足した延べ数です。同じブラウザが別の日に訪問した場合は、それぞれ1回として数えます。
         <br />
-        TOP訪問は同じタブ内の同じ日に1回、マイプラン作成は最初の予定追加時に1回として集計します。
+        TOP訪問・混雑予想訪問は各ページにつき同じタブ内の同じ日に1回、マイプラン作成は最初の予定追加時に1回として集計します。
         画像保存は保存開始時、共有は端末の共有操作が完了した時に数えます。
       </p>
 
@@ -345,9 +381,14 @@ export function ArticleAnalyticsDashboard({
               </Link>
               <p className="mt-1 truncate text-[9px] font-bold text-ink/30">/articles/{article.slug}</p>
             </div>
-            <strong className="shrink-0 text-[12px] font-black text-ink/55">
-              {article.views.toLocaleString("ja-JP")} views
-            </strong>
+            <div className="shrink-0 text-right">
+              <strong className="text-[12px] font-black text-ink/55">
+                {article.views.toLocaleString("ja-JP")} views
+              </strong>
+              <p className="mt-1 text-[9px] font-bold text-ink/40">
+                累計 {article.cumulativeViews.toLocaleString("ja-JP")} views
+              </p>
+            </div>
           </div>
         )) : (
           <div className="px-5 py-14 text-center">

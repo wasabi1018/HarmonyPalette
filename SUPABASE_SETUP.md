@@ -26,6 +26,7 @@ Open the Supabase SQL Editor for the project and run:
 - `supabase/migrations/20260821234044_free_plan_usage_guards.sql`
 - `supabase/migrations/20260822001455_retention_and_revision_limits.sql`
 - `supabase/migrations/20260929061751_daily_unique_visitors.sql`
+- `supabase/migrations/20261019005948_site_analytics_crowd_forecast.sql`
 
 This creates the import history, source documents, schedule versions, character
 relations, attraction operation data, article and tag tables, public read
@@ -40,6 +41,8 @@ The analytics migration stores privacy-friendly daily article view totals
 without IP addresses, cookies, or user-agent data.
 The site analytics migration adds the same privacy-friendly daily totals for
 TOP page visits, newly created My Plans, plan image saves, and plan shares.
+The crowd-forecast analytics migration adds crowd forecast page visits to the
+allowed events while preserving existing totals and daily unique visitors.
 The daily unique-visitors migration adds same-day browser deduplication. It
 stores only date-scoped SHA-256 hashes for the current and previous Japan-time
 day, while preserving only aggregate daily counts for older dates.
@@ -111,7 +114,7 @@ After applying the articles migration, sign in and open `/admin/articles`.
   restore it later. Permanent deletion is only available inside the trash.
 - Open `/admin/media` to upload reusable images and maintain alternative text.
   Images referenced by a current article or revision cannot be deleted.
-- Open `/admin/analytics` to compare 7, 30, or 90 days of TOP page visits,
+- Open `/admin/analytics` to compare 7, 30, or 90 days of TOP and crowd forecast page visits,
   daily unique browsers, newly created My Plans, plan image saves, plan shares,
   and article traffic, review popular articles, and export the aggregate data
   as CSV.

@@ -43,13 +43,17 @@ export type ArticleAnalyticsPoint = {
   uniqueVisitors: number;
   views: number;
   homeVisits: number;
+  crowdForecastVisits: number;
   planCreations: number;
   planImageSaves: number;
   planShares: number;
 };
 
+export type ArticleAnalyticsTotals = Omit<ArticleAnalyticsPoint, "date">;
+
 export type SiteAnalyticsEvent =
   | "home_view"
+  | "crowd_forecast_view"
   | "plan_created"
   | "plan_image_saved"
   | "plan_shared";
@@ -60,10 +64,12 @@ export type ArticleAnalyticsItem = {
   slug: string;
   coverImageUrl: string;
   views: number;
+  cumulativeViews: number;
 };
 
 export type ArticleAnalyticsData = {
   rangeDays: number;
+  cumulative: ArticleAnalyticsTotals;
   totalDailyUniqueVisitors: number;
   todayUniqueVisitors: number;
   averageDailyUniqueVisitors: number;
@@ -73,6 +79,8 @@ export type ArticleAnalyticsData = {
   averageViews: number;
   homeVisits: number;
   todayHomeVisits: number;
+  crowdForecastVisits: number;
+  todayCrowdForecastVisits: number;
   planCreations: number;
   todayPlanCreations: number;
   planImageSaves: number;

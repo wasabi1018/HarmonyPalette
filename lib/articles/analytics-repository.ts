@@ -3,6 +3,7 @@ import "server-only";
 import type {
   ArticleAnalyticsData,
   ArticleAnalyticsItem,
+  ArticleAnalyticsTotals,
   SiteAnalyticsEvent,
 } from "@/lib/articles/types";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
@@ -22,8 +23,8 @@ function japanDate(value = new Date()) {
   }).format(value);
 }
 
-function dateDaysAgo(days: number) {
-  const date = new Date();
+function dateDaysAgo(days: number, now: Date) {
+  const date = new Date(now);
   date.setUTCDate(date.getUTCDate() - days);
   return japanDate(date);
 }
@@ -59,7 +60,7 @@ export async function recordDailyUniqueVisitor(visitDate: string, visitorHash: s
   return data === true;
 }
 
-async function listViewRows(startDate: string) {
+async function listViewRows(today: string) {
   const client = getSupabaseAdminClient();
   if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
   const rows: Row[] = [];
@@ -67,8 +68,9 @@ async function listViewRows(startDate: string) {
     const { data, error } = await client
       .from("article_daily_views")
       .select("article_id,view_date,view_count")
-      .gte("view_date", startDate)
+      .lte("view_date", today)
       .order("view_date", { ascending: true })
+      .order("article_id", { ascending: true })
       .range(offset, offset + 999);
     if (error) throw new Error(error.message);
     rows.push(...((data ?? []) as Row[]));
@@ -77,7 +79,7 @@ async function listViewRows(startDate: string) {
   return rows;
 }
 
-async function listSiteEventRows(startDate: string) {
+async function listSiteEventRows(today: string) {
   const client = getSupabaseAdminClient();
   if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
   const rows: Row[] = [];
@@ -85,8 +87,9 @@ async function listSiteEventRows(startDate: string) {
     const { data, error } = await client
       .from("site_daily_events")
       .select("event_name,event_date,event_count")
-      .gte("event_date", startDate)
+      .lte("event_date", today)
       .order("event_date", { ascending: true })
+      .order("event_name", { ascending: true })
       .range(offset, offset + 999);
     if (error) throw new Error(error.message);
     rows.push(...((data ?? []) as Row[]));
@@ -99,15 +102,16 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
   const days = [7, 30, 90].includes(rangeDays) ? rangeDays : 30;
   const client = getSupabaseAdminClient();
   if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
-  const startDate = dateDaysAgo(days - 1);
-  const today = japanDate();
+  const now = new Date();
+  const startDate = dateDaysAgo(days - 1, now);
+  const today = japanDate(now);
   const [{ data: articles, error: articlesError }, views, siteEvents] = await Promise.all([
     client
       .from("articles")
       .select("id,title,slug,cover_image_url")
       .is("deleted_at", null),
-    listViewRows(startDate),
-    listSiteEventRows(startDate),
+    listViewRows(today),
+    listSiteEventRows(today),
   ]);
   if (articlesError) throw new Error(articlesError.message);
 
@@ -121,12 +125,23 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
         slug: asText(row.slug),
         coverImageUrl: asText(row.cover_image_url),
         views: 0,
+        cumulativeViews: 0,
       }];
     }),
   );
+  const cumulative: ArticleAnalyticsTotals = {
+    uniqueVisitors: 0,
+    views: 0,
+    homeVisits: 0,
+    crowdForecastVisits: 0,
+    planCreations: 0,
+    planImageSaves: 0,
+    planShares: 0,
+  };
   const dateTotals = new Map<string, number>();
   const uniqueVisitorTotals = new Map<string, number>();
   const homeVisitTotals = new Map<string, number>();
+  const crowdForecastVisitTotals = new Map<string, number>();
   const planCreationTotals = new Map<string, number>();
   const planImageSaveTotals = new Map<string, number>();
   const planShareTotals = new Map<string, number>();
@@ -134,6 +149,8 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
   let todayViews = 0;
   let homeVisits = 0;
   let todayHomeVisits = 0;
+  let crowdForecastVisits = 0;
+  let todayCrowdForecastVisits = 0;
   let planCreations = 0;
   let todayPlanCreations = 0;
   let planImageSaves = 0;
@@ -145,6 +162,9 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
     const count = Number(row.view_count || 0);
     const date = asText(row.view_date);
     const article = articleMap.get(asText(row.article_id));
+    cumulative.views += count;
+    if (article) article.cumulativeViews += count;
+    if (date < startDate) return;
     if (article) article.views += count;
     dateTotals.set(date, (dateTotals.get(date) || 0) + count);
     totalViews += count;
@@ -155,6 +175,13 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
     const count = Number(row.event_count || 0);
     const date = asText(row.event_date);
     const eventName = asText(row.event_name);
+    if (eventName === "unique_visitor") cumulative.uniqueVisitors += count;
+    if (eventName === "home_view") cumulative.homeVisits += count;
+    if (eventName === "crowd_forecast_view") cumulative.crowdForecastVisits += count;
+    if (eventName === "plan_created") cumulative.planCreations += count;
+    if (eventName === "plan_image_saved") cumulative.planImageSaves += count;
+    if (eventName === "plan_shared") cumulative.planShares += count;
+    if (date < startDate) return;
     if (eventName === "unique_visitor") {
       uniqueVisitorTotals.set(date, (uniqueVisitorTotals.get(date) || 0) + count);
     }
@@ -162,6 +189,11 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
       homeVisitTotals.set(date, (homeVisitTotals.get(date) || 0) + count);
       homeVisits += count;
       if (date === today) todayHomeVisits += count;
+    }
+    if (eventName === "crowd_forecast_view") {
+      crowdForecastVisitTotals.set(date, (crowdForecastVisitTotals.get(date) || 0) + count);
+      crowdForecastVisits += count;
+      if (date === today) todayCrowdForecastVisits += count;
     }
     if (eventName === "plan_created") {
       planCreationTotals.set(date, (planCreationTotals.get(date) || 0) + count);
@@ -181,12 +213,13 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
   });
 
   const daily = Array.from({ length: days }, (_, index) => {
-    const date = dateDaysAgo(days - index - 1);
+    const date = dateDaysAgo(days - index - 1, now);
     return {
       date,
       uniqueVisitors: uniqueVisitorTotals.get(date) || 0,
       views: dateTotals.get(date) || 0,
       homeVisits: homeVisitTotals.get(date) || 0,
+      crowdForecastVisits: crowdForecastVisitTotals.get(date) || 0,
       planCreations: planCreationTotals.get(date) || 0,
       planImageSaves: planImageSaveTotals.get(date) || 0,
       planShares: planShareTotals.get(date) || 0,
@@ -203,6 +236,7 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
 
   return {
     rangeDays: days,
+    cumulative,
     totalDailyUniqueVisitors,
     todayUniqueVisitors: uniqueVisitorTotals.get(today) || 0,
     averageDailyUniqueVisitors: Math.round((totalDailyUniqueVisitors / days) * 10) / 10,
@@ -212,6 +246,8 @@ export async function getArticleAnalytics(rangeDays: number): Promise<ArticleAna
     averageViews: Math.round((totalViews / days) * 10) / 10,
     homeVisits,
     todayHomeVisits,
+    crowdForecastVisits,
+    todayCrowdForecastVisits,
     planCreations,
     todayPlanCreations,
     planImageSaves,

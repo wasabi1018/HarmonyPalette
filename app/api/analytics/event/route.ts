@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 const SITE_EVENTS = new Set<SiteAnalyticsEvent>([
   "home_view",
+  "crowd_forecast_view",
   "plan_created",
   "plan_image_saved",
   "plan_shared",
