@@ -1,0 +1,22 @@
+{
+  "count": 16,
+  "routes": [
+    "/admin/articles",
+    "/admin/tags",
+    "/admin/series",
+    "/admin/media",
+    "/admin/analytics",
+    "/admin/backup",
+    "/admin/schedule",
+    "/admin/crowd-forecast",
+    "/admin/official-updates",
+    "/admin/instagram",
+    "/admin/links",
+    "/admin/homepage",
+    "/admin/rakuten-pr",
+    "/admin/rakuten",
+    "/admin/characters",
+    "/admin/plan-options"
+  ],
+  "missing": []
+}

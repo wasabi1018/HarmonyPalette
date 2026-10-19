@@ -825,3 +825,9 @@ Master integration preserves the existing `/logo-compact.png` image and combines
 - instagram: 画像プレビューのゆったり・普通の凡例と普通の日付セルの色が公開画面と一致。画像生成成功と1080×1350pxの自然寸法を確認。ダウンロード操作は行っていない。
 - checks: 最新masterに今回の変更だけを取り込んだ専用環境で31件のテスト、lint、production build成功。本番の保存済み予想の再計算は実施していない。
 - evidence: `audit/forecast-color-swap-2026-10-18/desktop.png`、`mobile-modal.png`、`instagram-preview.png`。いずれもローカルfixtureの表示。
+
+## 管理トップの全管理メニュー表示 — 2026-10-19
+
+メニューと管理トップで16機能の共通一覧を使用し、既存6カードの順序とデザインを維持して不足していた10機能を追加。lint、production build（型検査を含む）、全リンク先の存在確認が成功。実コンポーネントのローカルプレビューで、ブラウザーのアクセシビリティツリーに全16項目が表示されることを確認した。
+
+ブラウザーのデバッガー同期エラーにより、PC・スマホのスクリーンショット、横幅超過、メニュー開閉、フォーカス、consoleの最終確認は未完了。詳細とビルド時の一時的なメモリ対策は `audit/admin-home-menu-2026-10-19/qa.md` を参照。

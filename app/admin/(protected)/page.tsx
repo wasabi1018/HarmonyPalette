@@ -1,21 +1,39 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  BarChart3,
-  CalendarDays,
-  ChevronRight,
-  FileText,
-  Instagram,
-  ListTree,
-  Settings2,
-  ShieldCheck,
-  UsersRound,
-} from "lucide-react";
+import { ChevronRight, Settings2, ShieldCheck } from "lucide-react";
+import { adminSections } from "@/lib/admin-navigation";
 
 export const metadata: Metadata = {
   title: "管理トップ",
   description: "Harmony Paletteの管理トップページです。",
 };
+
+const cardStyles = {
+  mint: {
+    card: "border-mint/15 hover:border-mint/30 focus-visible:ring-mint/30",
+    icon: "bg-mint/10 text-[#4d987a]",
+    arrow: "text-[#4d987a]",
+  },
+  pink: {
+    card: "border-pink/10 hover:border-pink/25 focus-visible:ring-pink/30",
+    icon: "bg-pink/10 text-pink",
+    arrow: "text-pink",
+  },
+  sky: {
+    card: "border-sky/15 hover:border-sky/30 focus-visible:ring-sky/30",
+    icon: "bg-sky/10 text-sky",
+    arrow: "text-sky",
+  },
+  lavender: {
+    card: "border-lavender/15 hover:border-lavender/30 focus-visible:ring-lavender/30",
+    icon: "bg-lavender/10 text-lavender",
+    arrow: "text-lavender",
+  },
+};
+
+const homeSections = [...adminSections].sort(
+  (a, b) => (a.homeOrder ?? 100) - (b.homeOrder ?? 100),
+);
 
 export default function AdminPage() {
   return (
@@ -39,139 +57,33 @@ export default function AdminPage() {
         </span>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <Link
-          href="/admin/plan-options"
-          className="group flex items-center gap-4 rounded-[22px] border border-mint/15 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-mint/30"
-        >
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-mint/10 text-[#4d987a]">
-            <ListTree size={22} aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <strong className="block text-[15px] font-black text-ink">
-              マイプラン候補管理
-            </strong>
-            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
-              自由予定で選べるアトラクションと施設を管理
-            </span>
-          </span>
-          <ChevronRight
-            size={18}
-            className="shrink-0 text-[#4d987a] transition-transform group-hover:translate-x-0.5"
-            aria-hidden="true"
-          />
-        </Link>
-
-        <Link
-          href="/admin/instagram"
-          className="group flex items-center gap-4 rounded-[22px] border border-pink/10 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-pink/25"
-        >
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-pink/10 text-pink">
-            <Instagram size={22} aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <strong className="block text-[15px] font-black text-ink">
-              Instagram
-            </strong>
-            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
-              投稿画像・返信素材の作成とDM運用・表示設定
-            </span>
-          </span>
-          <ChevronRight
-            size={18}
-            className="shrink-0 text-pink transition-transform group-hover:translate-x-0.5"
-            aria-hidden="true"
-          />
-        </Link>
-
-        <Link
-          href="/admin/schedule"
-          className="group flex items-center gap-4 rounded-[22px] border border-pink/10 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-pink/25"
-        >
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-pink/10 text-pink">
-            <CalendarDays size={22} aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <strong className="block text-[15px] font-black text-ink">
-              スケジュール管理
-            </strong>
-            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
-              イベント、グリーティング、公開予定を管理
-            </span>
-          </span>
-          <ChevronRight
-            size={18}
-            className="shrink-0 text-pink transition-transform group-hover:translate-x-0.5"
-            aria-hidden="true"
-          />
-        </Link>
-
-        <Link
-          href="/admin/characters"
-          className="group flex items-center gap-4 rounded-[22px] border border-sky/15 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-sky/30"
-        >
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sky/10 text-sky">
-            <UsersRound size={22} aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <strong className="block text-[15px] font-black text-ink">
-              キャラクター管理
-            </strong>
-            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
-              基本情報、誕生日、公開画面の表示順を管理
-            </span>
-          </span>
-          <ChevronRight
-            size={18}
-            className="shrink-0 text-sky transition-transform group-hover:translate-x-0.5"
-            aria-hidden="true"
-          />
-        </Link>
-
-        <Link
-          href="/admin/articles"
-          className="group flex items-center gap-4 rounded-[22px] border border-lavender/15 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-lavender/30"
-        >
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-lavender/10 text-lavender">
-            <FileText size={22} aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <strong className="block text-[15px] font-black text-ink">
-              記事管理
-            </strong>
-            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
-              記事の作成、画像・リンク編集、プレビュー、タグ管理
-            </span>
-          </span>
-          <ChevronRight
-            size={18}
-            className="shrink-0 text-lavender transition-transform group-hover:translate-x-0.5"
-            aria-hidden="true"
-          />
-        </Link>
-
-        <Link
-          href="/admin/analytics"
-          className="group flex items-center gap-4 rounded-[22px] border border-mint/15 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-mint/30"
-        >
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-mint/10 text-[#4d987a]">
-            <BarChart3 size={22} aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <strong className="block text-[15px] font-black text-ink">
-              サイト分析
-            </strong>
-            <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
-              TOP訪問、プラン作成、画像保存・共有を確認
-            </span>
-          </span>
-          <ChevronRight
-            size={18}
-            className="shrink-0 text-[#4d987a] transition-transform group-hover:translate-x-0.5"
-            aria-hidden="true"
-          />
-        </Link>
-      </div>
+      <nav aria-label="管理機能一覧" className="mt-6 grid gap-4 md:grid-cols-2">
+        {homeSections.map(({ href, icon: Icon, title, description, tone }) => {
+          const styles = cardStyles[tone];
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`group flex items-center gap-4 rounded-[22px] border bg-white p-5 shadow-soft transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 ${styles.card}`}
+            >
+              <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${styles.icon}`}>
+                <Icon size={22} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <strong className="block text-[15px] font-black text-ink">{title}</strong>
+                <span className="mt-1 block text-[11px] font-bold leading-5 text-ink/45">
+                  {description}
+                </span>
+              </span>
+              <ChevronRight
+                size={18}
+                className={`shrink-0 transition-transform group-hover:translate-x-0.5 ${styles.arrow}`}
+                aria-hidden="true"
+              />
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

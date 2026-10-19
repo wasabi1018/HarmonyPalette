@@ -3,26 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Archive,
-  BarChart3,
-  BellRing,
-  BookCopy,
-  CalendarDays,
-  FileText,
-  Home,
-  Images,
-  Instagram,
-  Link2,
-  ListTree,
-  Menu,
-  Settings,
-  ShoppingBag,
-  Tag,
-  UsersRound,
-  X,
-} from "lucide-react";
+import { Home, Menu, Settings, X } from "lucide-react";
 import { useState } from "react";
+import { adminSections } from "@/lib/admin-navigation";
 import { AdminLogoutButton } from "./admin-logout-button";
 
 type AdminShellProps = {
@@ -32,22 +15,7 @@ type AdminShellProps = {
 
 const navigation = [
   { href: "/admin", label: "管理トップ", icon: Home, exact: true },
-  { href: "/admin/articles", label: "記事", icon: FileText, exact: false },
-  { href: "/admin/tags", label: "タグ", icon: Tag, exact: false },
-  { href: "/admin/series", label: "シリーズ", icon: BookCopy, exact: false },
-  { href: "/admin/media", label: "メディア", icon: Images, exact: false },
-  { href: "/admin/analytics", label: "アクセス分析", icon: BarChart3, exact: false },
-  { href: "/admin/backup", label: "バックアップ", icon: Archive, exact: false },
-  { href: "/admin/schedule", label: "スケジュール", icon: CalendarDays, exact: false },
-  { href: "/admin/crowd-forecast", label: "混雑予想", icon: BarChart3, exact: false },
-  { href: "/admin/official-updates", label: "公式更新監視", icon: BellRing, exact: false },
-  { href: "/admin/instagram", label: "Instagram", icon: Instagram, exact: false },
-  { href: "/admin/links", label: "リンク集設定", icon: Link2, exact: false },
-  { href: "/admin/homepage", label: "TOPページ設定", icon: Home, exact: false },
-  { href: "/admin/rakuten-pr", label: "楽天PR管理", icon: ShoppingBag, exact: false },
-  { href: "/admin/rakuten", label: "楽天API設定", icon: Settings, exact: false },
-  { href: "/admin/characters", label: "キャラクター", icon: UsersRound, exact: false },
-  { href: "/admin/plan-options", label: "マイプラン候補", icon: ListTree, exact: false },
+  ...adminSections.map(({ href, label, icon }) => ({ href, label, icon, exact: false })),
 ] as const;
 
 function BrandLogo() {
