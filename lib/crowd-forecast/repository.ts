@@ -79,8 +79,15 @@ export async function previewConfig(
     throw new Error("他の更新が行われています。再読み込みしてください。");
   const config = validateConfig(value),
     state = { ...current.state, config };
-  const inputs = await loadInputs(state, japanDay(now));
-  return { revision, state: mergeForUpdate(state, inputs, null, now) };
+  const today = japanDay(now),
+    inputs = await loadInputs(state, today),
+    recalculateToday = [config, current.state.config].some((c) =>
+      c.overrides.some((o) => o.date === today),
+    );
+  return {
+    revision,
+    state: mergeForUpdate(state, inputs, null, now, recalculateToday),
+  };
 }
 export async function saveConfig(
   value: unknown,

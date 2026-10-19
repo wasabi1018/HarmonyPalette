@@ -164,7 +164,7 @@ export function CrowdForecastSettings() {
         await load();
         setMessage(
           action === "save"
-            ? "設定と翌日以降の予想を保存しました。"
+            ? "設定と予想を保存しました。"
             : response.skipped
               ? response.reason
               : "天気を取得し、翌日以降の予想を更新しました。",
@@ -375,7 +375,7 @@ export function CrowdForecastSettings() {
                   />
                 </div>
                 <p className="mt-3 text-xs leading-6 text-ink/50">
-                  過去月は表示・保存しません。当月内の過ぎた日と当日の予想は、設定変更や定期更新で書き換えません。
+                  過去月は表示・保存しません。当月内の過ぎた日の予想は書き換えません。当日は日別調整を保存した場合のみ再計算します。
                 </p>
               </div>
               {numericGroups.map((group) => (
@@ -716,7 +716,7 @@ export function CrowdForecastSettings() {
             <div className={card}>
               <h2 className="text-sm font-black">日別の調整</h2>
               <p className="my-3 text-xs leading-6 text-ink/50">
-                休園日を最優先し、その次に固定レベルを優先します。理由は公開されます。内部メモは管理画面のみです。
+                当日の日別調整も保存時に反映されます。過ぎた日の予想は書き換えません。休園日を最優先し、その次に固定レベルを優先します。理由は公開されます。内部メモは管理画面のみです。
               </p>
               {config.overrides.map((p, i) => (
                 <div
@@ -995,7 +995,7 @@ export function CrowdForecastSettings() {
       <div className="sticky bottom-3 z-10 rounded-2xl border border-pink/20 bg-white/95 p-4 shadow-lg backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs leading-6 text-ink/55">
-            保存前に翌日以降の予想をご確認ください。
+            保存前に対象日の予想をご確認ください。
           </p>
           <div className="flex gap-2">
             <button

@@ -404,6 +404,32 @@ test("当日と当月の過去日は凍結、過去月は削除、未来だけ�
   assert.equal(next.days["2026-10-19"].score, 83);
   assert.equal(Object.keys(pruneState(next, "2026-11-01").days).length, 0);
 });
+test("当日の日別調整は明示した保存だけ再計算し、保存済み天気と過去日の固定を維持", () => {
+  const s = emptyState(),
+    today = "2026-10-19",
+    savingAt = new Date("2026-10-19T09:00:00+09:00");
+  s.days["2026-10-18"] = calculate(input("2026-10-18"), s.config, {}, null, now);
+  s.days[today] = calculate(input(today), s.config, {}, weather("cloud"), now);
+  const original = structuredClone(s.days);
+  s.config.overrides = [{
+    date: today, points: 5, level: "", weather: "", reason: "運動会振替休日", note: "内部限定",
+  }];
+  const inputs = [input("2026-10-18"), input(today), input("2026-10-20")];
+  const automatic = mergeForUpdate(s, inputs, null, savingAt);
+  assert.deepEqual(automatic.days[today], original[today]);
+  const saved = mergeForUpdate(s, inputs, null, savingAt, true);
+  assert.equal(saved.days[today].breakdown.manual, 5);
+  assert.equal(saved.days[today].score, original[today].score! + 5);
+  assert.ok(saved.days[today].topics.includes("運動会振替休日"));
+  assert.deepEqual(saved.days[today].weather, original[today].weather);
+  assert.deepEqual(saved.days["2026-10-18"], original["2026-10-18"]);
+  assert.ok(saved.days["2026-10-20"]);
+  s.config.overrides[0].level = "veryBusy";
+  assert.equal(mergeForUpdate(s, inputs, null, savingAt, true).days[today].level, "veryBusy");
+  const closed = mergeForUpdate(s, [{ ...input(today), status: "closed" }], null, savingAt, true);
+  assert.equal(closed.days[today].level, "closed");
+});
+
 test("公開DTOから点数・係数・内部メモを除外、期限切れは保存済みの天気補正なしレベル", () => {
   const s = emptyState(),
     c = config();

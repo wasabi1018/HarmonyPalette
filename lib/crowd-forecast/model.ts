@@ -460,17 +460,19 @@ export function projectPublic(
       })),
   };
 }
-/** Preserve today and earlier. Settings saves reuse weather; only the daily worker supplies new weather. */
+/** Freeze past days. Only an explicit daily adjustment may recalculate today; the daily worker starts tomorrow. */
 export function mergeForUpdate(
   s: ForecastState,
   inputs: DayInput[],
   weather: Record<string, Weather> | null,
   now: Date,
+  recalculateToday = false,
 ): ForecastState {
   const today = japanDay(now),
     days = { ...s.days };
   for (const input of inputs) {
-    if (input.date <= today) continue;
+    if (input.date < today || (input.date === today && !recalculateToday))
+      continue;
     days[input.date] = calculate(
       input,
       s.config,

@@ -5,7 +5,8 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 import { addDays, japanDay } from "./date";
-import { DEFAULT_CONFIG, emptyState } from "./model";
+import { calculate, DEFAULT_CONFIG, emptyState } from "./model";
+import type { DayInput, Weather } from "./types";
 
 const db = new PGlite();
 const today = japanDay(),
@@ -246,6 +247,89 @@ test("設定プレビュー・保存→SQLの原子的保存→公開API（点�
   assert.equal(external, 0);
   restore.mock.restore();
 });
+test("保存済みの当日調整も再保存で公開へ反映し、変更・削除後も定期更新と通常保存は当日を固定", async () => {
+  authorized = true;
+  const state = emptyState(),
+    yesterday = addDays(today, -1),
+    now = new Date();
+  const input: DayInput = {
+    date: today, status: "open", opening: "10:00", closing: "20:00",
+    schedule: "unconfirmed", fan: "unconfirmed", slots: 0, rooms: [],
+    baselineDensities: [], birthdays: [],
+  };
+  const weather: Weather = {
+    date: today, kind: "cloud", text: "くもり", region: "大分県 中部", station: "大分",
+    high: 29, low: 19, rain: [], dailyRain: null,
+    issuedAt: now.toISOString(), fetchedAt: now.toISOString(),
+    validUntil: new Date(now.getTime() + 86400000).toISOString(),
+    sourceUrl: "https://example.test/weather",
+  };
+  state.days[today] = calculate(input, state.config, state.holidays, weather, now);
+  state.days[yesterday] = calculate({ ...input, date: yesterday }, state.config, state.holidays, null, now);
+  const original = structuredClone(state.days);
+  // Reproduce the incident: config saved successfully, but today's snapshot still lacks the adjustment.
+  state.config.overrides = [{
+    date: today, points: 5, level: "", weather: "", reason: "運動会振替休日", note: "SECRET_TODAY",
+  }];
+  await client.rpc("crowd_forecast_write", { p_revision: 0, p_payload: state, p_token: null });
+  const config = structuredClone(state.config);
+  const restore = mock.method(globalThis, "fetch", async () => {
+    external++;
+    throw new Error("Unexpected network");
+  });
+  try {
+    const previewResponse = await adminRoute.POST(request({ action: "preview", config, revision: 1 }));
+    assert.equal(previewResponse.status, 200);
+    const preview = await previewResponse.json();
+    assert.equal(preview.state.days[today].breakdown.manual, 5);
+    assert.equal(preview.state.days[today].score, original[today].score! + 5);
+    assert.deepEqual(preview.state.days[today].weather, weather);
+    assert.deepEqual(preview.state.days[yesterday], original[yesterday]);
+    assert.equal((await repository.readForecast()).revision, 1);
+    assert.deepEqual((await repository.readForecast()).state.days[today], original[today]);
+
+    assert.equal((await adminRoute.POST(request({ action: "save", config, revision: 1 }))).status, 200);
+    const saved = (await repository.readForecast()).state;
+    assert.deepEqual({ ...saved.days[today], updatedAt: null }, { ...preview.state.days[today], updatedAt: null });
+    assert.deepEqual(saved.days[yesterday], original[yesterday]);
+    for (const query of ["", `?date=${today}`]) {
+      const response = await publicRoute.GET(new Request(`https://local.test/api/crowd-forecast${query}`));
+      const text = await response.text();
+      assert.match(text, /運動会振替休日/);
+      assert.doesNotMatch(text, /SECRET_TODAY|score|breakdown|factor/);
+    }
+
+    config.overrides[0].level = "veryBusy";
+    config.overrides[0].reason = "当日の調整変更";
+    await repository.saveConfig(config, 2);
+    assert.equal((await repository.readForecast()).state.days[today].level, "veryBusy");
+    config.overrides = [];
+    await repository.saveConfig(config, 3);
+    const removed = (await repository.readForecast()).state;
+    assert.equal(removed.days[today].breakdown.manual, 0);
+    assert.equal(removed.days[today].score, original[today].score);
+    assert.ok(!removed.days[today].topics.includes("当日の調整変更"));
+
+    config.weekday.adjacent = 80;
+    config.weekday.normal = 80;
+    await repository.saveConfig(config, 4);
+    assert.deepEqual((await repository.readForecast()).state.days[today], removed.days[today]);
+    assert.equal(external, 0);
+    restore.mock.restore();
+    const refreshFetch = mock.method(globalThis, "fetch", async () => { throw new Error("Keep saved weather and holidays"); });
+    try {
+      await repository.updateForecast();
+      const updated = (await repository.readForecast()).state;
+      assert.deepEqual(updated.days[today], removed.days[today]);
+      assert.deepEqual(updated.days[yesterday], original[yesterday]);
+    } finally {
+      refreshFetch.mock.restore();
+    }
+  } finally {
+    restore.mock.restore();
+  }
+});
+
 test("古いrevisionでの設定保存は競合を通知し、公開結果を上書きしない", async () => {
   authorized = true;
   await repository.saveConfig(DEFAULT_CONFIG, 0);
