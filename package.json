@@ -2,9 +2,12 @@
   "name": "harmony-palette",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=24.22.1 <25"
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node --version && next build",
     "start": "next start",
     "lint": "eslint .",
     "test:site-analytics": "node --experimental-test-module-mocks --import tsx --test lib/articles/analytics-repository.integration.test.ts lib/analytics/site-events.integration.test.ts lib/analytics/daily-visitor.test.ts lib/analytics/unique-visitor.test.ts",
