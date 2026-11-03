@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { LoaderCircle, Plus, RefreshCw, X } from "lucide-react";
 import {
-  captureCard, CharacterRecommendationCard, scheduleUrl, usePreviewScale,
+  captureCard, CharacterRecommendationCard, usePreviewScale,
 } from "@/components/admin/character-recommendation-studio";
 import { useInstagramSessionState, useInstagramUnsavedChanges } from "@/components/admin/instagram-session-provider";
 import type { PreparedInstagramDmAsset } from "@/lib/instagram-admin-session";
@@ -84,7 +84,7 @@ export function InstagramDmNewCampaign({ initialScheduleData, initialCharacterDa
     if (!character) return [];
     const days = buildCharacterRecommendations(month, character, initialScheduleData.entries, closedDates);
     const dmText = buildCharacterRecommendationMessage({
-      month, characterName: character.name, days, detailsUrl: scheduleUrl(month, character.name),
+      month, characterName: character.name, days,
     });
     return [{ character, days, dmText }];
   }), [selectedIds, initialCharacterData.characters, month, initialScheduleData.entries, closedDates]);

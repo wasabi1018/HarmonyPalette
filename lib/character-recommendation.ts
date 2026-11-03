@@ -192,27 +192,55 @@ export function buildCharacterRecommendationMessage({
   month,
   characterName,
   days,
-  detailsUrl,
 }: {
   month: string;
   characterName: string;
   days: CharacterRecommendationDay[];
-  detailsUrl: string;
 }) {
   if (!characterName || days.length === 0) return "対象月に掲載中の登場予定がありません。";
   const [, monthNumber] = month.split("-").map(Number);
+  const featuredDays = groupRecommendationRankingDays(days)[0].days;
   const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
-  const formatDate = (value: string) => {
-    const date = new Date(`${value}T00:00:00Z`);
+  const dates = featuredDays.slice(0, 3).map((day) => {
+    const date = dateFromIso(day.date);
     return `${date.getUTCMonth() + 1}/${date.getUTCDate()}(${weekdays[date.getUTCDay()]})`;
-  };
-  const bestDays = days.filter((day) => hasSameRecommendationScore(day, days[0]));
-  const bestDateText = bestDays.slice(0, 3).map((day) => formatDate(day.date)).join("・");
-  const moreBestDays = bestDays.length > 3 ? `・ほか${bestDays.length - 3}日` : "";
+  }).join("・");
+  const moreDays = featuredDays.length > 3 ? `・ほか${featuredDays.length - 3}日` : "";
+  const appearances = featuredDays[0].appearances;
+  const highlights = groupRecommendationTitles(appearances).map((group) => (
+    group.title === "ファンスタジオ" && appearances.every((appearance) => (
+      appearance.isRegularFanStudio || !appearance.title.normalize("NFKC").includes("ファンスタジオ")
+    ))
+      ? "ファンスタジオで会える予定✨"
+      : `${group.title}が${group.count}回！`
+  )).join("\n");
+  const characterHashtag = characterName.replace(/[^\p{L}\p{N}_]/gu, "");
 
-  return `${characterName}推しさんへ🩷
-${monthNumber}月のおすすめ日は${bestDateText}${moreBestDays}！
-詳しい時間・場所はこちら👇
-${detailsUrl}
-※掲載予定は変更になる場合があります。お出かけ前に公式サイトの最新情報もご確認ください。`;
+  return `${monthNumber}月、${characterName}好きが行くならこの日！🩷
+
+${dates}${moreDays}は…
+
+${highlights}
+
+${characterName}推しさんは、ぜひこの日を狙ってみてね🩷
+
+でも、この日に行けなくても大丈夫！
+
+実は、${monthNumber}月に${characterName}とたくさん会える日をランキング形式でまとめました✨
+
+🎁 ${characterName}に会える日ランキングが欲しい方へ
+
+① このアカウントをフォロー
+② この動画に「${characterName}」とコメント💬
+
+→ ${characterName}の${monthNumber}月のランキングをDMで送ります💌
+
+推しにたくさん会える日を見つけて、
+${monthNumber}月のハーモニーランドを楽しもう🌈✨
+
+※イベント内容・キャラクター出演は変更になる場合があります。来園前に公式情報をご確認ください。
+
+#ハーモニーランド
+#サンリオ${characterHashtag ? `\n#${characterHashtag}` : ""}
+#子連れお出かけ`;
 }

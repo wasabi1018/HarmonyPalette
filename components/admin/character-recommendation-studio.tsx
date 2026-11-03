@@ -489,7 +489,6 @@ export function CharacterRecommendationStudio({
       month: selectedMonth,
       characterName: character?.name ?? "",
       days: recommendations,
-      detailsUrl: character ? scheduleUrl(selectedMonth, character.name) : "",
     }),
     [character, recommendations, selectedMonth],
   );

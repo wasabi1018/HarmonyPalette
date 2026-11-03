@@ -210,22 +210,54 @@ test("キャラクター名付きのファンスタジオ予定をファンス�
   ]);
 });
 
-test("DM文章をおすすめ日と詳細URLだけの簡潔な形式で作成する", () => {
-  const detailsUrl = "https://harmonypalette.jp/schedule?character=%E3%82%B7%E3%83%8A%E3%83%A2%E3%83%AD%E3%83%BC%E3%83%AB&from=2026-09-01&to=2026-09-30&view=calendar#schedule-results";
+test("DM定型文に対象月・キャラ・おすすめ日の予定とフォロー・コメントの案内を反映する", () => {
+  const melody = character({ id: "melody", name: "マイメロディ" });
+  const days = buildCharacterRecommendations("2026-11", melody, [
+    ...Array.from({ length: 7 }, (_, index) => entry(`greeting-${index}`, "2026-11-22", {
+      title: "マイメログリーティング", startTime: `${10 + index}:00`, characterIds: ["melody"], characterNames: ["マイメロディ"],
+    })),
+    entry("parade", "2026-11-22", { title: "パレードパラレル スターライトver.", characterIds: ["melody"], characterNames: ["マイメロディ"] }),
+  ]);
   const message = buildCharacterRecommendationMessage({
-    month: "2026-09",
-    characterName: "シナモロール",
-    days: [
-      { date: "2026-09-21", eventCount: 2, count: 3, appearances: [] },
-      { date: "2026-09-22", eventCount: 2, count: 3, appearances: [] },
-      { date: "2026-09-23", eventCount: 2, count: 2, appearances: [] },
-    ],
-    detailsUrl,
+    month: "2026-11", characterName: melody.name, days,
   });
 
-  assert.equal(message, `シナモロール推しさんへ🩷
-9月のおすすめ日は9/21(月)・9/22(火)！
-詳しい時間・場所はこちら👇
-${detailsUrl}
-※掲載予定は変更になる場合があります。お出かけ前に公式サイトの最新情報もご確認ください。`);
+  assert.ok(message.startsWith("11月、マイメロディ好きが行くならこの日！🩷"));
+  assert.ok(message.includes("11/22(日)は…"));
+  assert.ok(message.includes("マイメログリーティングが7回！"));
+  assert.ok(message.includes("パレードパラレル スターライトver.が1回！"));
+  assert.ok(message.includes("① このアカウントをフォロー\n② この動画に「マイメロディ」とコメント💬"));
+  assert.ok(message.includes("マイメロディの11月のランキングをDMで送ります"));
+  assert.ok(message.includes("#マイメロディ"));
+  assert.ok(message.includes("来園前に公式情報をご確認ください。"));
+  assert.doesNotMatch(message, /通常|花火|イルミネーション|https?:/);
+  assert.ok(message.length <= 1000, "自動DMへ登録できる文字数に収まる");
+});
+
+test("DMの紹介は画像の先頭グループと一致し、同順位でも内容が異なる日を混在させない", () => {
+  const days = buildCharacterRecommendations("2026-09", character(), [
+    entry("one", "2026-09-21", { title: "グリーティング" }),
+    entry("two", "2026-09-22", { title: "別イベント" }),
+    entry("three", "2026-09-23", { title: "グリーティング" }),
+  ]);
+  const message = buildCharacterRecommendationMessage({ month: "2026-09", characterName: "シナモン", days });
+
+  assert.ok(message.includes("9/21(月)・9/23(水)は…"));
+  assert.ok(message.includes("グリーティングが1回！"));
+  assert.doesNotMatch(message, /9\/22|別イベント/);
+});
+
+test("補完のファンスタジオはDMで回数を断定せず、同じ内容のおすすめ日をまとめる", () => {
+  const days = buildCharacterRecommendations("2026-09", character({ isFanStudioRegular: true }), []);
+  const message = buildCharacterRecommendationMessage({ month: "2026-09", characterName: "シナモン", days });
+
+  assert.ok(message.includes("9/1(火)・9/2(水)・9/3(木)・ほか27日は…"));
+  assert.ok(message.includes("ファンスタジオで会える予定"));
+  assert.doesNotMatch(message, /ファンスタジオが1回/);
+});
+
+test("登場予定やキャラクターがない場合はDMのランキング受取案内を作成しない", () => {
+  assert.equal(buildCharacterRecommendationMessage({ month: "2026-11", characterName: "マイメロディ", days: [] }), "対象月に掲載中の登場予定がありません。");
+  const days = buildCharacterRecommendations("2026-09", character(), [entry("one", "2026-09-01")]);
+  assert.equal(buildCharacterRecommendationMessage({ month: "2026-09", characterName: "", days }), "対象月に掲載中の登場予定がありません。");
 });
