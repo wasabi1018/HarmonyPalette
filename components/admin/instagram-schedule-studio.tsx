@@ -1146,7 +1146,7 @@ export function DailyFanStudioInstagramCard({
           </p>
         </div>
 
-        <div
+        {specialEmoji && <div
           style={{
             position: "absolute",
             left: "50%",
@@ -1164,7 +1164,7 @@ export function DailyFanStudioInstagramCard({
         >
           <span style={{ fontSize: 30, lineHeight: 1 }}>{specialEmoji}</span>
           <span>{specialEmojiMeaning}</span>
-        </div>
+        </div>}
       </header>
 
       <main
@@ -1271,7 +1271,7 @@ export function DailyFanStudioInstagramCard({
                       overflowWrap: "anywhere",
                     }}
                   >
-                    {item.name}{item.special ? ` ${specialEmoji}` : ""}
+                    {item.name}{item.special && specialEmoji ? ` ${specialEmoji}` : ""}
                   </span>
                 ))}
               </div>
@@ -1385,6 +1385,7 @@ export function InstagramScheduleStudio({
   const [selectedEvents, setSelectedEvents] = useInstagramSessionState<string[]>(`${sessionKey}.events`, []);
   const [eventsInitialized, setEventsInitialized] = useInstagramSessionState(`${sessionKey}.events-initialized`, false);
   const [specialLegend, setSpecialLegend] = useInstagramSessionState(`${sessionKey}.legend`, DEFAULT_SPECIAL_LEGEND);
+  const [showSpecialEmoji, setShowSpecialEmoji] = useInstagramSessionState(`${sessionKey}.show-special-emoji`, false);
   const [specialEmoji, setSpecialEmoji] = useInstagramSessionState(`${sessionKey}.emoji`, DEFAULT_SPECIAL_EMOJI);
   const [specialEmojiMeaning, setSpecialEmojiMeaning] = useInstagramSessionState(`${sessionKey}.emoji-meaning`, DEFAULT_SPECIAL_EMOJI_MEANING);
   const [themeKey, setThemeKey] = useInstagramSessionState<ThemeKey>(`${sessionKey}.theme`, "pink");
@@ -1463,7 +1464,7 @@ export function InstagramScheduleStudio({
   const activePeriod = periods[Math.min(previewIndex, periods.length - 1)] ?? periods[0];
   const theme = themes[themeKey];
   const normalizedSpecialLegend = specialLegend.trim() || DEFAULT_SPECIAL_LEGEND;
-  const normalizedSpecialEmoji = specialEmoji.trim() || DEFAULT_SPECIAL_EMOJI;
+  const normalizedSpecialEmoji = showSpecialEmoji ? specialEmoji.trim() || DEFAULT_SPECIAL_EMOJI : "";
   const normalizedSpecialEmojiMeaning = specialEmojiMeaning.trim() || DEFAULT_SPECIAL_EMOJI_MEANING;
   const closedDates = useMemo(
     () => new Set(
@@ -1564,8 +1565,7 @@ export function InstagramScheduleStudio({
     if (isDailyTemplate) {
       return `＼${formatJapaneseDate(activePeriod.start)}のファンスタジオ／
 
-時間・部屋ごとの登場予定をまとめました。
-「${normalizedSpecialEmoji}」は「${normalizedSpecialEmojiMeaning}」を表します。
+時間・部屋ごとの登場予定をまとめました。${normalizedSpecialEmoji ? `\n「${normalizedSpecialEmoji}」は「${normalizedSpecialEmojiMeaning}」を表します。` : ""}
 
 ※内容は変更になる場合があります。お出かけ前に公式サイトの最新情報をご確認ください。
 
@@ -1923,7 +1923,16 @@ export function InstagramScheduleStudio({
               <p className="mt-2 text-[11px] font-bold leading-5 text-ink/45">
                 特別な姿のキャラクター名の後ろと、画像上部の凡例に表示します。
               </p>
-              <div className="mt-4 grid grid-cols-[88px_minmax(0,1fr)] gap-3">
+              <label className="mt-4 flex min-h-11 cursor-pointer items-center gap-3 text-[12px] font-black text-ink">
+                <input
+                  type="checkbox"
+                  checked={showSpecialEmoji}
+                  onChange={(event) => setShowSpecialEmoji(event.target.checked)}
+                  className="h-4 w-4 accent-pink"
+                />
+                特別な姿の絵文字を表示する
+              </label>
+              <fieldset disabled={!showSpecialEmoji} className="mt-3 grid grid-cols-[88px_minmax(0,1fr)] gap-3 disabled:opacity-50">
                 <label className="block">
                   <span className="mb-1.5 block text-[11px] font-black text-ink/55">
                     絵文字
@@ -1952,11 +1961,11 @@ export function InstagramScheduleStudio({
                     className="min-h-11 w-full rounded-xl border border-ink/10 bg-[#fffafd] px-3 text-[13px] font-bold text-ink outline-none transition focus:border-pink focus:ring-4 focus:ring-pink/10"
                   />
                 </label>
-              </div>
-              <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-lavender/10 px-3 py-3 text-[12px] font-black text-[#745f99]">
+              </fieldset>
+              {showSpecialEmoji && <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-lavender/10 px-3 py-3 text-[12px] font-black text-[#745f99]">
                 <span className="text-[20px] leading-none">{normalizedSpecialEmoji}</span>
                 <span className="truncate">{normalizedSpecialEmojiMeaning}</span>
-              </div>
+              </div>}
               <p className="mt-3 text-[10px] font-bold leading-5 text-ink/45">
                 {activeDailyFanStudio.rooms.length > 0
                   ? `${activeDailyFanStudio.rooms.length}部屋・${activeDailyFanStudio.rows.length}時間帯を表示します。予定のない部屋は自動で省略します。`
