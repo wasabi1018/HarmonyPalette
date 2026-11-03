@@ -183,6 +183,41 @@ function formatShortDate(value: string, withWeekday = true) {
   return withWeekday ? `${base}(${WEEKDAYS[date.getUTCDay()]})` : base;
 }
 
+export function buildDailyFanStudioCaption(value: string, closedDates: ReadonlySet<string>) {
+  const dates = getDailyFanStudioPeriods(value).map((period) => period.start);
+  const range = `${formatShortDate(dates[0], false)}〜${formatShortDate(dates[dates.length - 1], false)}`;
+  const closedDays = dates.filter((date) => closedDates.has(date));
+  const closedWeekdays = closedDays.map((date) => `${WEEKDAYS[dateFromIso(date).getUTCDay()]}曜`).join("・");
+  const closureNote = closedDays.length > 0 ? `\n(${closedWeekdays}は休園日です)` : "";
+
+  return `🎀 ${range}のファンスタジオ タイムスケジュール
+
+${range}の${dates.length - closedDays.length}日分の登場キャラクター＆時間をまとめました📅${closureNote}
+
+「この日に行くけど、誰に会える？」
+「推しに会える時間はいつ？」
+という方は、ぜひチェックしてみてね👀✨
+
+⚠️ ファンスタジオの無料整理券は、時間を自由に選べません。
+人気キャラクターは早い時間から整理券がなくなることもあるので、会いたいキャラがいる方は早めのチェックがおすすめです！
+
+⚠️整理券はグループで1枚です。グループ内複数人で同時に整理券を取得することはできません。
+
+⚠️この投稿は公式サイトの情報をもとに作成したものです。情報は予告なく変更になる場合がある為公式サイトの情報も同時にご確認ください
+
+📌行く日が決まったら保存しておくと便利◎
+
+ハーモニーランド初心者さん向けに、
+グリーティング・パレード・混雑対策など
+「行く前に知りたかった！」情報を発信しています🎀
+
+#ハーモニーランド
+#大分旅行
+#サンリオ
+#子連れお出かけ
+#子連れ旅行`;
+}
+
 function formatLongRange(period: WeekPeriod) {
   return `${formatShortDate(period.start)} – ${formatShortDate(period.end)}`;
 }
@@ -1563,13 +1598,7 @@ export function InstagramScheduleStudio({
 
   const caption = useMemo(() => {
     if (isDailyTemplate) {
-      return `＼${formatJapaneseDate(activePeriod.start)}のファンスタジオ／
-
-時間・部屋ごとの登場予定をまとめました。${normalizedSpecialEmoji ? `\n「${normalizedSpecialEmoji}」は「${normalizedSpecialEmojiMeaning}」を表します。` : ""}
-
-※内容は変更になる場合があります。お出かけ前に公式サイトの最新情報をご確認ください。
-
-#ハーモニーランド #ファンスタジオ #サンリオ #大分観光 #HarmonyPalette`;
+      return buildDailyFanStudioCaption(periodRange.start, closedDates);
     }
 
     if (template === "fan-studio") {
@@ -1617,11 +1646,11 @@ export function InstagramScheduleStudio({
 #ハーモニーランド #サンリオ #大分観光 #子連れおでかけ #HarmonyPalette`;
   }, [
     activePeriod,
+    closedDates,
     isDailyTemplate,
     mode,
-    normalizedSpecialEmoji,
-    normalizedSpecialEmojiMeaning,
     normalizedSpecialLegend,
+    periodRange.start,
     selectedMonth,
     template,
   ]);

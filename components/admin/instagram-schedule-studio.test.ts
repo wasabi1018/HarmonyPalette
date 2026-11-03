@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildDailyFanStudioCaption,
   buildDailyFanStudioSchedule,
   buildFanStudioRows,
   characterNamesForCell,
@@ -118,4 +119,19 @@ test("日別ファンスタジオは選択日を含む月曜日から日曜日�
     { id: "2026-08-29", start: "2026-08-29", end: "2026-08-29" },
     { id: "2026-08-30", start: "2026-08-30", end: "2026-08-30" },
   ]);
+});
+
+test("日別の投稿文はプレビューの日付によらず週全体と期間内の休園日を案内する", () => {
+  const closedDates = new Set(["2026-11-11", "2026-11-12", "2026-11-18"]);
+  const caption = buildDailyFanStudioCaption("2026-11-09", closedDates);
+
+  assert.equal(buildDailyFanStudioCaption("2026-11-15", closedDates), caption);
+  assert.ok(caption.startsWith("🎀 11/9〜11/15のファンスタジオ タイムスケジュール\n\n11/9〜11/15の5日分の登場キャラクター＆時間をまとめました📅\n(水曜・木曜は休園日です)"));
+});
+
+test("日別の投稿文は月をまたぐ週と休園日のない週に対応する", () => {
+  const caption = buildDailyFanStudioCaption("2026-12-01", new Set());
+
+  assert.ok(caption.startsWith("🎀 11/30〜12/6のファンスタジオ タイムスケジュール\n\n11/30〜12/6の7日分の登場キャラクター＆時間をまとめました📅\n\n「この日に行くけど、誰に会える？」"));
+  assert.ok(!caption.includes("休園日です"));
 });
