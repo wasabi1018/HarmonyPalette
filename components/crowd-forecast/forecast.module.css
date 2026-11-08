@@ -502,7 +502,7 @@
   border-top: 1px solid #efcfdb;
   margin-top: 32px;
   padding-top: 17px;
-  font-size: 12px;
+  font-size: 14px;
   color: #817685;
   line-height: 1.9;
 }
@@ -511,6 +511,22 @@
   color: #534657;
   font-weight: 800;
   margin-bottom: 5px;
+}
+.aboutList {
+  display: grid;
+  gap: 16px;
+  margin: 16px 0;
+  padding-left: 20px;
+  list-style: disc;
+}
+.aboutList li {
+  padding-left: 4px;
+}
+.aboutList strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #534657;
+  font-size: 14px;
 }
 .muted {
   font-size: 12px;
@@ -918,10 +934,6 @@
   }
   .about {
     margin-top: 23px;
-    font-size: 10px;
-  }
-  .about h2 {
-    font-size: 13px;
   }
 }
 
