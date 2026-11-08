@@ -29,6 +29,11 @@ type AdminSection = {
 
 export const adminSections: readonly AdminSection[] = [
   {
+    href: "/admin/guides", label: "攻略ガイド", icon: BookCopy,
+    title: "攻略ガイド管理", description: "攻略記事、カテゴリ・表示順、準備中表示を管理",
+    tone: "lavender", homeOrder: 7,
+  },
+  {
     href: "/admin/articles",
     label: "記事",
     icon: FileText,

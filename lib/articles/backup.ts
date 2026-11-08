@@ -30,6 +30,11 @@ const articleFields = [
   "updated_at",
   "series_id",
   "series_order",
+  "destination",
+  "is_strategy_guide",
+  "guide_event_key",
+  "guide_category_id",
+  "guide_display_order",
 ] as const;
 
 function requireAdminClient() {
@@ -63,6 +68,8 @@ export async function createArticleBackup() {
     media,
     series,
     analytics,
+    guideCategories,
+    guideSettings,
   ] = await Promise.all([
     client.from("articles").select("*").order("created_at", { ascending: true }),
     client.from("tags").select("id,name,slug,color,created_at,updated_at").order("created_at"),
@@ -71,6 +78,8 @@ export async function createArticleBackup() {
     optionalRows("article_media", "created_at"),
     optionalRows("article_series", "created_at"),
     optionalRows("article_daily_views", "view_date"),
+    optionalRows("guide_categories", "display_order"),
+    optionalRows("guide_settings"),
   ]);
   if (articleError || tagError || relationError) {
     throw new Error(
@@ -104,6 +113,8 @@ export async function createArticleBackup() {
     },
     articles,
     tags,
+    guideCategories,
+    guideSettings,
     articleTags,
     series: series.map((row) => pick(row, [
       "id",

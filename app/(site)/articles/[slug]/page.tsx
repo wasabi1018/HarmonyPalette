@@ -125,8 +125,8 @@ export default async function ArticleDetailPage({
       ? `この記事は${datedStatus.year}年${datedStatus.month}月時点の記録です。現在の来園情報としては使用せず、最新記事と公式サイトをご確認ください。`
       : `この記事は${datedStatus.year}年${datedStatus.month}月の月間情報です。終了した日程を含む場合があります。来園前に最新の予定と公式サイトをご確認ください。`
     : undefined;
-  const listingUrl = siteUrl("/articles");
-  const listingName = "記事";
+  const listingUrl = siteUrl(article.guide ? "/guides" : "/articles");
+  const listingName = article.guide ? "攻略ガイド" : "記事";
   const breadcrumbItems = [
     { name: "ホーム", url: siteUrl("/") },
     { name: listingName, url: listingUrl },
@@ -215,7 +215,7 @@ export default async function ArticleDetailPage({
         authorHref="/about"
         authorDescription={SITE_AUTHOR_DESCRIPTION}
         datedContentNotice={datedContentNotice}
-        topContent={topBanner ? <RakutenBanner banner={topBanner} /> : undefined}
+        topContent={<>{article.guide && <nav aria-label="攻略ガイドの案内" className="mb-5 flex flex-wrap gap-3"><Link href="/guides" className="inline-flex min-h-11 items-center rounded-xl border border-pink/20 bg-white px-4 text-[13px] font-bold text-pink">攻略ガイド一覧に戻る</Link><Link href="/daily-schedule" className="inline-flex min-h-11 items-center rounded-xl border border-pink/20 bg-white px-4 text-[13px] font-bold text-pink">スケジュールを見る</Link></nav>}{topBanner && <RakutenBanner banner={topBanner} />}</>}
         bodyContent={<ArticleRakutenBody html={preparedContent.html} promotion={inlineProducts} />}
         endContent={sharedProducts ? <RakutenPrSection placement={sharedProducts} twoColumns className="" /> : undefined}
       />
@@ -307,11 +307,11 @@ export default async function ArticleDetailPage({
         )}
         <OfficialNotice />
         <Link
-          href="/articles"
+          href={article.guide ? "/guides" : "/articles"}
           className="mt-7 inline-flex items-center gap-2 text-[12px] font-black text-pink hover:underline"
         >
           <ArrowLeft size={15} />
-          記事一覧へ戻る
+          {article.guide ? "攻略ガイド一覧へ戻る" : "記事一覧へ戻る"}
         </Link>
       </div>
     </>

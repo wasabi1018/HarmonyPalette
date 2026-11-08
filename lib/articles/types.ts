@@ -1,3 +1,4 @@
+import type { GuideAssignment } from "@/lib/guides/model";
 export type ArticleStatus = "draft" | "scheduled" | "published";
 export type ArticleDestination = "articles" | "guide";
 
@@ -92,6 +93,7 @@ export type ArticleAnalyticsData = {
 };
 
 export type ArticleSummary = {
+  guide?: GuideAssignment | null;
   id: string;
   title: string;
   slug: string;
@@ -123,6 +125,7 @@ export type ArticleRevision = {
 };
 
 export type ArticleInput = {
+  guide?: GuideAssignment | null;
   title: string;
   slug: string;
   excerpt: string;

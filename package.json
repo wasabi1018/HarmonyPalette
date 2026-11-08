@@ -6,6 +6,7 @@
     "node": ">=24.22.1 <25"
   },
   "scripts": {
+    "test:guides": "node --experimental-test-module-mocks --import tsx --test lib/guides/*.test.ts",
     "dev": "next dev",
     "build": "node --version && next build",
     "start": "next start",

@@ -24,7 +24,7 @@ export default async function AdminArticlesPage() {
 
   return (
     <ArticleListManager
-      initialArticles={articles}
+      initialArticles={articles.filter((article) => !article.guide)}
       availableTags={tags}
       setupError={setupError}
     />

@@ -4,7 +4,7 @@ import { createDefaultHomepageGuideCards, normalizeHomepageGuideCards, normalize
 
 test("guide links reject executable, protocol-relative and credential-bearing URLs", () => {
   for (const url of ["javascript:alert(1)", "data:text/html,test", "//evil.example", "/\\evil.example", "https://user:password@example.com", "https://example.com\n/path", "http://example.com", ""]) {
-    assert.throws(() => normalizeHomepageGuideUrl(url), undefined, url);
+    assert.throws(() => normalizeHomepageGuideUrl(url), { name: "Error" }, url);
   }
   assert.equal(normalizeHomepageGuideUrl(" /articles/guide?source=top#section "), "/articles/guide?source=top#section");
   assert.equal(normalizeHomepageGuideUrl("https://example.com/guide"), "https://example.com/guide");

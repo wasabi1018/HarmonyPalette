@@ -4,6 +4,7 @@ import { cache } from "react";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { OfficialNotice } from "@/components/official-notice";
 import { ScheduleBrowser } from "@/components/schedule-browser";
+import { GuideEntryLink } from "@/components/guide-entry-link";
 import { getCharacterBirthdaysInRange } from "@/lib/character-birthday";
 import { getInitialCharacterData, getInitialParkOperatingDayData, getInitialScheduleData } from "@/lib/supabase/initial-data";
 
@@ -107,6 +108,7 @@ export default async function SchedulePage({
           <div className="max-w-2xl"><p className="flex items-center gap-2 text-[11px] font-black tracking-[0.18em] text-pink"><Sparkles size={14} aria-hidden="true" />GREETING &amp; EVENT SCHEDULE</p><h1 className="mt-2 font-display text-[28px] font-semibold leading-tight text-ink sm:text-[38px]">会いたい予定を、すぐ見つけよう。</h1><p className="mt-3 text-[13px] font-bold leading-6 text-ink/60 sm:text-[14px]">日付・イベント・複数のキャラクターから、グリーティングとイベントをまとめて検索できます。</p></div>
         </div>
       </section>
+      <GuideEntryLink className="mt-5" />
       <ScheduleBrowser
         initialCharacters={initialCharacters}
         initialEvents={initialEvents}

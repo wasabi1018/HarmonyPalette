@@ -1,6 +1,7 @@
 import "server-only";
 
 import sanitizeHtml from "sanitize-html";
+import { parseGuideAssignment } from "@/lib/guides/model";
 import type {
   ArticleDestination,
   ArticleInput,
@@ -163,6 +164,7 @@ export function parseArticleInput(value: unknown): ArticleInput {
 
   return {
     title,
+    guide: parseGuideAssignment(input.guide),
     slug,
     excerpt,
     seoTitle,

@@ -11,6 +11,7 @@ import { DataStatePanel } from "@/components/data-state-panel";
 import { ParkOperatingInfo } from "@/components/park-operating-info";
 import { DailyForecastSummary } from "@/components/crowd-forecast/daily-summary";
 import { SectionHeading } from "@/components/section-heading";
+import { GuideEntryLink } from "@/components/guide-entry-link";
 import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
 import { type InitialParkOperatingDayData, useParkOperatingDays } from "@/lib/park-operating-day-store";
 
@@ -300,6 +301,7 @@ export function HomeTodaySections({
       </section>}
 
       <section id={mode === "home" ? "today-schedule" : "daily-schedule"} className={`mx-auto max-w-[1200px] scroll-mt-20 px-4 sm:px-6 lg:px-8 ${mode === "home" ? "pt-5 sm:pt-7" : "pt-6 sm:pt-8"}`}>
+        <GuideEntryLink className="mb-4" />
         <div className="rounded-[26px] border border-pink/10 bg-[#fff6f9] p-3.5 sm:p-6">
           {mode === "home" && (
             <SectionHeading

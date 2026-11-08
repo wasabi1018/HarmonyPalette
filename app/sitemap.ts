@@ -7,12 +7,13 @@ import {
   PUBLIC_CACHE_TAGS,
 } from "@/lib/public-cache";
 import { siteUrl } from "@/lib/site-config";
+import { getGuideSettings } from "@/lib/guides/repository";
 
 export const revalidate = 86_400;
 
 const loadSitemapContent = unstable_cache(
   () => Promise.all([
-    listPublishedArticles(),
+    listPublishedArticles({ includeGuides: true }),
     listPublishedArticleSeries(),
   ]),
   ["public-sitemap-content-v1"],
@@ -37,6 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const [articles, series] = await loadSitemapContent();
+  if (!(await getGuideSettings()).preparing) staticRoutes.push({ url: siteUrl("/guides"), changeFrequency: "weekly", priority: 0.8 });
   const contentRoutes = articles.length > 0 ? [{
     url: siteUrl("/articles"),
     changeFrequency: "daily" as const,

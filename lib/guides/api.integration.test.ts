@@ -1,0 +1,33 @@
+import assert from "node:assert/strict";
+import { before, beforeEach, mock, test } from "node:test";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+let access: { ok: boolean; reason?: string } = { ok: false, reason: "unauthorized" };
+let writes = 0;
+let reads = 0;
+let invalidations = 0;
+const fixture = { preparing: true, updatedAt: "2026-11-09T00:00:00Z", categories: [], articles: [], events: [], guides: [] };
+mock.module("next/cache", { namedExports: { revalidatePath: () => { invalidations++; } } });
+mock.module(pathToFileURL(resolve(__dirname, "../supabase/auth-server.ts")), { namedExports: { getAdminAccess: async () => access } });
+mock.module(pathToFileURL(resolve(__dirname, "../public-cache.ts")), { namedExports: { revalidatePublicArticleData: () => { invalidations++; } } });
+mock.module(pathToFileURL(resolve(__dirname, "repository.ts")), { namedExports: { getGuideManagementData: async () => { reads++; return fixture; }, saveGuideConfiguration: async () => { writes++; } } });
+let route: typeof import("../../app/api/admin/guides/route");
+before(async () => { route = await import(pathToFileURL(resolve(__dirname, "../../app/api/admin/guides/route.ts")).href); });
+beforeEach(() => { access = { ok: false, reason: "unauthorized" }; writes = 0; reads = 0; invalidations = 0; });
+test("anonymous/non-admin cannot read configuration or disable preparing", async () => {
+  assert.equal((await route.GET()).status, 401);
+  assert.equal((await route.PUT(new Request("https://example.test", { method: "PUT", body: JSON.stringify(fixture) }))).status, 401);
+  access = { ok: false, reason: "forbidden" };
+  assert.equal((await route.GET()).status, 403);
+  assert.equal(writes + reads + invalidations, 0);
+});
+test("malformed toggles fail before persistence; valid admin save invalidates the directory", async () => {
+  access = { ok: true };
+  const request = (body: unknown) => new Request("https://example.test", { method: "PUT", body: JSON.stringify(body) });
+  assert.equal((await route.PUT(request({ ...fixture, preparing: "false" }))).status, 400);
+  assert.equal(writes, 0);
+  assert.equal((await route.PUT(request({ ...fixture, preparing: false }))).status, 200);
+  assert.equal(writes, 1);
+  assert.equal(reads, 1);
+  assert.ok(invalidations >= 2);
+});

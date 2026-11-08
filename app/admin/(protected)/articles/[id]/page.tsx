@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleEditor } from "@/components/admin/article-editor";
+import { getGuideEditorOptions } from "@/lib/guides/repository";
 import { listArticleMedia } from "@/lib/articles/media-repository";
 import {
   getAdminArticle,
@@ -26,6 +27,7 @@ export default async function EditArticlePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const guideOptions = await getGuideEditorOptions().catch(() => undefined);
   if (!isUuid(id)) notFound();
 
   try {
@@ -44,6 +46,7 @@ export default async function EditArticlePage({
     return (
       <ArticleEditor
         initialArticle={article}
+        guideOptions={guideOptions}
         availableTags={tags}
         initialRevisions={revisions}
         initialMedia={media}

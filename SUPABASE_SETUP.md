@@ -234,3 +234,13 @@ The operations API is ready for a future “today's operation status” section.
 `vercel.json` に `/api/cron/crowd-forecast`（UTC 10:00＝JST 19:00）と `/api/cron/crowd-forecast-cleanup`（UTC 15:00＝JST 00:00）を追加しています。既存Cronは保持しています。CronはBearerの `CRON_SECRET` で認証します。既存運用との互換用に `ADMIN_IMPORT_SECRET` のフォールバックもあります。実行精度・利用可能数は利用中のVercelプランで確認してください。
 
 天気は無料の気象庁公開XML PULL、大分県中部の天気・降水確率と大分地点の気温を使います。公開閲覧による天気取得・計算はありません。実際の混雑を記録する管理フォームもありません。詳細は [混雑予想ページ](knowledge/specs/混雑予想ページ.md) を参照してください。
+
+## 攻略ガイド（2026-11-09）
+
+Apply `supabase/migrations/20261108230912_strategy_guides.sql` before deploying the guide management changes. It adds guide categories, a singleton preparing flag (default ON), guide fields on articles, a unique active event-guide constraint, and the service-role-only transactional settings RPC. Existing articles are not converted or published.
+
+Open `/admin/guides` to create an event guide or a free-title guide, edit category names/order and article placement, and save **準備中を表示**. `/guides` remains **準備中** until an administrator switches it off. Only already-published, due, non-trashed guides then appear. The flag does not change individual article publication states or access to their existing URLs. Missing configuration falls back to preparing mode.
+
+The new migration is additive, but the new article selectors require its columns. Apply it before the application update. This implementation task includes the migration file and local SQL tests; it does not apply the migration to a remote project.
+
+Run `npm run test:guides` using the Node version required by package.json. See `knowledge/specs/攻略ガイド.md` and `audit/strategy-guides-2026-11-09/qa.md` for behavior and verification scope.

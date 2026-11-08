@@ -37,6 +37,6 @@ export function revalidatePublicPlanOptions() {
 
 export function revalidatePublicArticleData(slug?: string) {
   revalidateTag(PUBLIC_CACHE_TAGS.articles);
-  revalidatePaths(["/", "/articles", "/articles/feed.xml", "/articles/feed.json", "/sitemap.xml"]);
+  revalidatePaths(["/", "/articles", "/guides", "/articles/feed.xml", "/articles/feed.json", "/sitemap.xml"]);
   if (slug) revalidatePath(`/articles/${slug}`);
 }

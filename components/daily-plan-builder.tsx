@@ -37,6 +37,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PlanItemCard } from "@/components/plan-item-card";
+import { GuideEntryLink } from "@/components/guide-entry-link";
 import { ParkOperatingInfo } from "@/components/park-operating-info";
 import { ScheduleTimeline } from "@/components/schedule-timeline";
 import { type InitialCharacterData, useCharacters } from "@/lib/character-store";
@@ -543,6 +544,7 @@ export function DailyPlanBuilder({
           </div>
         </section>
 
+        <GuideEntryLink className="mt-5" />
         <section className="mt-5">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>

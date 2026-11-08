@@ -15,8 +15,9 @@ export const dynamic = "force-dynamic";
 function errorResponse(error: unknown, fallback: string) {
   const message = error instanceof Error ? error.message : fallback;
   const conflict = /duplicate key|already exists|unique/i.test(message);
+  const guideConflict = /articles_guide_event_unique/.test(message);
   return NextResponse.json(
-    { error: conflict ? "同じスラッグの記事がすでに存在します。" : message },
+    { error: guideConflict ? "このイベントの攻略ガイドは作成済みです。既存の記事を編集してください。" : conflict ? "同じスラッグの記事がすでに存在します。" : message },
     { status: conflict ? 409 : 400 },
   );
 }

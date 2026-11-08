@@ -1,4 +1,6 @@
 import "server-only";
+import { listImportedGuideEvents } from "@/lib/guides/repository";
+import type { GuideAssignment } from "@/lib/guides/model";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
@@ -52,6 +54,7 @@ function mapSummary(row: Row): ArticleSummary {
   return {
     id: asText(row.id),
     title: asText(row.title),
+    guide: row.is_strategy_guide ? { eventKey: row.guide_event_key ? asText(row.guide_event_key) : null, categoryId: row.guide_category_id ? asText(row.guide_category_id) : null, displayOrder: Number(row.guide_display_order ?? 0) } : null,
     slug: asText(row.slug),
     excerpt: asText(row.excerpt),
     seoTitle: asText(row.seo_title),
@@ -89,6 +92,10 @@ const articleSummarySelection = `
   cover_image_url,
   status,
   destination,
+  is_strategy_guide,
+  guide_event_key,
+  guide_category_id,
+  guide_display_order,
   published_at,
   deleted_at,
   created_at,
@@ -113,6 +120,13 @@ function requireAdminClient() {
   const client = getSupabaseAdminClient();
   if (!client) throw new Error("Supabaseのサーバー用秘密鍵が設定されていません。");
   return client;
+}
+
+function guideColumns(guide: GuideAssignment | null | undefined) {
+  return { is_strategy_guide: Boolean(guide), guide_event_key: guide?.eventKey ?? null, guide_category_id: guide?.categoryId ?? null, guide_display_order: guide?.displayOrder ?? 0 };
+}
+async function validateGuideEvent(guide: GuideAssignment | null | undefined) {
+  if (guide?.eventKey && !(await listImportedGuideEvents()).some((event) => event.key === guide.eventKey)) throw new Error("取り込みイベントを選択するか、自由入力に切り替えてください。");
 }
 
 async function replaceArticleTags(
@@ -176,6 +190,7 @@ async function createArticleRevision(
     coverImageUrl: record.coverImageUrl,
     status: record.status,
     destination: record.destination,
+    guide: record.guide,
     publishedAt: record.publishedAt,
     tagIds: (relations ?? []).map((relation) => asText((relation as Row).tag_id)).filter(Boolean),
     seriesId: assignment?.series_id ? asText((assignment as Row).series_id) : null,
@@ -249,11 +264,13 @@ export async function listTags() {
 
 export async function createArticle(input: ArticleInput, userId: string | null) {
   const client = requireAdminClient();
+  await validateGuideEvent(input.guide);
   const { tagIds, seriesId, seriesOrder, ...article } = input;
   const { data, error } = await client
     .from("articles")
     .insert({
       title: article.title,
+      ...guideColumns(article.guide),
       slug: article.slug,
       excerpt: article.excerpt,
       seo_title: article.seoTitle,
@@ -284,11 +301,18 @@ export async function updateArticle(
   userId: string | null,
 ) {
   const client = requireAdminClient();
+  const current = await getAdminArticle(id);
+  if (!current) return null;
+  const proposedGuide = input.guide === undefined ? current.guide : input.guide;
+  const nextGuide = proposedGuide ? { ...proposedGuide, displayOrder: current.guide?.displayOrder ?? proposedGuide.displayOrder } : proposedGuide;
+  if (current.guide?.eventKey && nextGuide?.eventKey !== current.guide.eventKey) throw new Error("攻略記事の対象イベントは変更できません。");
+  if (!current.guide?.eventKey) await validateGuideEvent(nextGuide);
   const { tagIds, seriesId, seriesOrder, ...article } = input;
   const { data, error } = await client
     .from("articles")
     .update({
       title: article.title,
+      ...guideColumns(nextGuide),
       slug: article.slug,
       excerpt: article.excerpt,
       seo_title: article.seoTitle,
@@ -360,9 +384,11 @@ export async function restoreArticleRevision(
   const snapshot = data.snapshot && typeof data.snapshot === "object" && !Array.isArray(data.snapshot)
     ? data.snapshot as Row
     : {};
+  const current = await getAdminArticle(articleId);
+  if (!current) return null;
   return updateArticle(
     articleId,
-    parseArticleInput({ ...snapshot, status: "draft", publishedAt: null }),
+    parseArticleInput({ ...snapshot, guide: current.guide, status: "draft", publishedAt: null }),
     userId,
   );
 }
@@ -458,6 +484,7 @@ export async function duplicateArticle(id: string, userId: string | null) {
   if (!source) return null;
 
   const article = mapRecord(source as Row);
+  if (article.guide?.eventKey) throw new Error("このイベントの攻略ガイドは作成済みです。既存の記事を編集してください。");
   const baseSlug = `${article.slug}-copy`.slice(0, 112);
   let slug = baseSlug;
   let available = false;
@@ -494,6 +521,7 @@ export async function duplicateArticle(id: string, userId: string | null) {
     status: "draft",
     destination: article.destination,
     publishedAt: null,
+    guide: article.guide,
     tagIds: (relations ?? []).map((relation) => asText((relation as Row).tag_id)).filter(Boolean),
     seriesId: assignment?.series_id ? asText((assignment as Row).series_id) : null,
     seriesOrder: assignment?.series_order ? Number((assignment as Row).series_order) + 1 : null,
@@ -538,10 +566,12 @@ export async function listPublishedArticles({
   tagSlug = "",
   destination,
   limit,
+  includeGuides = false,
 }: {
   tagSlug?: string;
   destination?: ArticleDestination;
   limit?: number;
+  includeGuides?: boolean;
 } = {}) {
   const client = getSupabaseReadClient();
   if (!client) return [];
@@ -554,6 +584,7 @@ export async function listPublishedArticles({
     .lte("published_at", new Date().toISOString())
     .order("published_at", { ascending: false });
   if (destination) query = query.eq("destination", destination);
+  if (!includeGuides) query = query.eq("is_strategy_guide", false);
   if (limit) query = query.limit(Math.min(24, Math.max(1, Math.floor(limit))));
   const { data, error } = await query;
   if (error) {
