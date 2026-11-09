@@ -17,23 +17,29 @@ const buttonClass = "inline-flex min-h-11 items-center justify-center gap-2 roun
 
 export function GuideManager({ initialData }: { initialData: GuideManagementData }) {
   const [data, setData] = useState(initialData);
+  const [savedData, setSavedData] = useState(initialData);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
   const [selected, setSelected] = useState(initialData.categories[0]?.id ?? "");
   const [eventKey, setEventKey] = useState("");
   const categories = [...data.categories].sort((a, b) => a.displayOrder - b.displayOrder || a.id.localeCompare(b.id));
   const guideById = new Map(data.guides.map((guide) => [guide.id, guide]));
   const categoryArticles = data.articles.filter((item) => (item.categoryId ?? "") === selected).sort((a, b) => a.displayOrder - b.displayOrder || (guideById.get(a.id)?.title ?? "").localeCompare(guideById.get(b.id)?.title ?? "", "ja") || a.id.localeCompare(b.id));
   const existing = data.guides.find((guide) => guide.eventKey === eventKey);
+  const changed = data.preparing !== savedData.preparing
+    || JSON.stringify(data.categories) !== JSON.stringify(savedData.categories)
+    || JSON.stringify(data.articles) !== JSON.stringify(savedData.articles);
   async function save() {
-    setBusy(true); setMessage("");
+    if (busy || !changed) return;
+    setBusy(true); setMessage(""); setIsError(false);
     try {
       const configuration: GuideConfiguration = { preparing: data.preparing, updatedAt: data.updatedAt, categories: data.categories, articles: data.articles };
       const response = await fetch("/api/admin/guides", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(configuration) });
       const result = await response.json() as { data?: GuideManagementData; error?: string };
       if (!response.ok || !result.data) throw new Error(result.error || "設定を保存できませんでした。");
-      setData(result.data); setMessage("設定を保存しました。");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "設定を保存できませんでした。"); }
+      setData(result.data); setSavedData(result.data); setMessage("設定を保存しました。");
+    } catch (error) { setIsError(true); setMessage(error instanceof Error ? error.message : "設定を保存できませんでした。"); }
     finally { setBusy(false); }
   }
   function moveCategory(index: number, direction: number) {
@@ -45,8 +51,7 @@ export function GuideManager({ initialData }: { initialData: GuideManagementData
     setData((current) => ({ ...current, articles: current.articles.map((item) => positions.has(item.id) ? { ...item, displayOrder: positions.get(item.id)! } : item) }));
   }
   return <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-7">
-    <header className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-[26px] font-black text-ink">攻略ガイド管理</h1><p className="mt-2 text-[13px] leading-6 text-ink/60">記事の作成、公開ページの表示、カテゴリと順番を管理します。</p></div><button type="button" onClick={() => void save()} disabled={busy} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-pink px-5 text-[13px] font-black text-white disabled:opacity-50"><Save size={17} aria-hidden="true" />{busy ? "保存中…" : "設定を保存"}</button></header>
-    {message && <p role="status" className="mt-4 rounded-xl border border-pink/20 bg-white p-3 text-[13px] font-bold text-ink">{message}</p>}
+    <header className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-[26px] font-black text-ink">攻略ガイド管理</h1><p className="mt-2 text-[13px] leading-6 text-ink/60">記事の作成、公開ページの表示、カテゴリと順番を管理します。</p></div><button type="button" onClick={() => void save()} disabled={busy || !changed} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-pink px-5 text-[13px] font-black text-white disabled:opacity-50"><Save size={17} aria-hidden="true" />{busy ? "保存中…" : "設定を保存"}</button></header>
     <fieldset disabled={busy} className="mt-6 min-w-0 space-y-6">
       <legend className="sr-only">攻略ガイドの設定</legend>
       <section className="rounded-2xl border border-pink/15 bg-white p-4 sm:p-5" aria-labelledby="guide-preparing-heading">
@@ -64,7 +69,8 @@ export function GuideManager({ initialData }: { initialData: GuideManagementData
         <Link href="/admin/articles/new?type=strategy&mode=custom" className={`${buttonClass} mt-4`}><Plus size={16} aria-hidden="true" />自由なタイトルで作成</Link>
         <p className="mt-2 text-[12px] leading-6 text-ink/60">アトラクションやレストランなど、取り込みイベントにないガイドも作成できます。</p>
       </section>
-      <section aria-labelledby="guide-order-heading"><h2 id="guide-order-heading" className="mb-3 text-[18px] font-black text-ink">カテゴリ・表示順</h2>
+      <section aria-labelledby="guide-order-heading"><h2 id="guide-order-heading" className="text-[18px] font-black text-ink">カテゴリ・表示順</h2>
+        <p className="mb-3 mt-2 text-[12px] leading-6 text-ink/60">カテゴリ名や順番を変更したら「設定を保存」を押してください。</p>
         <div className="grid gap-4 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)]">
           <div className="min-w-0 rounded-2xl border border-pink/15 bg-white p-4">
             <button type="button" className={`${buttonClass} w-full`} onClick={() => { const id = crypto.randomUUID(); setData((current) => ({ ...current, categories: [...current.categories, { id, name: "新しいカテゴリ", displayOrder: categories.length }] })); setSelected(id); }}><Plus size={16} aria-hidden="true" />カテゴリを追加</button>
@@ -84,5 +90,11 @@ export function GuideManager({ initialData }: { initialData: GuideManagementData
         </div>
       </section>
     </fieldset>
+    <div className="sticky bottom-3 z-20 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-pink/20 bg-white/95 p-4 shadow-lg backdrop-blur" aria-label="攻略ガイド設定の保存">
+      <p role={isError ? "alert" : "status"} className={`min-w-0 flex-1 basis-40 text-[12px] font-bold leading-6 ${isError ? "text-red-700" : "text-ink/65"}`}>
+        {busy ? "設定を保存しています…" : isError ? message : changed ? "未保存の変更があります。" : message || "変更した設定をここから保存できます。"}
+      </p>
+      <button type="button" onClick={() => void save()} disabled={busy || !changed} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-pink px-5 text-[13px] font-black text-white disabled:opacity-50"><Save size={17} aria-hidden="true" />{busy ? "保存中…" : "設定を保存"}</button>
+    </div>
   </div>;
 }
