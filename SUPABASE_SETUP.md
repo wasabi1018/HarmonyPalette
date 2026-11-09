@@ -237,10 +237,10 @@ The operations API is ready for a future “today's operation status” section.
 
 ## 攻略ガイド（2026-11-09）
 
-Apply `supabase/migrations/20261108230912_strategy_guides.sql` before deploying the guide management changes. It adds guide categories, a singleton preparing flag (default ON), guide fields on articles, a unique active event-guide constraint, and the service-role-only transactional settings RPC. Existing articles are not converted or published.
+Apply `supabase/migrations/20261109001036_strategy_guides.sql` before deploying the guide management changes. It adds guide categories, a singleton preparing flag (default ON), guide fields on articles, a unique active event-guide constraint, and the service-role-only transactional settings RPC. Existing articles are not converted or published.
 
 Open `/admin/guides` to create an event guide or a free-title guide, edit category names/order and article placement, and save **準備中を表示**. `/guides` remains **準備中** until an administrator switches it off. Only already-published, due, non-trashed guides then appear. The flag does not change individual article publication states or access to their existing URLs. Missing configuration falls back to preparing mode.
 
-The new migration is additive, but the new article selectors require its columns. Apply it before the application update. This implementation task includes the migration file and local SQL tests; it does not apply the migration to a remote project.
+The new migration is additive, but the new article selectors require its columns. Apply it before the application update. Applied to the Harmony Palette hosted project on 2026-11-09 as migration 20261109001036. The local filename matches the version assigned by the Supabase integration. Public API roles have explicit SELECT-only grants on the two new tables, in addition to RLS. See audit/strategy-guides-2026-11-09/release.md for verification.
 
 Run `npm run test:guides` using the Node version required by package.json. See `knowledge/specs/攻略ガイド.md` and `audit/strategy-guides-2026-11-09/qa.md` for behavior and verification scope.

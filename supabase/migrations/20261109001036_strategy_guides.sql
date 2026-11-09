@@ -25,6 +25,8 @@ alter table public.guide_categories enable row level security;
 alter table public.guide_settings enable row level security;
 create policy "guide categories are readable" on public.guide_categories for select to anon, authenticated using (true);
 create policy "guide page status is readable" on public.guide_settings for select to anon, authenticated using (true);
+-- Hosted projects may grant public API roles default table privileges.
+revoke all on public.guide_categories, public.guide_settings from public, anon, authenticated;
 grant select on public.guide_categories, public.guide_settings to anon, authenticated;
 grant all on public.guide_categories, public.guide_settings to service_role;
 

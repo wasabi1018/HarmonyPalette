@@ -7,14 +7,20 @@ test("actual guide migration: publication, access control, uniqueness, atomic re
   const db = new PGlite();
   try {
     await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
+      alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
       create table articles(id uuid primary key default gen_random_uuid(), title text not null default '', slug text unique, excerpt text default '', content_html text default '', status text default 'draft', published_at timestamptz, deleted_at timestamptz, destination text default 'articles');
       create table tags(id uuid primary key default gen_random_uuid(), slug text);
       create table article_tags(article_id uuid references articles, tag_id uuid references tags);
       alter table articles enable row level security;
       create policy published on articles for select to anon, authenticated using(status='published' and deleted_at is null and published_at <= now());
       grant select on articles, tags, article_tags to anon, authenticated; grant all on articles to service_role;`);
-    await db.exec(await readFile(new URL("../../supabase/migrations/20261108230912_strategy_guides.sql", import.meta.url), "utf8"));
+    await db.exec(await readFile(new URL("../../supabase/migrations/20261109001036_strategy_guides.sql", import.meta.url), "utf8"));
     assert.equal((await db.query<{ preparing: boolean }>("select preparing from guide_settings")).rows[0].preparing, true);
+    for (const table of ["guide_settings", "guide_categories"]) {
+      for (const role of ["anon", "authenticated"]) {
+        assert.equal((await db.query<{ allowed: boolean }>("select has_table_privilege($1, $2, 'UPDATE,INSERT,DELETE,TRUNCATE') as allowed", [role, table])).rows[0].allowed, false);
+      }
+    }
     await db.exec("set role anon");
     assert.equal((await db.query("select * from guide_settings")).rows.length, 1);
     await assert.rejects(db.exec("update guide_settings set preparing=false"), /permission denied/);
