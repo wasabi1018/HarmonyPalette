@@ -47,7 +47,8 @@ export type ForecastConfig = {
   months: number;
   weekday: {
     normal: number;
-    adjacent: number;
+    beforeHoliday: number;
+    afterHoliday: number;
     saturday: number;
     sunday: number;
     holiday: number;

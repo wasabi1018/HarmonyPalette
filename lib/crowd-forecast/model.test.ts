@@ -10,6 +10,7 @@ import {
   mergeForUpdate,
   projectPublic,
   pruneState,
+  upgradeConfig,
   validateConfig,
 } from "./model";
 import {
@@ -117,13 +118,65 @@ test("営業が確定し予定が未公開の日は、未反映の情報を明�
     "pending",
   );
 });
-test("通常平日25、土日祝の前後の平日は基準30", () => {
+test("土日祝の直前・直後の個別設定を月・年の境界でも判定", () => {
   const s = emptyState();
-  assert.equal(
-    calculate(input("2026-10-20"), config(), s.holidays, null, now).breakdown.weekday,
-    25,
-  );
-  assert.equal(calculate(input(), config(), s.holidays, null, now).breakdown.weekday, 30);
+  const c = config();
+  c.weekday.beforeHoliday = 18;
+  c.weekday.afterHoliday = 46;
+  for (const [date, expected] of [
+    ["2026-10-20", 25], // Ordinary Tuesday.
+    ["2026-10-16", 18], // Before the weekend.
+    ["2026-10-19", 46], // After the weekend.
+    ["2026-02-10", 18], // Before a midweek holiday.
+    ["2026-02-12", 46], // After a midweek holiday.
+    ["2026-07-31", 18], // Weekend across a month boundary.
+    ["2026-11-02", 46], // Between Sunday and a Tuesday holiday: after takes priority.
+    ["2026-12-31", 18], // Before New Year's Day.
+    ["2027-01-04", 46], // After the New Year weekend.
+    ["2026-10-17", 60],
+    ["2026-10-18", 55],
+    ["2026-11-03", 60],
+  ] as const) {
+    assert.equal(calculate(input(date), c, s.holidays, null, now).breakdown.weekday,
+      expected, date);
+  }
+  for (const [before, after] of [[47, 12], [0, 100], [30, 30]]) {
+    const configured = validateConfig({ ...c,
+      weekday: { ...c.weekday, beforeHoliday: before, afterHoliday: after } });
+    assert.equal(calculate(input("2026-10-16"), configured, s.holidays, null, now).breakdown.weekday, before);
+    assert.equal(calculate(input(), configured, s.holidays, null, now).breakdown.weekday, after);
+  }
+});
+
+test("旧共通点数を前後に分け、旧初期ファンスタ加点だけを縮小する", () => {
+  const weekday = { normal: 25, saturday: 60, sunday: 55, holiday: 60 };
+  const legacy = { ...config(), weekday: { ...weekday, adjacent: 30 },
+    fan: { ...config().fan, medium: 3, high: 5 } };
+  const original = structuredClone(legacy);
+  const upgraded = validateConfig(legacy);
+  assert.deepEqual(upgraded.weekday, config().weekday);
+  assert.deepEqual(upgraded.fan, config().fan);
+  assert.deepEqual(legacy, original);
+  assert.deepEqual(upgradeConfig(upgraded), upgraded);
+  for (const adjacent of [0, 45, 100]) {
+    const custom = validateConfig({ ...legacy, weekday: { ...weekday, adjacent },
+      fan: { ...legacy.fan, medium: 4, high: 8 } });
+    assert.equal(custom.weekday.beforeHoliday, adjacent);
+    assert.equal(custom.weekday.afterHoliday, adjacent);
+    assert.equal(custom.fan.medium, 4);
+    assert.equal(custom.fan.high, 8);
+  }
+  const custom = config();
+  custom.weekday.beforeHoliday = 47;
+  custom.weekday.afterHoliday = 12;
+  custom.fan.medium = 3;
+  custom.fan.high = 5;
+  assert.deepEqual(validateConfig(custom), custom);
+  assert.deepEqual(validateConfig({ ...legacy,
+    weekday: { ...legacy.weekday, beforeHoliday: 0 } }).weekday,
+    { ...config().weekday, beforeHoliday: 0 });
+  assert.throws(() => validateConfig({ ...config(), weekday }), /曜日/);
+  assert.throws(() => validateConfig({ ...config(), weekday: { ...config().weekday, afterHoliday: 101 } }));
 });
 test("100点を超える合計も天気補正後の点数で保持し、90点以上は大混雑", () => {
   const d = calculate(
@@ -143,7 +196,7 @@ test("100点を超える合計も天気補正後の点数で保持し、90点以
   assert.equal(d.fallbackLevel, "veryBusy");
 
   const c = config();
-  c.weekday.adjacent = 100;
+  c.weekday.afterHoliday = 100;
   const rainy = calculate(
     {
       ...input(),
@@ -183,12 +236,12 @@ test("7時間・10時間・11時間の加点は0・30・40、分単位で境界�
 test("ファンスタは基準回数以上で加点し、営業時間・過去密度・部屋数に依存しない", () => {
   const c = config();
   assert.deepEqual([21, 22, 32, 33].map((slots) =>
-    calculate({ ...input(), slots }, c, {}, null, now).breakdown.fan), [0, 3, 3, 5]);
+    calculate({ ...input(), slots }, c, {}, null, now).breakdown.fan), [0, 1, 1, 2]);
   for (const closing of ["17:00", "20:00", "21:00"]) {
     for (const baselineDensities of [[], [100, 100, 100, 100]]) {
       const d = calculate({ ...input(), closing, slots: 33, rooms: [101, 102, 103],
         baselineDensities }, c, {}, null, now);
-      assert.equal(d.breakdown.fan, 5);
+      assert.equal(d.breakdown.fan, 2);
       assert.equal(d.threeRooms, true);
     }
   }
@@ -217,7 +270,7 @@ test("営業時間とファンスタ回数は大きい加点だけを使う", ()
     null,
     now,
   );
-  assert.equal(d.breakdown.fan, 5);
+  assert.equal(d.breakdown.fan, 2);
   assert.equal(d.basic, 60);
   assert.equal(
     calculate(
@@ -227,16 +280,16 @@ test("営業時間とファンスタ回数は大きい加点だけを使う", ()
       null,
       now,
     ).breakdown.fan,
-    5,
+    2,
   );
 });
 
-test("10月31日の33回・3部屋は5点で、営業時間15点との大きい方を合計に反映", () => {
+test("10月31日の33回・3部屋は2点で、営業時間15点との大きい方を合計に反映", () => {
   const c = config();
   c.hours.ten = 15;
   const d = calculate({ ...input("2026-10-31"), closing: "20:00", slots: 33,
     rooms: [101, 102, 103], birthdays: [{ id: "kuromi", name: "クロミ" }] }, c, {}, null, now);
-  assert.equal(d.breakdown.fan, 5);
+  assert.equal(d.breakdown.fan, 2);
   assert.equal(d.breakdown.hours, 15);
   assert.equal(d.threeRooms, true);
   assert.equal(d.score, 85);
@@ -258,7 +311,7 @@ test("誕生日は0・5・10、複数は最大値で、雨の係数も共通", (
     now,
   );
   assert.equal(d.breakdown.birthday, 10);
-  assert.equal(d.score, 34);
+  assert.equal(d.score, 33);
   assert.throws(() => validateConfig({ ...c, birthdays: { a: 15 } }));
 });
 test("連休日数と初日・最終日の減点、月境界、国民の休日も判定", () => {
@@ -396,12 +449,12 @@ test("当日と当月の過去日は凍結、過去月は削除、未来だけ�
   for (const date of ["2026-09-30", "2026-10-17", "2026-10-18", "2026-10-19"])
     s.days[date] = calculate(input(date), config(), {}, null, now);
   const old = s.days["2026-10-18"];
-  s.config.weekday.adjacent = 80;
+  s.config.weekday.afterHoliday = 80;
   const next = mergeForUpdate(s, [input("2026-10-18"), input()], null, now);
   assert.deepEqual(next.days["2026-10-18"], old);
   assert.ok(next.days["2026-10-17"]);
   assert.equal(next.days["2026-09-30"], undefined);
-  assert.equal(next.days["2026-10-19"].score, 83);
+  assert.equal(next.days["2026-10-19"].score, 81);
   assert.equal(Object.keys(pruneState(next, "2026-11-01").days).length, 0);
 });
 test("当日の日別調整は明示した保存だけ再計算し、保存済み天気と過去日の固定を維持", () => {
@@ -433,7 +486,7 @@ test("当日の日別調整は明示した保存だけ再計算し、保存済�
 test("公開DTOから点数・係数・内部メモを除外、期限切れは保存済みの天気補正なしレベル", () => {
   const s = emptyState(),
     c = config();
-  c.weekday.adjacent = 55;
+  c.weekday.afterHoliday = 55;
   c.overrides = [
     {
       date: input().date,

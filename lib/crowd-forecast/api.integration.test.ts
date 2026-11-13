@@ -177,6 +177,55 @@ test("公開GETは保存済みデータだけを読み、取得・計算・DB書
   );
   restore.mock.restore();
 });
+test("旧設定・履歴を読み込み時に変換し、保存前のDBと当日・過去日の予想を維持", async () => {
+  authorized = true;
+  const state = emptyState(), at = new Date(), yesterday = addDays(today, -1);
+  const oldConfig = structuredClone(DEFAULT_CONFIG);
+  oldConfig.weekday.beforeHoliday = 30;
+  oldConfig.weekday.afterHoliday = 30;
+  oldConfig.fan.medium = 3;
+  oldConfig.fan.high = 5;
+  for (const date of [yesterday, today, tomorrow]) {
+    const input: DayInput = { date, status: "open", opening: "10:00", closing: "17:00",
+      schedule: "published", fan: "published", slots: 33, rooms: [101, 102, 103],
+      baselineDensities: [], birthdays: [] };
+    state.days[date] = calculate(input, oldConfig, state.holidays, null, at);
+  }
+  const legacyConfig = { ...oldConfig,
+    weekday: { normal: 25, adjacent: 30, saturday: 60, sunday: 55, holiday: 60 } };
+  const payload = { ...state, config: legacyConfig,
+    history: [{ at: at.toISOString(), config: legacyConfig }] };
+  await client.rpc("crowd_forecast_write", { p_revision: 0, p_payload: payload, p_token: null });
+  const readRow = async () => (await db.query<{ payload: unknown; revision: number }>(
+    "select payload,revision from public.crowd_forecast_state")).rows[0];
+  const before = await readRow();
+  const response = await adminRoute.GET(new Request("https://local.test/api/admin/crowd-forecast"));
+  assert.equal(response.status, 200);
+  const loaded = await response.json();
+  assert.deepEqual(loaded.state.config.weekday, DEFAULT_CONFIG.weekday);
+  assert.deepEqual(loaded.state.config.fan, DEFAULT_CONFIG.fan);
+  assert.deepEqual(loaded.state.history[0].config, loaded.state.config);
+  assert.deepEqual(loaded.state.days, state.days);
+  const preview = await repository.previewConfig(legacyConfig, 1, at);
+  assert.deepEqual(preview.state.days[today], state.days[today]);
+  if (yesterday.slice(0, 7) === today.slice(0, 7))
+    assert.deepEqual(preview.state.days[yesterday], state.days[yesterday]);
+  assert.equal(preview.state.days[tomorrow].breakdown.fan, 1);
+  assert.deepEqual(await readRow(), before);
+  loaded.state.config.weekday.beforeHoliday = 18;
+  loaded.state.config.weekday.afterHoliday = 46;
+  const configuredPreview = await repository.previewConfig(loaded.state.config, 1, at);
+  assert.deepEqual(configuredPreview.state.config.weekday, loaded.state.config.weekday);
+  assert.deepEqual(await readRow(), before);
+  await repository.saveConfig(loaded.state.config, 1, at);
+  const saved = await repository.readForecast();
+  assert.equal(saved.revision, 2);
+  assert.deepEqual(saved.state.config.weekday, loaded.state.config.weekday);
+  assert.deepEqual(saved.state.history[0].config.weekday, DEFAULT_CONFIG.weekday);
+  assert.deepEqual(saved.state.days[today], state.days[today]);
+  assert.equal(saved.state.days[tomorrow].breakdown.fan, 1);
+});
+
 test("未認証の保存・取得・cron、別Originの保存を拒否", async () => {
   assert.equal(
     (await adminRoute.GET(new Request("https://local.test"))).status,
@@ -310,7 +359,8 @@ test("保存済みの当日調整も再保存で公開へ反映し、変更・�
     assert.equal(removed.days[today].score, original[today].score);
     assert.ok(!removed.days[today].topics.includes("当日の調整変更"));
 
-    config.weekday.adjacent = 80;
+    config.weekday.beforeHoliday = 80;
+    config.weekday.afterHoliday = 80;
     config.weekday.normal = 80;
     await repository.saveConfig(config, 4);
     assert.deepEqual((await repository.readForecast()).state.days[today], removed.days[today]);

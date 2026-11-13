@@ -7,6 +7,7 @@ import {
   mergeForUpdate,
   projectPublic,
   pruneState,
+  upgradeConfig,
   validateConfig,
 } from "./model";
 import { loadInputs } from "./sources";
@@ -26,9 +27,14 @@ function client() {
   return c;
 }
 function unpack(row: Row) {
+  const saved = row.payload.config ? (row.payload as ForecastState) : emptyState();
   return {
     revision: Number(row.revision),
-    state: row.payload.config ? (row.payload as ForecastState) : emptyState(),
+    state: {
+      ...saved,
+      config: upgradeConfig(saved.config),
+      history: saved.history.map((entry) => ({ ...entry, config: upgradeConfig(entry.config) })),
+    },
     lastAttempt: row.last_attempt_day,
     running: !!row.lease_until && Date.parse(row.lease_until) > Date.now(),
   };

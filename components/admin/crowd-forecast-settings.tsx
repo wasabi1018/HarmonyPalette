@@ -187,7 +187,8 @@ export function CrowdForecastSettings() {
       key: "weekday" as const,
       labels: {
         normal: "通常の平日",
-        adjacent: "土日祝前後の平日",
+        beforeHoliday: "土日祝の直前の平日",
+        afterHoliday: "土日祝の直後の平日",
         saturday: "土曜日",
         sunday: "日曜日",
         holiday: "祝日・振替休日",
@@ -345,6 +346,11 @@ export function CrowdForecastSettings() {
                       />
                     ))}
                   </div>
+                  {group.key === "weekday" && (
+                    <p className="mt-3 text-xs leading-6 text-ink/50">
+                      土日祝の直前と直後の基準点をそれぞれ設定できます。通常平日の点数には加算しません。両方に当たる平日は直後の基準点を使います。
+                    </p>
+                  )}
                   {group.key === "hours" && (
                     <p className="mt-3 text-xs leading-6 text-ink/50">
                       8時間未満は加点なし。該当する1段階のみ適用し、ファンスタ回数の加点と大きい方を使います。
@@ -418,7 +424,7 @@ export function CrowdForecastSettings() {
                   />
                 </div>
                 <p className="mt-3 text-xs leading-6 text-ink/50">
-                  公開済みの1日の回数が基準回数以上なら加点し、設定倍率以上なら高加点の点数を使います。営業時間や過去の開催実績では割りません。同室・同時刻の複数キャラクターは1回。3部屋を使用し、回数が基準を超える場合だけ「ファンスタ3部屋」と表示します。
+                  ファンスタは補助的な要素とし、初期値は基準回数以上で1点、設定倍率以上で2点です。営業時間の加点と大きい方だけを使います。部屋数自体は加点せず、同室・同時刻の複数キャラクターは1回。3部屋を使用し、回数が基準を超える場合だけ「ファンスタ3部屋」と表示します。
                 </p>
               </div>
               <div className={card}>

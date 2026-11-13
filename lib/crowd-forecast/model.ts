@@ -29,13 +29,13 @@ export {
 } from "./date";
 export const DEFAULT_CONFIG: ForecastConfig = {
   months: 3,
-  weekday: { normal: 25, adjacent: 30, saturday: 60, sunday: 55, holiday: 60 },
+  weekday: { normal: 25, beforeHoliday: 30, afterHoliday: 30, saturday: 60, sunday: 55, holiday: 60 },
   holiday: { three: 8, four: 12, five: 16, six: 20, edgeReduction: 5, cap: 25 },
   hours: { eight: 10, nine: 20, ten: 30, eleven: 40 },
   fan: {
     highRatio: 1.5,
-    medium: 3,
-    high: 5,
+    medium: 1,
+    high: 2,
     baselineDate: "2026-10-19",
     baselineSlots: 22,
   },
@@ -70,10 +70,29 @@ export function emptyState(): ForecastState {
     history: [],
   };
 }
+/** Upgrade legacy settings in memory; stored day snapshots are never recalculated here. */
+export function upgradeConfig(c: ForecastConfig): ForecastConfig {
+  const weekday = c.weekday as ForecastConfig["weekday"] & { adjacent?: number };
+  if (!weekday || typeof weekday.adjacent !== "number") return c;
+  const { adjacent, ...current } = weekday;
+  const legacy = current.beforeHoliday === undefined && current.afterHoliday === undefined;
+  return {
+    ...c,
+    weekday: {
+      ...current,
+      beforeHoliday: current.beforeHoliday ?? adjacent,
+      afterHoliday: current.afterHoliday ?? adjacent,
+    },
+    // Preserve custom weights; only the previous default pair is reduced.
+    fan: legacy && c.fan?.medium === 3 && c.fan.high === 5
+      ? { ...c.fan, medium: 1, high: 2 }
+      : c.fan,
+  };
+}
 export function validateConfig(value: unknown): ForecastConfig {
   if (!value || typeof value !== "object")
     throw new Error("設定を確認してください。");
-  const c = value as ForecastConfig;
+  const c = upgradeConfig(value as ForecastConfig);
   const numeric = (v: unknown, low = 0, high = 100) =>
     typeof v === "number" && Number.isFinite(v) && v >= low && v <= high;
   if (!Number.isInteger(c.months) || !numeric(c.months, 1, 6))
@@ -81,6 +100,9 @@ export function validateConfig(value: unknown): ForecastConfig {
   for (const group of [c.weekday, c.holiday, c.hours, c.thresholds, c.event])
     if (!group || !Object.values(group).every((v) => numeric(v)))
       throw new Error("加点は0〜100で入力してください。");
+  if (![c.weekday.normal, c.weekday.beforeHoliday, c.weekday.afterHoliday,
+    c.weekday.saturday, c.weekday.sunday, c.weekday.holiday].every((v) => numeric(v)))
+    throw new Error("曜日の基準点を確認してください。");
   if (
     !c.fan ||
     !numeric(c.fan.highRatio, 1, 10) ||
@@ -237,17 +259,19 @@ export function calculate(
   const { date } = input,
     day = weekday(date),
     override = c.overrides.find((o) => o.date === date);
-  const adjacent =
-    isHoliday(addDays(date, -1), h) || isHoliday(addDays(date, 1), h);
+  const afterHoliday = isHoliday(addDays(date, -1), h),
+    beforeHoliday = isHoliday(addDays(date, 1), h);
   const base = h[date]
     ? c.weekday.holiday
     : day === 6
       ? c.weekday.saturday
       : day === 0
         ? c.weekday.sunday
-        : adjacent
-          ? c.weekday.adjacent
-          : c.weekday.normal;
+        : afterHoliday
+          ? c.weekday.afterHoliday
+          : beforeHoliday
+            ? c.weekday.beforeHoliday
+            : c.weekday.normal;
   const vacation = Math.max(
     0,
     ...c.vacations
