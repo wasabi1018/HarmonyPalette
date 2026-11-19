@@ -855,7 +855,7 @@ export function ArticleEditor({
               {coverImageUrl ? (
                 <div className="relative mt-2 overflow-hidden rounded-2xl border border-pink/10 bg-[#fffafd]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={coverImageUrl} alt="" className="aspect-[4/1] w-full object-cover" />
+                  <img src={coverImageUrl} alt="" className="aspect-video w-full object-cover" />
                   <button
                     type="button"
                     onClick={() => coverInputRef.current?.click()}
@@ -873,7 +873,7 @@ export function ArticleEditor({
                   type="button"
                   onClick={() => coverInputRef.current?.click()}
                   disabled={uploading === "cover"}
-                  className="mt-2 flex aspect-[4/1] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-pink/25 bg-[#fffafd] text-center transition hover:border-pink/50 hover:bg-pink/[0.03]"
+                  className="mt-2 flex aspect-video w-full flex-col items-center justify-center rounded-2xl border border-dashed border-pink/25 bg-[#fffafd] text-center transition hover:border-pink/50 hover:bg-pink/[0.03]"
                 >
                   {uploading === "cover"
                     ? <LoaderCircle size={24} className="animate-spin text-pink" />
@@ -1276,13 +1276,13 @@ export function ArticleEditor({
                 <img
                   src={coverImageUrl}
                   alt=""
-                  className="mt-2 aspect-[3.4/1] w-full rounded-xl border border-pink/10 object-cover"
+                  className="mt-2 aspect-video w-full rounded-xl border border-pink/10 object-cover"
                 />
               ) : (
                 <button
                   type="button"
                   onClick={() => coverInputRef.current?.click()}
-                  className="mt-2 grid aspect-[3.4/1] w-full place-items-center rounded-xl border border-dashed border-pink/20 bg-white text-pink/45"
+                  className="mt-2 grid aspect-video w-full place-items-center rounded-xl border border-dashed border-pink/20 bg-white text-pink/45"
                 >
                   <ImageIcon size={19} />
                 </button>

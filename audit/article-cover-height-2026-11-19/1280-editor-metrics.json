@@ -1,0 +1,48 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 1000
+  },
+  "view": "editor",
+  "measurements": [
+    {
+      "tag": "IMG",
+      "width": 848,
+      "height": 477,
+      "ratio": 1.7777777777777777,
+      "expectedHeight": 477,
+      "imageLoaded": true
+    },
+    {
+      "tag": "IMG",
+      "width": 270,
+      "height": 151.875,
+      "ratio": 1.7777777777777777,
+      "expectedHeight": 151.875,
+      "imageLoaded": true
+    }
+  ],
+  "checks": [
+    {
+      "name": "cover or empty state present",
+      "passed": true
+    },
+    {
+      "name": "all cover surfaces use 16:9",
+      "passed": true
+    },
+    {
+      "name": "images loaded",
+      "passed": true
+    },
+    {
+      "name": "no horizontal page overflow",
+      "passed": true
+    },
+    {
+      "name": "no JavaScript errors",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

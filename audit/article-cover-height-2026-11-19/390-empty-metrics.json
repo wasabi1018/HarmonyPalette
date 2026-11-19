@@ -1,0 +1,40 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 1000
+  },
+  "view": "empty",
+  "measurements": [
+    {
+      "tag": "BUTTON",
+      "width": 358,
+      "height": 201.375,
+      "ratio": 1.7777777777777777,
+      "expectedHeight": 201.375,
+      "imageLoaded": null
+    }
+  ],
+  "checks": [
+    {
+      "name": "cover or empty state present",
+      "passed": true
+    },
+    {
+      "name": "all cover surfaces use 16:9",
+      "passed": true
+    },
+    {
+      "name": "images loaded",
+      "passed": true
+    },
+    {
+      "name": "no horizontal page overflow",
+      "passed": true
+    },
+    {
+      "name": "no JavaScript errors",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

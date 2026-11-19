@@ -872,3 +872,8 @@ Master integration preserves the existing `/logo-compact.png` image and combines
 Implemented photo/text columns in either order and two-photo layouts, including media selection, uploads, alternative text, captions, swap, and content-preserving unwrap. Desktop uses equal columns; mobile stacks in document order. Existing single-image content remains supported. Color, link and layout menus now render above the editor through a portal instead of being clipped inside the horizontal toolbar.
 
 Verified the actual editor at 320px, 390px and 1280px, plus sanitized published previews at 390px and 1280px. Insertion, media targeting, local upload, JSON/HTML round trips, swap/unwrap, text coloring, Escape/outside-close, stable toolbar scrolling, loaded images and lack of horizontal overflow passed. No global JavaScript errors or unhandled rejections were observed. All 75 targeted/regression tests, full lint, standalone TypeScript and production build passed in the isolated master checkout. Screenshots, metrics, runtime details and limits: `audit/article-layout-2026-11-19/qa.md`. This also closes the earlier color/link popover visual verification gap. No production data was modified for testing.
+## 記事アイキャッチの表示高さ — 2026-11-19
+
+編集画面のメイン画像（従来4:1）・サイド欄（3.4:1）・記事詳細／プレビュー（3:1）を16:9に統一。未設定時の画像選択枠も同じ比率に変更し、横長に切れすぎる表示を改善した。
+
+390px・1280pxの編集画面と公開プレビュー、390pxの未設定状態を実際のコンポーネントで確認。モバイルのメイン画像は356×200.25px、PCの公開画像は862×484.875px。16:9の確認用画像の上下端が表示され、横幅超過・JavaScriptエラーなし。全体lint・production build（型チェック含む）・diffチェック成功。証跡と非16:9画像等の制限は `audit/article-cover-height-2026-11-19/qa.md`。本番記事・画像データの変更は実施していない。

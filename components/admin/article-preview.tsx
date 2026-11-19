@@ -133,7 +133,7 @@ export function ArticlePreview({
             <img
               src={coverImageUrl}
               alt={`${title || "記事"}のアイキャッチ画像`}
-              className="aspect-[3/1] w-full object-cover"
+              className="aspect-video w-full object-cover"
             />
           </div>
         )}
