@@ -149,6 +149,9 @@ export function assessArticleQuality(input: ArticleQualityInput): ArticleQuality
   else add("headings", "見出し構造", "pass", `${headings.length}個の見出しが正しい順序です。`, "content");
 
   const images = Array.from(input.contentHtml.matchAll(/<img\b[^>]*>/gi));
+  const emptyLayoutImages = Array.from(input.contentHtml.matchAll(/<figure\b[^>]*data-article-image[^>]*>([\s\S]*?)<\/figure>/gi))
+    .filter((match) => !/<img\b/i.test(match[1])).length;
+  if (emptyLayoutImages) add("layout-images", "レイアウトの画像", "error", `${emptyLayoutImages}か所の写真が未設定です。写真を選択するか、レイアウトを解除してください。`, "content");
   const missingAltCount = images.filter((match) => !attributeValue(match[0], "alt")).length;
   const unhelpfulAltCount = images.filter((match) => {
     const alt = attributeValue(match[0], "alt");

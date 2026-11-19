@@ -1,0 +1,227 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 844
+  },
+  "view": "editor",
+  "checks": [
+    {
+      "name": "actual editor initialized",
+      "passed": true
+    },
+    {
+      "name": "palette above toolbar and fully reachable",
+      "passed": true,
+      "details": {
+        "parent": "BODY",
+        "rect": {
+          "x": 277.5,
+          "y": 188.921875,
+          "width": 220,
+          "height": 129.84375
+        },
+        "inViewport": true,
+        "toolbarVerticalOverflow": false,
+        "covered": 0
+      }
+    },
+    {
+      "name": "selected text receives blue",
+      "passed": true,
+      "details": "<p><span style=\"color: rgb(79, 131, 182);\">選択した文字の色</span>と写真レイアウトを確認します。</p>"
+    },
+    {
+      "name": "Escape closes palette and restores focus",
+      "passed": true
+    },
+    {
+      "name": "outside pointer closes palette",
+      "passed": true
+    },
+    {
+      "name": "link panel visible",
+      "passed": true,
+      "details": {
+        "parent": "BODY",
+        "rect": {
+          "x": 315.5,
+          "y": 188.921875,
+          "width": 330,
+          "height": 128.84375
+        },
+        "inViewport": true,
+        "toolbarVerticalOverflow": false,
+        "covered": 0
+      }
+    },
+    {
+      "name": "toolbar inserts image-left",
+      "passed": true
+    },
+    {
+      "name": "library fills the correct image slots: image-left",
+      "passed": true
+    },
+    {
+      "name": "JSON reload retains images, captions and text: image-left",
+      "passed": true
+    },
+    {
+      "name": "sanitized HTML reload retains layout: image-left",
+      "passed": true
+    },
+    {
+      "name": "responsive columns: image-left",
+      "passed": true,
+      "details": {
+        "viewport": 1280,
+        "columns": [
+          {
+            "x": 93.5,
+            "y": 299.921875,
+            "width": 371.5,
+            "height": 371.234375
+          },
+          {
+            "x": 489,
+            "y": 299.921875,
+            "width": 371.5,
+            "height": 53.1875
+          }
+        ]
+      }
+    },
+    {
+      "name": "swap preserves photos and captions: image-left",
+      "passed": true
+    },
+    {
+      "name": "unwrap retains caption: image-left",
+      "passed": true
+    },
+    {
+      "name": "toolbar inserts image-right",
+      "passed": true
+    },
+    {
+      "name": "library fills the correct image slots: image-right",
+      "passed": true
+    },
+    {
+      "name": "JSON reload retains images, captions and text: image-right",
+      "passed": true
+    },
+    {
+      "name": "sanitized HTML reload retains layout: image-right",
+      "passed": true
+    },
+    {
+      "name": "responsive columns: image-right",
+      "passed": true,
+      "details": {
+        "viewport": 1280,
+        "columns": [
+          {
+            "x": 93.5,
+            "y": 290.921875,
+            "width": 371.5,
+            "height": 53.1875
+          },
+          {
+            "x": 489,
+            "y": 290.921875,
+            "width": 371.5,
+            "height": 371.234375
+          }
+        ]
+      }
+    },
+    {
+      "name": "swap preserves photos and captions: image-right",
+      "passed": true
+    },
+    {
+      "name": "unwrap retains caption: image-right",
+      "passed": true
+    },
+    {
+      "name": "toolbar inserts two-images",
+      "passed": true
+    },
+    {
+      "name": "library fills the correct image slots: two-images",
+      "passed": true
+    },
+    {
+      "name": "JSON reload retains images, captions and text: two-images",
+      "passed": true
+    },
+    {
+      "name": "sanitized HTML reload retains layout: two-images",
+      "passed": true
+    },
+    {
+      "name": "responsive columns: two-images",
+      "passed": true,
+      "details": {
+        "viewport": 1280,
+        "columns": [
+          {
+            "x": 93.5,
+            "y": 253.921875,
+            "width": 371.5,
+            "height": 371.234375
+          },
+          {
+            "x": 489,
+            "y": 253.921875,
+            "width": 371.5,
+            "height": 343.65625
+          }
+        ]
+      }
+    },
+    {
+      "name": "swap preserves photos and captions: two-images",
+      "passed": true
+    },
+    {
+      "name": "unwrap retains caption: two-images",
+      "passed": true
+    },
+    {
+      "name": "file upload targets the chosen layout image",
+      "passed": true
+    },
+    {
+      "name": "all preview photos loaded",
+      "passed": true
+    },
+    {
+      "name": "no horizontal page overflow",
+      "passed": true,
+      "details": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280
+      }
+    },
+    {
+      "name": "toolbar stable during body scroll",
+      "passed": true,
+      "details": {
+        "before": 528.921875,
+        "after": 528.921875,
+        "pageBefore": 0,
+        "pageAfter": 0,
+        "heightBefore": 48,
+        "heightAfter": 48
+      }
+    },
+    {
+      "name": "no application browser errors",
+      "passed": true,
+      "details": []
+    }
+  ],
+  "errors": []
+}

@@ -156,7 +156,52 @@ textarea:focus-visible {
   scroll-margin-top: 6rem;
 }
 
+.article-prose [data-article-layout],
+.article-layout-columns > [data-node-view-content-react] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 24px;
+}
+
+.article-prose [data-article-layout] { margin: 1.7em 0; }
+[data-article-layout-column] { min-width: 0; overflow-wrap: anywhere; }
+[data-article-layout-column] > :first-child { margin-top: 0; }
+[data-article-layout-column] > :last-child { margin-bottom: 0; }
+
+.article-editor-content figure[data-article-image],
+.article-prose figure[data-article-image] { margin: 0; min-width: 0; }
+
+.article-editor-content figure[data-article-image] img,
+.article-prose figure[data-article-image] img { margin: 0; width: 100%; height: auto; }
+
+.article-editor-content figure[data-article-image] figcaption,
+.article-prose figure[data-article-image] figcaption {
+  margin-top: 0.6em;
+  color: rgba(62, 53, 64, 0.6);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.article-prose figure[data-article-image]:empty { display: none; }
+
+.article-editor-content [data-article-layout-column] > p.is-empty:only-child { min-height: 140px; }
+.article-editor-content [data-article-layout-column] > p.is-empty:only-child::before {
+  float: left;
+  height: 0;
+  color: rgba(62, 53, 64, 0.35);
+  content: "説明文を入力…";
+  pointer-events: none;
+}
+
 @media (max-width: 640px) {
+  .article-prose [data-article-layout],
+  .article-layout-columns > [data-node-view-content-react] {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
   .article-editor-scroll {
     height: clamp(320px, 56dvh, 520px);
   }

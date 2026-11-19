@@ -1,0 +1,75 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 1600
+  },
+  "view": "preview",
+  "checks": [
+    {
+      "name": "actual editor initialized",
+      "passed": true
+    },
+    {
+      "name": "sanitized published preview responsive",
+      "passed": true,
+      "details": [
+        [
+          {
+            "x": 16,
+            "y": 322.171875,
+            "width": 358,
+            "height": 266.234375
+          },
+          {
+            "x": 16,
+            "y": 604.40625,
+            "width": 358,
+            "height": 53.1875
+          }
+        ],
+        [
+          {
+            "x": 16,
+            "y": 752.265625,
+            "width": 358,
+            "height": 53.1875
+          },
+          {
+            "x": 16,
+            "y": 821.453125,
+            "width": 358,
+            "height": 266.234375
+          }
+        ],
+        [
+          {
+            "x": 16,
+            "y": 1182.359375,
+            "width": 358,
+            "height": 266.234375
+          },
+          {
+            "x": 16,
+            "y": 1464.59375,
+            "width": 358,
+            "height": 266.234375
+          }
+        ]
+      ]
+    },
+    {
+      "name": "all four published photos loaded",
+      "passed": true
+    },
+    {
+      "name": "no horizontal preview overflow",
+      "passed": true
+    },
+    {
+      "name": "no application browser errors",
+      "passed": true,
+      "details": []
+    }
+  ],
+  "errors": []
+}

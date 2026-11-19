@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Color } from "@tiptap/extension-color";
 import { Image as TiptapImage } from "@tiptap/extension-image";
@@ -16,6 +17,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Columns2,
   History,
   ExternalLink,
   ImageIcon,
@@ -48,6 +50,8 @@ import type {
   ArticleTag,
 } from "@/lib/articles/types";
 import { ArticlePreview } from "@/components/admin/article-preview";
+import { createArticleLayoutExtensions } from "@/components/admin/article-layout";
+import { articleLayouts, createArticleLayoutContent, type ApplyLayoutImage } from "@/lib/articles/layout";
 import { GuideArticleFields, type GuideFieldValue } from "@/components/admin/guide-article-fields";
 import type { GuideEditorOptions } from "@/lib/guides/model";
 import { ArticleQualityPanel } from "@/components/admin/article-quality-panel";
@@ -130,12 +134,14 @@ function ToolbarButton({
   label,
   active = false,
   disabled = false,
+  expanded,
   onClick,
   children,
 }: {
   label: string;
   active?: boolean;
   disabled?: boolean;
+  expanded?: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
@@ -145,6 +151,8 @@ function ToolbarButton({
       title={label}
       aria-label={label}
       aria-pressed={active}
+      aria-haspopup={expanded === undefined ? undefined : "dialog"}
+      aria-expanded={expanded}
       disabled={disabled}
       onClick={onClick}
       className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg transition ${
@@ -155,6 +163,111 @@ function ToolbarButton({
     >
       {children}
     </button>
+  );
+}
+
+function ToolbarPopover({
+  anchorRef,
+  label,
+  width,
+  onClose,
+  children,
+}: {
+  anchorRef: React.RefObject<HTMLDivElement | null>;
+  label: string;
+  width: number;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+  const positioned = position !== null;
+
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useLayoutEffect(() => {
+    if (positioned) {
+      panelRef.current?.querySelector<HTMLElement>("input, button")?.focus({ preventScroll: true });
+    }
+  }, [positioned]);
+
+  useLayoutEffect(() => {
+    const anchor = anchorRef.current;
+    const panel = panelRef.current;
+    if (!anchor || !panel) return;
+
+    function updatePosition() {
+      if (!anchor || !panel) return;
+      const rect = anchor.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const minLeft = (viewport?.offsetLeft ?? 0) + 12;
+      const minTop = (viewport?.offsetTop ?? 0) + 12;
+      const right = minLeft + (viewport?.width ?? window.innerWidth) - 24;
+      const bottom = minTop + (viewport?.height ?? window.innerHeight) - 24;
+      const panelRect = panel.getBoundingClientRect();
+      const below = rect.bottom + 8;
+      const top = below + panelRect.height <= bottom
+        ? below
+        : Math.max(minTop, rect.top - panelRect.height - 8);
+      setPosition({
+        top,
+        left: Math.max(minLeft, Math.min(rect.left, right - panelRect.width)),
+      });
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (event.target instanceof Node && !panel?.contains(event.target) && !anchor?.contains(event.target)) {
+        onCloseRef.current();
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onCloseRef.current();
+      anchor?.querySelector("button")?.focus({ preventScroll: true });
+    }
+
+    updatePosition();
+    const observer = new ResizeObserver(updatePosition);
+    observer.observe(panel);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    window.visualViewport?.addEventListener("resize", updatePosition);
+    window.visualViewport?.addEventListener("scroll", updatePosition);
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.visualViewport?.removeEventListener("resize", updatePosition);
+      window.visualViewport?.removeEventListener("scroll", updatePosition);
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [anchorRef]);
+
+  return createPortal(
+    <div
+      ref={panelRef}
+      role="dialog"
+      aria-label={label}
+      className="fixed z-[80] rounded-xl border border-pink/15 bg-white p-3 shadow-card"
+      style={{
+        width,
+        maxWidth: "calc(100vw - 24px)",
+        top: position?.top ?? 0,
+        left: position?.left ?? 0,
+        visibility: position ? "visible" : "hidden",
+      }}
+    >
+      {children}
+    </div>,
+    document.body,
   );
 }
 
@@ -201,6 +314,7 @@ export function ArticleEditor({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
+  const [layoutOpen, setLayoutOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [uploading, setUploading] = useState<"cover" | "body" | "">("");
   const [mediaItems, setMediaItems] = useState(initialMedia);
@@ -210,6 +324,10 @@ export function ArticleEditor({
   const [restoringRevisionId, setRestoringRevisionId] = useState("");
   const coverInputRef = useRef<HTMLInputElement>(null);
   const bodyInputRef = useRef<HTMLInputElement>(null);
+  const colorAnchorRef = useRef<HTMLDivElement>(null);
+  const linkAnchorRef = useRef<HTMLDivElement>(null);
+  const layoutAnchorRef = useRef<HTMLDivElement>(null);
+  const layoutImageTargetRef = useRef<ApplyLayoutImage | null>(null);
   const changeVersionRef = useRef(0);
 
   const editor = useEditor({
@@ -233,7 +351,16 @@ export function ArticleEditor({
         allowBase64: demoMode,
         HTMLAttributes: { class: "article-body-image" },
       }),
+      ...createArticleLayoutExtensions({
+        onChooseImage: (apply) => {
+          layoutImageTargetRef.current = apply;
+          setMediaPicker("body");
+        },
+        onUploadImage: (file, apply) => uploadImage(file, "body", apply),
+      }),
       Placeholder.configure({
+        includeChildren: true,
+        showOnlyCurrent: false,
         placeholder: "ここから記事を書き始めます…",
       }),
     ],
@@ -375,11 +502,11 @@ export function ArticleEditor({
     markDirty();
   };
 
-  const uploadImage = async (file: File, placement: "cover" | "body") => {
+  const uploadImage = async (file: File, placement: "cover" | "body", apply?: ApplyLayoutImage) => {
     if (!file.type.startsWith("image/")) {
       setMessage("画像ファイルを選択してください。");
       setSaveState("error");
-      return;
+      return false;
     }
     setUploading(placement);
     setMessage("");
@@ -417,13 +544,17 @@ export function ArticleEditor({
 
       if (placement === "cover") {
         setCoverImageUrl(url);
+      } else if (apply) {
+        apply({ src: url, alt: altText });
       } else {
         editor?.chain().focus().setImage({ src: url, alt: altText }).run();
       }
       markDirty();
+      return true;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "画像のアップロードに失敗しました。");
       setSaveState("error");
+      return false;
     } finally {
       setUploading("");
       if (coverInputRef.current) coverInputRef.current.value = "";
@@ -435,11 +566,14 @@ export function ArticleEditor({
     if (mediaPicker === "cover") {
       setCoverImageUrl(item.publicUrl);
     } else if (mediaPicker === "body") {
-      editor?.chain().focus().setImage({
+      const image = {
         src: item.publicUrl,
         alt: item.altText || item.fileName,
-      }).run();
+      };
+      if (layoutImageTargetRef.current) layoutImageTargetRef.current(image);
+      else editor?.chain().focus().setImage(image).run();
     }
+    layoutImageTargetRef.current = null;
     setMediaPicker("");
     setMediaQuery("");
     markDirty();
@@ -800,16 +934,21 @@ export function ArticleEditor({
                   <ToolbarButton label="下線" active={editor?.isActive("underline")} disabled={!editor} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
                     <UnderlineIcon size={16} />
                   </ToolbarButton>
-                  <div className="relative">
+                  <div ref={colorAnchorRef} className="shrink-0">
                     <ToolbarButton
                       label="文字色"
                       disabled={!editor}
-                      onClick={() => setColorOpen((value) => !value)}
+                      expanded={colorOpen}
+                      onClick={() => {
+                        setLinkOpen(false);
+                        setLayoutOpen(false);
+                        setColorOpen((value) => !value);
+                      }}
                     >
                       <Palette size={16} />
                     </ToolbarButton>
                     {colorOpen && (
-                      <div className="absolute left-0 top-11 z-30 w-[190px] rounded-xl border border-pink/15 bg-white p-3 shadow-card">
+                      <ToolbarPopover anchorRef={colorAnchorRef} label="文字色を選択" width={220} onClose={() => setColorOpen(false)}>
                         <p className="text-[9px] font-black text-ink/45">文字色</p>
                         <div className="mt-2 grid grid-cols-6 gap-2">
                           {[
@@ -858,15 +997,18 @@ export function ArticleEditor({
                             リセット
                           </button>
                         </div>
-                      </div>
+                      </ToolbarPopover>
                     )}
                   </div>
-                  <div className="relative">
+                  <div ref={linkAnchorRef} className="shrink-0">
                     <ToolbarButton
                       label="リンク"
                       active={editor?.isActive("link")}
                       disabled={!editor}
+                      expanded={linkOpen}
                       onClick={() => {
+                        setColorOpen(false);
+                        setLayoutOpen(false);
                         setLinkUrl(editor?.getAttributes("link").href || "https://");
                         setLinkOpen((value) => !value);
                       }}
@@ -874,7 +1016,7 @@ export function ArticleEditor({
                       <Link2 size={16} />
                     </ToolbarButton>
                     {linkOpen && (
-                      <div className="absolute left-0 top-11 z-30 w-[min(330px,80vw)] rounded-xl border border-pink/15 bg-white p-3 shadow-card">
+                      <ToolbarPopover anchorRef={linkAnchorRef} label="リンクの設定" width={330} onClose={() => setLinkOpen(false)}>
                         <label className="block text-[9px] font-black text-ink/45">
                           リンクURL
                           <input
@@ -905,7 +1047,7 @@ export function ArticleEditor({
                             適用
                           </button>
                         </div>
-                      </div>
+                      </ToolbarPopover>
                     )}
                   </div>
                   <input
@@ -921,9 +1063,35 @@ export function ArticleEditor({
                   <ToolbarButton label="画像を挿入" disabled={!editor || uploading === "body"} onClick={() => bodyInputRef.current?.click()}>
                     {uploading === "body" ? <LoaderCircle size={16} className="animate-spin" /> : <ImageIcon size={16} />}
                   </ToolbarButton>
-                  <ToolbarButton label="ライブラリから画像を挿入" disabled={!editor} onClick={() => setMediaPicker("body")}>
+                  <ToolbarButton label="ライブラリから画像を挿入" disabled={!editor} onClick={() => { layoutImageTargetRef.current = null; setMediaPicker("body"); }}>
                     <Images size={16} />
                   </ToolbarButton>
+                  <div ref={layoutAnchorRef} className="shrink-0">
+                    <ToolbarButton label="画像レイアウト" disabled={!editor || editor.isActive("articleLayout")} expanded={layoutOpen} onClick={() => {
+                      if (!editor || editor.isActive("articleLayout")) return;
+                      setColorOpen(false);
+                      setLinkOpen(false);
+                      setLayoutOpen((value) => !value);
+                    }}>
+                      <Columns2 size={16} />
+                    </ToolbarButton>
+                    {layoutOpen && <ToolbarPopover anchorRef={layoutAnchorRef} label="画像レイアウトを選択" width={260} onClose={() => setLayoutOpen(false)}>
+                      <p className="mb-2 text-[10px] font-black text-ink/50">画像レイアウト</p>
+                      {articleLayouts.map((layout) => <button key={layout.value} type="button" onClick={() => {
+                        if (editor && !editor.isActive("articleLayout")) {
+                          editor.chain().focus().insertContent([createArticleLayoutContent(layout.value), { type: "paragraph" }]).run();
+                        }
+                        setLayoutOpen(false);
+                      }} className="flex min-h-11 w-full items-center gap-3 rounded-lg px-2 text-left text-[11px] font-bold text-ink/70 hover:bg-pink/10">
+                        <span aria-hidden="true" className="grid h-7 w-10 shrink-0 grid-cols-2 gap-1 rounded border border-pink/20 bg-white p-1">
+                          <span className={layout.value === "image-right" ? "border-y-2 border-ink/20" : "rounded-sm bg-pink/25"} />
+                          <span className={layout.value === "image-left" ? "border-y-2 border-ink/20" : "rounded-sm bg-pink/25"} />
+                        </span>
+                        {layout.label}
+                      </button>)}
+                      <p className="mt-2 text-[9px] leading-5 text-ink/45">スマホでは上から順に縦並びで表示します。</p>
+                    </ToolbarPopover>}
+                  </div>
                   <span className="mx-1 h-5 w-px shrink-0 bg-ink/10" />
                   <ToolbarButton label="箇条書き" active={editor?.isActive("bulletList")} disabled={!editor} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
                     <List size={16} />

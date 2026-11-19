@@ -63,11 +63,16 @@ export function sanitizeArticleHtml(value: string) {
       "img",
       "code",
       "pre",
+      "div",
+      "figure",
+      "figcaption",
     ],
     allowedAttributes: {
       a: ["href", "target", "rel"],
       img: ["src", "alt", "title"],
       span: ["style"],
+      div: ["data-article-layout", "data-article-layout-column"],
+      figure: ["data-article-image"],
     },
     allowedStyles: {
       span: {

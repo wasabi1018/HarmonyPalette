@@ -866,3 +866,9 @@ Master integration preserves the existing `/logo-compact.png` image and combines
 ユーザー添付のスマートフォン画面と、保存ボタンが見当たらないという回答を基準に、カテゴリ操作中も使える画面下部の保存欄を追加。未保存・保存中・保存完了・エラーを保存ボタンの隣に表示し、カテゴリ欄にも保存操作を案内する。既存の上部保存ボタンと手動保存方式は維持する。
 
 390pxでカテゴリ追加・保存・再読み込み後の保持、カテゴリ名重複時のエラーと入力保持、修正後の再保存を実画面で確認。320・390pxで横幅超過なし、1440pxのPC表示も確認。ブラウザーerror/warnなし。証跡・本番DBのロールバック確認と検証上の制限は `audit/guide-category-save-2026-11-09/qa.md` を参照。
+
+## Article image layouts and toolbar popovers — 2026-11-19
+
+Implemented photo/text columns in either order and two-photo layouts, including media selection, uploads, alternative text, captions, swap, and content-preserving unwrap. Desktop uses equal columns; mobile stacks in document order. Existing single-image content remains supported. Color, link and layout menus now render above the editor through a portal instead of being clipped inside the horizontal toolbar.
+
+Verified the actual editor at 320px, 390px and 1280px, plus sanitized published previews at 390px and 1280px. Insertion, media targeting, local upload, JSON/HTML round trips, swap/unwrap, text coloring, Escape/outside-close, stable toolbar scrolling, loaded images and lack of horizontal overflow passed. No global JavaScript errors or unhandled rejections were observed. All 75 targeted/regression tests, full lint, standalone TypeScript and production build passed in the isolated master checkout. Screenshots, metrics, runtime details and limits: `audit/article-layout-2026-11-19/qa.md`. This also closes the earlier color/link popover visual verification gap. No production data was modified for testing.
