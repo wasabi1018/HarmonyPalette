@@ -311,42 +311,44 @@ export function CharacterOrderManager({
         <p className="text-[12px] font-black text-ink/45"><span className="text-lavender">{orderedCharacters.length}</span> / {characters.length}件</p>
       </div>
 
-      <div className="mt-3 grid max-h-[500px] gap-2 overflow-y-auto pr-1 lg:grid-cols-2">
+      <div className="mt-3 grid max-h-[500px] gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
         {orderedCharacters.map((character) => {
           const birthday = getCharacterBirthday(character);
           return (
-            <article key={character.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-ink/10 bg-[#fffdfd] px-3 py-2.5">
+            <article key={character.id} className="grid min-w-0 grid-cols-[36px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-xl border border-ink/10 bg-[#fffdfd] px-3 py-2.5 sm:flex sm:gap-3">
               <span className="h-9 w-9 shrink-0 rounded-xl border-2 border-white shadow-soft" style={{ backgroundColor: character.themeColor }} aria-hidden="true" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[12px] font-black text-ink">{character.name}</p>
+                <p className="break-words text-[12px] font-black text-ink">{character.name}</p>
                 <p className="mt-0.5 truncate text-[10px] font-bold text-ink/35">{character.nameKana || "よみがな未登録"}・{character.slug}</p>
-                <p className={`mt-1 flex items-center gap-1 text-[10px] font-black ${birthday ? "text-pink" : "text-ink/30"}`}>
-                  <CakeSlice size={11} aria-hidden="true" />
+                <p className={`mt-1 flex items-center gap-1 whitespace-nowrap text-[10px] font-black ${birthday ? "text-pink" : "text-ink/30"}`}>
+                  <CakeSlice size={11} className="shrink-0" aria-hidden="true" />
                   {birthday ? formatCharacterBirthday(birthday) : "誕生日未登録"}
                 </p>
               </div>
-              <label className="shrink-0">
-                <span className="sr-only">{character.name}の表示順</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={999999}
-                  step={1}
-                  value={orders[character.id] ?? 999}
-                  onChange={(event) => {
-                    dirtyOrderIds.current.add(character.id);
-                    setOrders((current) => ({ ...current, [character.id]: Number(event.target.value) }));
-                  }}
-                  className={`${inputClass} w-20 text-right`}
-                  aria-label={`${character.name}の表示順`}
-                />
-              </label>
-              <button type="button" onClick={() => openEdit(character)} aria-label={`${character.name}を編集`} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-lavender/15 bg-lavender/5 text-lavender hover:bg-lavender/10"><Pencil size={15} aria-hidden="true" /></button>
-              <button type="button" onClick={() => deleteCharacter(character)} disabled={deletingId === character.id} aria-label={`${character.name}を削除`} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 disabled:opacity-40"><Trash2 size={15} aria-hidden="true" /></button>
+              <div className="col-span-2 flex items-center justify-end gap-2 sm:shrink-0">
+                <label className="flex w-32 items-center gap-2 sm:block sm:w-20">
+                  <span className="shrink-0 text-[10px] font-bold text-ink/45 sm:sr-only"><span className="sr-only">{character.name}の</span>表示順</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={999999}
+                    step={1}
+                    value={orders[character.id] ?? 999}
+                    onChange={(event) => {
+                      dirtyOrderIds.current.add(character.id);
+                      setOrders((current) => ({ ...current, [character.id]: Number(event.target.value) }));
+                    }}
+                    className={`${inputClass} min-w-0 text-right`}
+                    aria-label={`${character.name}の表示順`}
+                  />
+                </label>
+                <button type="button" onClick={() => openEdit(character)} aria-label={`${character.name}を編集`} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-lavender/15 bg-lavender/5 text-lavender hover:bg-lavender/10 sm:h-10 sm:w-10"><Pencil size={15} aria-hidden="true" /></button>
+                <button type="button" onClick={() => deleteCharacter(character)} disabled={deletingId === character.id} aria-label={`${character.name}を削除`} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 disabled:opacity-40 sm:h-10 sm:w-10"><Trash2 size={15} aria-hidden="true" /></button>
+              </div>
             </article>
           );
         })}
-        {orderedCharacters.length === 0 && <p className="rounded-xl border border-dashed border-pink/20 p-6 text-center text-[12px] font-bold text-ink/45 lg:col-span-2">該当するキャラクターはありません。</p>}
+        {orderedCharacters.length === 0 && <p className="rounded-xl border border-dashed border-pink/20 p-6 text-center text-[12px] font-bold text-ink/45 xl:col-span-2">該当するキャラクターはありません。</p>}
       </div>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">

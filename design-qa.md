@@ -1,5 +1,9 @@
 # Phase 2 Article Management — Design QA
 
+## Follow-up: character catalog mobile text — 2026-11-21
+
+Changed character rows to put information above controls on mobile, bounded the order input through its label, kept birthdays on one line, and allowed long names to wrap. The two-column list now starts at 1280px so the admin sidebar does not squeeze character information at 1024px. Chromium checks at nine widths from 320 to 1440px found no horizontal overflow or browser errors. Search, empty results, edit open/close, order submission, and cancel deletion were checked using local fixtures. Evidence and limits: `audit/character-admin-mobile-2026-11-21/qa.md`.
+
 ## Scope
 
 - Article list, create/edit screen, rich-text editing, preview, draft/publish controls, image insertion, and tag management.
