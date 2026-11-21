@@ -1,0 +1,11 @@
+﻿{
+    "State":  "preparing",
+    "DirectoryRobots":  "\u003cmeta name=\"robots\" content=\"noindex, follow\"/\u003e",
+    "DirectoryInSitemap":  false,
+    "ArticleInSitemap":  true,
+    "DraftBodyAbsent":  true,
+    "DraftRobots":  [
+                        "\u003cmeta name=\"robots\" content=\"noindex\"/\u003e",
+                        "\u003cmeta name=\"robots\" content=\"noindex, nofollow\"/\u003e"
+                    ]
+}

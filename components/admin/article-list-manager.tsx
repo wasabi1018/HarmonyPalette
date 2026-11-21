@@ -236,7 +236,7 @@ export function ArticleListManager({
                 <p className="mt-1 line-clamp-1 text-[9px] font-bold text-ink/35">/articles/{article.slug}</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <span className={`rounded-full px-2 py-0.5 text-[8px] font-black ${destinationClass[article.destination]}`}>
-                    {destinationLabel[article.destination]}
+                    {article.guide ? "攻略ガイド" : destinationLabel[article.destination]}
                   </span>
                   {article.tags.slice(0, 3).map((tag) => (
                     <span

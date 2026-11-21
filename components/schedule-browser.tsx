@@ -5,6 +5,7 @@ import { CakeSlice, CalendarDays, CalendarX2, Check, ChevronDown, Clock3, Filter
 import type { Character } from "@/data/types";
 import { DataStatePanel } from "@/components/data-state-panel";
 import { ParkOperatingInfo } from "@/components/park-operating-info";
+import { ParkGuideButton } from "@/components/park-guide";
 import { ScheduleEntryCard } from "@/components/schedule-entry-card";
 import { ScheduleMonthCalendar } from "@/components/schedule-month-calendar";
 import { PlanToggleIndicator, PlanToggleSurface } from "@/components/plan-add-button";
@@ -415,6 +416,7 @@ export function ScheduleBrowser({
         <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fff6f9] px-3 py-2.5 text-[11px] font-bold leading-5 text-ink/55"><Filter size={14} className="shrink-0 text-pink" aria-hidden="true" />ファンスタジオは、同じ日の同じキャラクターを1枚にまとめています。各時間の行をタップしてマイプランに追加できます。</div>
       )}
 
+      <ParkGuideButton className="mt-4" />
       <section id="schedule-results" className="mt-4 grid scroll-mt-24 gap-4" aria-live="polite" aria-busy={isInitialLoading}>
         {isInitialLoading ? (
           <DataStatePanel state="loading" message="スケジュールを読み込んでいます…" />

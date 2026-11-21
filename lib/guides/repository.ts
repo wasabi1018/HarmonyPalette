@@ -1,6 +1,9 @@
 import "server-only";
+import { sanitizeArticleHtml } from "@/lib/articles/validation";
+import { proxyArticleImageSources } from "@/lib/articles/media-url";
+import type { ParkGuideCatalog } from "@/lib/park-guides";
 import { getSupabaseAdminClient, getSupabaseReadClient } from "@/lib/supabase/server";
-import { guideEventFor, parseGuideConfiguration, type GuideCategory, type GuideEvent, type GuideArticle, type GuideManagementData } from "./model";
+import { guideEventFor, groupGuideArticles, parseGuideConfiguration, type GuideCategory, type GuideEvent, type GuideArticle, type GuideManagementData } from "./model";
 
 const setupError = "攻略ガイドのマイグレーションとSupabase接続設定を確認してください。";
 function admin() {
@@ -58,14 +61,28 @@ async function listGuideArticles(adminMode = false): Promise<GuideArticle[]> {
   const all: GuideArticle[] = [];
   for (let start = 0; ; start += 1000) {
     let query = client.from("articles")
-      .select("id,title,slug,excerpt,status,guide_event_key,guide_category_id,guide_display_order")
+      .select("id,title,slug,excerpt,content_html,status,guide_event_key,guide_category_id,guide_display_order")
       .eq("is_strategy_guide", true).is("deleted_at", null).order("id").range(start, start + 999);
     if (!adminMode) query = query.eq("status", "published").lte("published_at", new Date().toISOString());
     const { data, error } = await query;
     if (error) throw new Error("攻略ガイドを読み込めませんでした。");
-    all.push(...(data ?? []).map((row) => ({ id: String(row.id), title: String(row.title), slug: String(row.slug), excerpt: String(row.excerpt ?? ""), status: row.status as GuideArticle["status"], eventKey: row.guide_event_key as string | null, categoryId: row.guide_category_id as string | null, displayOrder: Number(row.guide_display_order) })));
+    all.push(...(data ?? []).map((row) => ({ id: String(row.id), title: String(row.title), slug: String(row.slug), excerpt: String(row.excerpt ?? ""), contentHtml: proxyArticleImageSources(sanitizeArticleHtml(String(row.content_html ?? ""))), status: row.status as GuideArticle["status"], eventKey: row.guide_event_key as string | null, categoryId: row.guide_category_id as string | null, displayOrder: Number(row.guide_display_order) })));
     if ((data?.length ?? 0) < 1000) break;
   }
   return all;
 }
 export async function listPublishedGuideArticles() { return listGuideArticles(false); }
+
+export async function getPublicGuideCatalog(): Promise<ParkGuideCatalog> {
+  const { preparing } = await getGuideSettings();
+  if (preparing) return { preparing: true, groups: [] };
+  const [categories, articles] = await Promise.all([listGuideCategories(), listPublishedGuideArticles()]);
+  return {
+    preparing: false,
+    groups: groupGuideArticles(categories, articles).map((group) => ({
+      id: group.id,
+      name: group.name,
+      guides: group.articles.map((article) => ({ id: article.id, title: article.title, summary: article.excerpt, contentHtml: article.contentHtml, articleUrl: `/articles/${encodeURIComponent(article.slug)}` })),
+    })),
+  };
+}

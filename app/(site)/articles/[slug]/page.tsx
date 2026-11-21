@@ -67,7 +67,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const article = await loadPublishedArticle(slug);
-  if (!article) return { title: "記事が見つかりません" };
+  if (!article) return { title: "記事が見つかりません", robots: { index: false, follow: false } };
   const title = article.seoTitle || article.title;
   const description = article.seoDescription || article.excerpt || `${article.title}の記事です。`;
   const url = `/articles/${article.slug}`;
@@ -75,6 +75,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    robots: { index: true, follow: true },
     alternates: {
       canonical: url,
       types: {
@@ -125,7 +126,8 @@ export default async function ArticleDetailPage({
       ? `この記事は${datedStatus.year}年${datedStatus.month}月時点の記録です。現在の来園情報としては使用せず、最新記事と公式サイトをご確認ください。`
       : `この記事は${datedStatus.year}年${datedStatus.month}月の月間情報です。終了した日程を含む場合があります。来園前に最新の予定と公式サイトをご確認ください。`
     : undefined;
-  const listingUrl = siteUrl(article.guide ? "/guides" : "/articles");
+  const listingPath = article.guide ? "/guides" : "/articles";
+  const listingUrl = siteUrl(listingPath);
   const listingName = article.guide ? "攻略ガイド" : "記事";
   const breadcrumbItems = [
     { name: "ホーム", url: siteUrl("/") },
@@ -307,11 +309,11 @@ export default async function ArticleDetailPage({
         )}
         <OfficialNotice />
         <Link
-          href={article.guide ? "/guides" : "/articles"}
+          href={listingPath}
           className="mt-7 inline-flex items-center gap-2 text-[12px] font-black text-pink hover:underline"
         >
           <ArrowLeft size={15} />
-          {article.guide ? "攻略ガイド一覧へ戻る" : "記事一覧へ戻る"}
+          {listingName}一覧へ戻る
         </Link>
       </div>
     </>

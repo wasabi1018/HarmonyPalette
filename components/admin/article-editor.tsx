@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import type {
   ArticleDestination,
+  ArticleInput,
   ArticleRecord,
   ArticleMedia,
   ArticleRevision,
@@ -54,6 +55,7 @@ import { createArticleLayoutExtensions } from "@/components/admin/article-layout
 import { articleLayouts, createArticleLayoutContent, type ApplyLayoutImage } from "@/lib/articles/layout";
 import { GuideArticleFields, type GuideFieldValue } from "@/components/admin/guide-article-fields";
 import type { GuideEditorOptions } from "@/lib/guides/model";
+import { ParkGuideDialog } from "@/components/park-guide";
 import { ArticleQualityPanel } from "@/components/admin/article-quality-panel";
 import {
   assessArticleQuality,
@@ -62,6 +64,7 @@ import {
 } from "@/lib/articles/quality";
 
 type ArticleEditorProps = {
+  initialDraft?: ArticleInput | null;
   guideOptions?: GuideEditorOptions;
   initialGuide?: boolean;
   initialGuideMode?: "event" | "custom";
@@ -272,6 +275,7 @@ function ToolbarPopover({
 }
 
 export function ArticleEditor({
+  initialDraft,
   guideOptions,
   initialGuide = false,
   initialGuideMode = "event",
@@ -287,16 +291,17 @@ export function ArticleEditor({
   demoMode = false,
 }: ArticleEditorProps) {
   const router = useRouter();
+  const initialContent = initialDraft ?? initialArticle;
   const [articleId, setArticleId] = useState(initialArticle?.id || "");
-  const [title, setTitle] = useState(initialArticle?.title || (initialGuide && initialEventKey ? `${guideOptions?.events.find((event) => event.key === initialEventKey)?.name || "イベント"}の攻略ガイド` : ""));
-  const [guideFields, setGuideFields] = useState<GuideFieldValue>({ enabled: Boolean(initialArticle?.guide) || initialGuide, mode: initialArticle?.guide ? (initialArticle.guide.eventKey ? "event" : "custom") : initialGuideMode, eventKey: initialArticle?.guide?.eventKey ?? initialEventKey, categoryId: initialArticle?.guide?.categoryId ?? "" });
-  const [slug, setSlug] = useState(initialArticle?.slug || fallbackSlug());
-  const [slugTouched, setSlugTouched] = useState(Boolean(initialArticle?.slug));
-  const [excerpt, setExcerpt] = useState(initialArticle?.excerpt || "");
-  const [seoTitle, setSeoTitle] = useState(initialArticle?.seoTitle || "");
-  const [seoDescription, setSeoDescription] = useState(initialArticle?.seoDescription || "");
-  const [coverImageUrl, setCoverImageUrl] = useState(initialArticle?.coverImageUrl || "");
-  const [status, setStatus] = useState<ArticleStatus>(initialArticle?.status || "draft");
+  const [title, setTitle] = useState(initialContent?.title || (initialGuide && initialEventKey ? `${guideOptions?.events.find((event) => event.key === initialEventKey)?.name || "イベント"}の攻略ガイド` : ""));
+  const [guideFields, setGuideFields] = useState<GuideFieldValue>({ enabled: Boolean(initialArticle?.guide || initialDraft?.guide) || initialGuide, mode: (initialArticle?.guide ?? initialDraft?.guide) ? ((initialArticle?.guide ?? initialDraft?.guide)?.eventKey ? "event" : "custom") : initialGuideMode, eventKey: initialArticle?.guide?.eventKey ?? initialDraft?.guide?.eventKey ?? initialEventKey, categoryId: initialArticle?.guide?.categoryId ?? initialDraft?.guide?.categoryId ?? "" });
+  const [slug, setSlug] = useState(initialArticle?.slug || initialDraft?.slug || fallbackSlug());
+  const [slugTouched, setSlugTouched] = useState(Boolean(initialArticle?.slug || initialDraft?.slug));
+  const [excerpt, setExcerpt] = useState(initialContent?.excerpt || "");
+  const [seoTitle, setSeoTitle] = useState(initialContent?.seoTitle || "");
+  const [seoDescription, setSeoDescription] = useState(initialContent?.seoDescription || "");
+  const [coverImageUrl, setCoverImageUrl] = useState(initialContent?.coverImageUrl || "");
+  const [status, setStatus] = useState<ArticleStatus>(initialDraft ? "draft" : initialArticle?.status || "draft");
   const [destination, setDestination] = useState<ArticleDestination>(
     initialArticle?.destination || "articles",
   );
@@ -307,7 +312,7 @@ export function ArticleEditor({
   const [seriesId, setSeriesId] = useState(initialSeriesId || "");
   const [seriesOrder, setSeriesOrder] = useState(initialSeriesOrder || 1);
   const [tagQuery, setTagQuery] = useState("");
-  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [saveState, setSaveState] = useState<SaveState>(initialDraft ? "dirty" : "idle");
   const [linkChecks, setLinkChecks] = useState<ArticleLinkCheck[]>([]);
   const [checkingLinks, setCheckingLinks] = useState(false);
   const [message, setMessage] = useState("");
@@ -364,7 +369,7 @@ export function ArticleEditor({
         placeholder: "ここから記事を書き始めます…",
       }),
     ],
-    content: initialArticle?.contentJson || blankDocument,
+    content: initialContent?.contentJson || blankDocument,
     editorProps: {
       attributes: {
         class: "article-editor-content",
@@ -397,7 +402,7 @@ export function ArticleEditor({
       `${item.fileName} ${item.altText}`.toLocaleLowerCase("ja").includes(query)
     ));
   }, [mediaItems, mediaQuery]);
-  const contentHtml = editor?.getHTML() || initialArticle?.contentHtml || "<p></p>";
+  const contentHtml = editor?.getHTML() || initialContent?.contentHtml || "<p></p>";
   const characterCount = editor?.getText().replace(/\s/g, "").length || 0;
   const qualityReport = useMemo(() => assessArticleQuality({
     title,
@@ -618,13 +623,15 @@ export function ArticleEditor({
     }
 
     const saveVersion = changeVersionRef.current;
-    if (guideFields.enabled && guideFields.mode === "event" && (!guideFields.eventKey || guideOptions?.existingGuides.some((guide) => guide.eventKey === guideFields.eventKey && guide.id !== articleId))) {
-      setSaveState("error"); setMessage(guideFields.eventKey ? "このイベントの攻略記事は作成済みです。既存の記事を編集してください。" : "対象イベントを選択してください。"); return;
+    if (guideFields.enabled && (!guideOptions || (guideFields.mode === "event" && (!guideFields.eventKey || guideOptions.existingGuides.some((guide) => guide.eventKey === guideFields.eventKey && guide.id !== articleId))))) {
+      setSaveState("error");
+      setMessage(!guideOptions ? "攻略ガイドの設定を読み込めませんでした。再読み込みしてください。" : guideFields.eventKey ? "このイベントの攻略ガイドは作成済みです。既存の記事を編集してください。" : "対象イベントを選択してください。");
+      return;
     }
     setSaveState("saving");
     setMessage("");
     const payload = {
-      guide: guideFields.enabled ? { eventKey: guideFields.mode === "event" ? guideFields.eventKey : null, categoryId: guideFields.categoryId || null, displayOrder: initialArticle?.guide?.displayOrder ?? 100000 } : null,
+      guide: guideOptions ? (guideFields.enabled ? { eventKey: guideFields.mode === "event" ? guideFields.eventKey : null, categoryId: guideFields.categoryId || null, displayOrder: initialArticle?.guide?.displayOrder ?? 100000 } : null) : undefined,
       title: title.trim(),
       slug: normalizeSlug(slug),
       excerpt: excerpt.trim(),
@@ -803,6 +810,7 @@ export function ArticleEditor({
       <div className="grid min-h-[calc(100vh-64px)] xl:grid-cols-[minmax(0,1fr)_310px]">
         <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-7 xl:border-r xl:border-pink/10">
           <div className="mx-auto max-w-[850px]">
+            {initialDraft && <p className="mb-5 rounded-xl border border-pink/20 bg-[#fff7fa] p-4 text-[12px] font-bold leading-6 text-ink/70">ガイド原稿を読み込みました。まだ保存されていません。内容を確認して「下書き保存」してください。</p>}
             {guideOptions && <GuideArticleFields value={guideFields} options={guideOptions} articleId={articleId} locked={Boolean(initialArticle?.guide?.eventKey)} onChange={(next) => {
               const previousName = guideOptions.events.find((event) => event.key === guideFields.eventKey)?.name;
               const nextName = guideOptions.events.find((event) => event.key === next.eventKey)?.name;
@@ -1141,7 +1149,7 @@ export function ArticleEditor({
 
             <h2 className="mt-7 text-[14px] font-black text-ink">公開設定</h2>
 
-            {guideFields.enabled && <p className="mt-5 rounded-xl bg-pink/5 p-3 text-[12px] font-bold leading-6 text-ink/65">掲載先：攻略ガイド。公開済みの記事は、準備中を解除すると攻略ガイド一覧に表示されます。</p>}
+            {guideFields.enabled && <p className="mt-5 rounded-xl bg-pink/5 p-3 text-[12px] font-bold leading-6 text-ink/65">掲載先：攻略ガイド一覧とモーダル。公開済みの記事は、準備中を解除すると一覧から記事ページへ移動でき、スケジュール・My Planではモーダルでも読めます。</p>}
             <fieldset className={`mt-5 ${guideFields.enabled ? "hidden" : ""}`}>
               <legend className="flex items-center gap-2 text-[10px] font-black text-ink/50">
                 表示先
@@ -1596,7 +1604,7 @@ export function ArticleEditor({
         </div>
       )}
 
-      {previewOpen && (
+      {previewOpen && guideFields.enabled ? <ParkGuideDialog onClose={() => setPreviewOpen(false)} previewData={{ preparing: false, groups: [{ id: "editing", name: "編集中のガイド（未保存）", guides: [{ id: articleId || "new", title, summary: excerpt, contentHtml }] }] }} /> : previewOpen && (
         <div className="fixed inset-0 z-[70] overflow-y-auto bg-[#fffafd]">
           <ArticlePreview
             title={title}

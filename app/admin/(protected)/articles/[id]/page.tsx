@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleEditor } from "@/components/admin/article-editor";
-import { getGuideEditorOptions } from "@/lib/guides/repository";
 import { listArticleMedia } from "@/lib/articles/media-repository";
 import {
   getAdminArticle,
@@ -9,6 +8,8 @@ import {
   listTags,
 } from "@/lib/articles/repository";
 import { isUuid } from "@/lib/articles/validation";
+import { getGuideEditorOptions } from "@/lib/guides/repository";
+import { createStarterGuideDraft } from "@/lib/guides/starter-drafts";
 import {
   getAdminArticleSeriesAssignment,
   listArticleSeries,
@@ -23,15 +24,17 @@ export const dynamic = "force-dynamic";
 
 export default async function EditArticlePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ template?: string }>;
 }) {
   const { id } = await params;
-  const guideOptions = await getGuideEditorOptions().catch(() => undefined);
   if (!isUuid(id)) notFound();
+  const { template } = await searchParams;
 
   try {
-    const [article, tags, revisions, media, series, assignment] = await Promise.all([
+    const [article, tags, revisions, media, series, assignment, guideOptions] = await Promise.all([
       getAdminArticle(id),
       listTags(),
       listArticleRevisions(id),
@@ -41,12 +44,16 @@ export default async function EditArticlePage({
         seriesId: null,
         seriesOrder: null,
       })),
+      getGuideEditorOptions().catch(() => undefined),
     ]);
     if (!article) notFound();
     return (
       <ArticleEditor
         initialArticle={article}
+        key={`${id}-${template || "saved"}`}
+        initialDraft={template ? createStarterGuideDraft(template) : null}
         guideOptions={guideOptions}
+        setupError={article.guide && !guideOptions ? "攻略ガイドの設定を読み込めませんでした。再読み込みしてください。" : ""}
         availableTags={tags}
         initialRevisions={revisions}
         initialMedia={media}

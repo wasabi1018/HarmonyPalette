@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Save } from "lucide-react";
+import { ParkGuideButton } from "@/components/park-guide";
+import { guidePreviewCatalog } from "@/lib/guides/model";
+import { starterGuideCatalog, starterGuideOptions } from "@/lib/guides/starter-drafts";
 import type { GuideManagementData, GuideConfiguration } from "@/lib/guides/model";
 
 function moved<T>(items: T[], index: number, direction: number): T[] {
@@ -57,8 +60,20 @@ export function GuideManager({ initialData }: { initialData: GuideManagementData
       <section className="rounded-2xl border border-pink/15 bg-white p-4 sm:p-5" aria-labelledby="guide-preparing-heading">
         <h2 id="guide-preparing-heading" className="text-[17px] font-black text-ink">公開ページの表示</h2>
         <label className="mt-4 flex min-h-11 cursor-pointer items-center gap-3 text-[14px] font-bold text-ink"><input type="checkbox" checked={data.preparing} onChange={(event) => setData((current) => ({ ...current, preparing: event.target.checked }))} className="h-5 w-5 accent-pink" />準備中を表示</label>
-        <p className="mt-2 text-[12px] leading-6 text-ink/60">オン：攻略ガイドページに「準備中」を表示します。オフ：公開済みの記事をカテゴリ別に表示します。記事の公開状態は変更しません。</p>
-        <Link href="/guides" target="_blank" className="mt-2 inline-flex min-h-11 items-center text-[13px] font-bold text-pink hover:underline">公開ページを確認 ↗</Link>
+        <p className="mt-2 text-[12px] leading-6 text-ink/60">オン：ガイド一覧とモーダルに「準備中」を表示します。オフ：公開済みの記事をカテゴリ・表示順に並べます。一覧からは記事ページへ移動し、スケジュール・My Planではモーダルで確認できます。下書きや予約公開前の記事は表示しません。</p>
+        <Link href="/guides" className="mt-2 inline-flex min-h-11 items-center text-[13px] font-bold text-pink hover:underline">ガイド一覧を確認</Link>
+        <ParkGuideButton className="mt-4" label="モーダルをプレビュー（下書きを含む）" previewData={guidePreviewCatalog(data)} />
+        <p className="mt-2 text-[12px] leading-6 text-ink/60">プレビューには下書きと保存前の並び順も表示します。プレビューを開いても、公開状態は変わりません。</p>
+      </section>
+      <section className="rounded-2xl border border-pink/15 bg-white p-4 sm:p-5" aria-labelledby="guide-starter-heading">
+        <h2 id="guide-starter-heading" className="text-[17px] font-black text-ink">今回のガイド原稿</h2>
+        <p className="mt-2 text-[12px] leading-6 text-ink/60">4本の原稿を読み込んで編集できます。読み込みだけでは保存・公開されません。編集後に「下書き保存」で保存してください。既存の記事に読み込む場合も、保存するまで元の本文は変わりません。</p>
+        <ul className="mt-3 divide-y divide-pink/10">{starterGuideOptions.map((starter) => {
+          const existing = data.guides.find((guide) => guide.slug === starter.slug || (starter.eventKey && guide.eventKey === starter.eventKey));
+          const href = existing ? `/admin/articles/${existing.id}?template=${starter.id}` : `/admin/articles/new?type=strategy&mode=${starter.eventKey ? "event" : "custom"}&template=${starter.id}${starter.eventKey ? `&event=${encodeURIComponent(starter.eventKey)}` : ""}`;
+          return <li key={starter.id} className="flex flex-wrap items-center justify-between gap-2 py-3"><span className="text-[14px] font-bold text-ink">{starter.title}</span><Link href={href} className={buttonClass}>{existing ? "原稿を読み込んで編集" : "原稿から作成"}</Link></li>;
+        })}</ul>
+        <ParkGuideButton className="mt-3" label="4本の原稿をプレビュー（未保存）" previewData={starterGuideCatalog} />
       </section>
       <section className="rounded-2xl border border-pink/15 bg-white p-4 sm:p-5" aria-labelledby="guide-create-heading">
         <h2 id="guide-create-heading" className="text-[17px] font-black text-ink">攻略記事を作成・編集</h2>

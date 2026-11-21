@@ -1,0 +1,23 @@
+{
+  "clientHeight": 718,
+  "closeVisible": true,
+  "dialog": {
+    "bottom": 844,
+    "height": 806,
+    "left": 0,
+    "right": 390.3999938964844,
+    "top": 38,
+    "width": 390.3999938964844,
+    "x": 0,
+    "y": 38
+  },
+  "horizontalOverflow": false,
+  "openGuides": [
+    "harmony-train"
+  ],
+  "scrollHeight": 1535,
+  "viewport": {
+    "height": 844,
+    "width": 390
+  }
+}

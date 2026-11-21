@@ -5,8 +5,22 @@ export type GuideEditorOptions = { categories: GuideCategory[]; events: GuideEve
 export type GuideArticle = {
   id: string; title: string; slug: string; excerpt: string;
   status: "draft" | "scheduled" | "published";
+  contentHtml?: string;
   eventKey: string | null; categoryId: string | null; displayOrder: number;
 };
+
+export function guidePreviewCatalog(data: GuideManagementData) {
+  const assignments = new Map(data.articles.map((item) => [item.id, item]));
+  const guides = data.guides.map((guide) => ({ ...guide, ...assignments.get(guide.id) }));
+  return {
+    preparing: false,
+    groups: groupGuideArticles(data.categories, guides).map((group) => ({
+      id: group.id,
+      name: group.name,
+      guides: group.articles.map((article) => ({ id: article.id, title: article.title, summary: article.excerpt, contentHtml: article.contentHtml || "<p>本文はまだありません。</p>" })),
+    })),
+  };
+}
 export type GuideConfiguration = {
   preparing: boolean; updatedAt: string | null;
   categories: GuideCategory[];
