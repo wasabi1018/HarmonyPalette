@@ -888,3 +888,7 @@ TOPとガイド一覧は記事ページへ移動し、日別予定・キャラ�
 ## 保存済みガイドの原稿一覧 — 2026-11-23
 
 原稿欄を初期4本の固定表示から、保存済み記事と未保存の初期原稿をまとめた一覧へ変更。状態を表示し、保存済みの記事は最新本文の編集画面へ進める。追加のショー2本を含む6件の一覧・プレビューをPC 1280pxとスマートフォン390pxで確認し、横幅超過・console error/warnなし。テスト20件・lint・production build成功。画像と確認範囲は `audit/guide-draft-list-2026-11-23/qa.md`。
+
+## ガイド一覧内で本文を展開 — 2026-11-23
+
+一覧のタイトルから記事ページへの遷移をやめ、My Planと共通のdetails/summaryで本文を展開する。カテゴリ・順序と個別記事への補助リンクを保持。PC 1280px・スマートフォン390pxで複数同時展開、Enter/Space、URL保持、横幅超過なし・console error/warnなしを確認。本文とリンクは初期HTMLにも出力される。テスト20件・lint・production build成功。証跡は `audit/guide-directory-accordion-2026-11-23/qa.md`。

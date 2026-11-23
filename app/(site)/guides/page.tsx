@@ -33,7 +33,7 @@ export default async function GuidesPage() {
     <div className="mx-auto max-w-[860px] px-4 py-8 sm:px-6 sm:py-12">
       <nav aria-label="パンくずリスト" className="mb-5 text-[12px] text-ink/60"><Link href="/" className="hover:text-pink">ホーム</Link><span aria-hidden="true" className="mx-2">›</span><span aria-current="page">攻略ガイド</span></nav>
       <h1 className="flex items-center gap-3 font-display text-[28px] font-semibold text-ink sm:text-[36px]"><BookOpen className="text-pink" aria-hidden="true" />攻略ガイド</h1>
-      <p className="mb-6 mt-3 text-[13px] leading-7 text-ink/65">気になるガイドを選んで、詳しい回り方や注意点を確認できます。</p>
+      <p className="mb-6 mt-3 text-[13px] leading-7 text-ink/65">タイトルを選ぶと、このページ内で内容が開きます。複数のガイドを開いて読めます。</p>
       <GuideArticleDirectory data={data} />
       <p className="mt-6 text-[11px] leading-6 text-ink/60">{PARK_GUIDE_NOTE}</p>
     </div>

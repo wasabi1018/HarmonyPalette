@@ -9,7 +9,7 @@ import type { ParkGuideCatalog } from "../park-guides";
 
 (globalThis as typeof globalThis & { React: typeof React }).React = React;
 
-const guide = { id: "guide", title: "ファンスタジオ", summary: "整理券の案内", articleUrl: "/articles/fan-studio", contentHtml: "<p>記事ページだけに表示する本文</p>" };
+const guide = { id: "guide", title: "ファンスタジオ", summary: "整理券の案内", articleUrl: "/articles/fan-studio", contentHtml: "<p>一覧でも展開して読める本文</p>" };
 let catalog: ParkGuideCatalog;
 let unavailable = false;
 let articles: { slug: string; updatedAt: string; guide: { eventKey: null; categoryId: null; displayOrder: number } }[];
@@ -32,11 +32,17 @@ beforeEach(() => {
   articles = [{ slug: "fan-studio", updatedAt: "2026-11-22T00:00:00Z", guide: { eventKey: null, categoryId: null, displayOrder: 0 } }];
 });
 
-test("guide directory contains real article links in server HTML without requiring a click or JavaScript", () => {
+test("guide directory expands native disclosures while keeping bodies and optional article links in server HTML", () => {
   const html = renderToStaticMarkup(createElement(GuideArticleDirectory, { data: catalog }));
   assert.match(html, /href="\/articles\/fan-studio"/);
   assert.match(html, /ファンスタジオ/);
-  assert.doesNotMatch(html, /<details|記事ページだけに表示する本文/);
+  assert.match(html, /<details/);
+  assert.match(html, /一覧でも展開して読める本文/);
+  const summary = html.match(/<summary[\s\S]*?<\/summary>/)?.[0];
+  assert.ok(summary);
+  assert.match(summary, /ファンスタジオ/);
+  assert.doesNotMatch(summary, /<a\b/);
+  assert.doesNotMatch(html, /<details[^>]*\bopen(?:[=>\s])/);
 });
 
 test("ready guide directory allows indexing and keeps its canonical URL", async () => {
