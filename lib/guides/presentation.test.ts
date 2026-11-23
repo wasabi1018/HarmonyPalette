@@ -32,9 +32,9 @@ beforeEach(() => {
   articles = [{ slug: "fan-studio", updatedAt: "2026-11-22T00:00:00Z", guide: { eventKey: null, categoryId: null, displayOrder: 0 } }];
 });
 
-test("guide directory expands native disclosures while keeping bodies and optional article links in server HTML", () => {
+test("guide directory keeps full content in native disclosures without article navigation", () => {
   const html = renderToStaticMarkup(createElement(GuideArticleDirectory, { data: catalog }));
-  assert.match(html, /href="\/articles\/fan-studio"/);
+  assert.doesNotMatch(html, /記事ページで読む|href="\/articles\/fan-studio"/);
   assert.match(html, /ファンスタジオ/);
   assert.match(html, /<details/);
   assert.match(html, /一覧でも展開して読める本文/);

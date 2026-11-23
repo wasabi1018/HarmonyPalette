@@ -35,7 +35,6 @@ export function ParkGuideContents({ guides }: { guides: readonly ParkGuide[] }) 
                 </div>
               </section>
             ))}
-            {guide.articleUrl && <Link href={guide.articleUrl} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-pink/20 bg-[#fff7fa] px-4 text-[13px] font-bold text-pink transition-colors hover:bg-pink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink">記事ページで読む<ChevronRight size={16} aria-hidden="true" /></Link>}
           </div>
         </details>
       ))}
