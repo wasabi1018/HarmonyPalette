@@ -33,8 +33,8 @@ export function createStarterGuideDraft(id: string): ArticleInput | null {
   content.push({ type: "paragraph", content: [{ type: "text", text: PARK_GUIDE_NOTE }] });
   html.push(`<p>${escapeHtml(PARK_GUIDE_NOTE)}</p>`);
   return {
-    title: `${guide.title}の攻略ガイド`, slug: slugs[id], excerpt: guide.summary,
-    seoTitle: `${guide.title}の攻略ガイド`, seoDescription: guide.summary,
+    title: guide.title, slug: slugs[id], excerpt: guide.summary,
+    seoTitle: guide.title, seoDescription: guide.summary,
     contentJson: { type: "doc", content }, contentHtml: html.join(""), coverImageUrl: "",
     status: "draft", destination: "articles", publishedAt: null,
     tagIds: [], seriesId: null, seriesOrder: null,

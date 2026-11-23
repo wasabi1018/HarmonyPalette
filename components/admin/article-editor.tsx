@@ -293,7 +293,7 @@ export function ArticleEditor({
   const router = useRouter();
   const initialContent = initialDraft ?? initialArticle;
   const [articleId, setArticleId] = useState(initialArticle?.id || "");
-  const [title, setTitle] = useState(initialContent?.title || (initialGuide && initialEventKey ? `${guideOptions?.events.find((event) => event.key === initialEventKey)?.name || "イベント"}の攻略ガイド` : ""));
+  const [title, setTitle] = useState(initialContent?.title || (initialGuide && initialEventKey ? guideOptions?.events.find((event) => event.key === initialEventKey)?.name || "イベント" : ""));
   const [guideFields, setGuideFields] = useState<GuideFieldValue>({ enabled: Boolean(initialArticle?.guide || initialDraft?.guide) || initialGuide, mode: (initialArticle?.guide ?? initialDraft?.guide) ? ((initialArticle?.guide ?? initialDraft?.guide)?.eventKey ? "event" : "custom") : initialGuideMode, eventKey: initialArticle?.guide?.eventKey ?? initialDraft?.guide?.eventKey ?? initialEventKey, categoryId: initialArticle?.guide?.categoryId ?? initialDraft?.guide?.categoryId ?? "" });
   const [slug, setSlug] = useState(initialArticle?.slug || initialDraft?.slug || fallbackSlug());
   const [slugTouched, setSlugTouched] = useState(Boolean(initialArticle?.slug || initialDraft?.slug));
@@ -814,7 +814,7 @@ export function ArticleEditor({
             {guideOptions && <GuideArticleFields value={guideFields} options={guideOptions} articleId={articleId} locked={Boolean(initialArticle?.guide?.eventKey)} onChange={(next) => {
               const previousName = guideOptions.events.find((event) => event.key === guideFields.eventKey)?.name;
               const nextName = guideOptions.events.find((event) => event.key === next.eventKey)?.name;
-              if (next.mode === "event" && nextName && (!title.trim() || title === `${previousName}の攻略ガイド`)) setTitle(`${nextName}の攻略ガイド`);
+              if (next.mode === "event" && nextName && (!title.trim() || title === previousName || title === `${previousName}の攻略ガイド`)) setTitle(nextName);
               setGuideFields(next); markDirty();
             }} />}
             <label id="quality-title" className="block scroll-mt-28">
