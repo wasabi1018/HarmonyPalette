@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Save } from "lucide-react";
 import { ParkGuideButton } from "@/components/park-guide";
 import { guidePreviewCatalog } from "@/lib/guides/model";
-import { starterGuideCatalog, starterGuideOptions } from "@/lib/guides/starter-drafts";
+import { guideManuscripts } from "@/lib/guides/manuscripts";
 import type { GuideManagementData, GuideConfiguration } from "@/lib/guides/model";
 
 function moved<T>(items: T[], index: number, direction: number): T[] {
@@ -30,6 +30,7 @@ export function GuideManager({ initialData }: { initialData: GuideManagementData
   const guideById = new Map(data.guides.map((guide) => [guide.id, guide]));
   const categoryArticles = data.articles.filter((item) => (item.categoryId ?? "") === selected).sort((a, b) => a.displayOrder - b.displayOrder || (guideById.get(a.id)?.title ?? "").localeCompare(guideById.get(b.id)?.title ?? "", "ja") || a.id.localeCompare(b.id));
   const existing = data.guides.find((guide) => guide.eventKey === eventKey);
+  const manuscripts = guideManuscripts(data.guides);
   const changed = data.preparing !== savedData.preparing
     || JSON.stringify(data.categories) !== JSON.stringify(savedData.categories)
     || JSON.stringify(data.articles) !== JSON.stringify(savedData.articles);
@@ -67,13 +68,9 @@ export function GuideManager({ initialData }: { initialData: GuideManagementData
       </section>
       <section className="rounded-2xl border border-pink/15 bg-white p-4 sm:p-5" aria-labelledby="guide-starter-heading">
         <h2 id="guide-starter-heading" className="text-[17px] font-black text-ink">今回のガイド原稿</h2>
-        <p className="mt-2 text-[12px] leading-6 text-ink/60">4本の原稿を読み込んで編集できます。読み込みだけでは保存・公開されません。編集後に「下書き保存」で保存してください。既存の記事に読み込む場合も、保存するまで元の本文は変わりません。</p>
-        <ul className="mt-3 divide-y divide-pink/10">{starterGuideOptions.map((starter) => {
-          const existing = data.guides.find((guide) => guide.slug === starter.slug || (starter.eventKey && guide.eventKey === starter.eventKey));
-          const href = existing ? `/admin/articles/${existing.id}?template=${starter.id}` : `/admin/articles/new?type=strategy&mode=${starter.eventKey ? "event" : "custom"}&template=${starter.id}${starter.eventKey ? `&event=${encodeURIComponent(starter.eventKey)}` : ""}`;
-          return <li key={starter.id} className="flex flex-wrap items-center justify-between gap-2 py-3"><span className="text-[14px] font-bold text-ink">{starter.title}</span><Link href={href} className={buttonClass}>{existing ? "原稿を読み込んで編集" : "原稿から作成"}</Link></li>;
-        })}</ul>
-        <ParkGuideButton className="mt-3" label="4本の原稿をプレビュー（未保存）" previewData={starterGuideCatalog} />
+        <p className="mt-2 text-[12px] leading-6 text-ink/60">保存済みのガイドと、まだ保存していない原稿をまとめて表示します。「編集」から保存済みの本文を開けます。「原稿から作成」は、読み込んだ内容を確認して下書き保存してください。プレビューだけでは保存・公開されません。</p>
+        <ul className="mt-3 divide-y divide-pink/10">{manuscripts.entries.map((entry) => <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 py-3"><div className="min-w-0 flex-1 basis-48"><span className="block break-words text-[14px] font-bold text-ink">{entry.title}</span><span className="mt-1 block text-[11px] text-ink/55">{entry.status ? ({ draft: "下書き", published: "公開中", scheduled: "予約公開" })[entry.status] : "未保存の原稿"}</span></div><Link href={entry.href} className={`${buttonClass} shrink-0`}>{entry.status ? "編集" : "原稿から作成"}</Link></li>)}</ul>
+        <ParkGuideButton className="mt-3" label={`${manuscripts.entries.length}本のガイドをプレビュー`} previewData={manuscripts.previewData} />
       </section>
       <section className="rounded-2xl border border-pink/15 bg-white p-4 sm:p-5" aria-labelledby="guide-create-heading">
         <h2 id="guide-create-heading" className="text-[17px] font-black text-ink">攻略記事を作成・編集</h2>
