@@ -15,7 +15,7 @@
     "test:crowd-forecast": "node --experimental-test-module-mocks --import tsx --test lib/crowd-forecast/model.test.ts lib/crowd-forecast/api.integration.test.ts lib/crowd-forecast/daily-adjustments.test.ts",
     "test:birthday": "tsx --test lib/character-birthday.test.ts",
     "test:park-operating-days": "tsx --test lib/official-import/park-operating-days.test.ts",
-    "test:official-monitor": "tsx --test lib/official-monitor/diff.test.ts lib/official-monitor/probe.test.ts lib/official-monitor/runner.test.ts lib/official-monitor/summary.test.ts",
+    "test:official-monitor": "node --experimental-test-module-mocks --import tsx --test lib/official-monitor/*.test.ts",
     "test:schedule-calendar": "tsx --test lib/schedule-calendar.test.ts components/schedule-month-calendar.test.tsx",
     "test:character-recommendation": "tsx --test lib/character-recommendation.test.ts",
     "test:instagram-dm": "tsx --test lib/instagram-dm/*.test.ts",

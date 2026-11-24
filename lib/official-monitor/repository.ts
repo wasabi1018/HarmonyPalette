@@ -12,6 +12,7 @@ import type {
 } from "@/lib/official-monitor/types";
 import { isNotificationOnlyEvent } from "@/lib/official-monitor/types";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { nextMonitorRetryAt } from "./schedule";
 
 function client() {
   const value = getSupabaseAdminClient();
@@ -357,14 +358,15 @@ export async function markMonitorStarted(nextRunAt: string) {
   if (error) throw new Error(`監視開始時刻を記録できませんでした: ${error.message}`);
 }
 
-export async function markMonitorFinished(errorMessage?: string) {
+export async function markMonitorFinished(errorMessage?: string, now = new Date()) {
   const db = client();
   const current = await getOfficialMonitorSettings();
   const { error } = await db.from("official_monitor_settings").update(errorMessage ? {
     last_error: errorMessage,
     consecutive_failures: current.consecutiveFailures + 1,
+    next_run_at: nextMonitorRetryAt(current.scheduledTime, now),
   } : {
-    last_succeeded_at: new Date().toISOString(),
+    last_succeeded_at: now.toISOString(),
     last_error: null,
     consecutive_failures: 0,
   }).eq("id", true);

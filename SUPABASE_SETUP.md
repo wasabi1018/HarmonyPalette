@@ -148,32 +148,31 @@ imported or published automatically; use the manual schedule import screen when
 data needs to be updated.
 Archived official source originals are retained for 45 days by default.
 
-The monitor uses Supabase Cron because Vercel Hobby Cron is limited to one run
-per day. Store the deployed site URL and the same `CRON_SECRET` used by the
-Vercel environment in Supabase Vault, then schedule a lightweight 15-minute call:
+The monitor uses Supabase Cron to check the saved due date inside Postgres every
+15 minutes. It calls Vercel only when monitoring is enabled and `next_run_at` is
+due or unset, so admin time changes remain effective without changing the Cron
+schedule. Store the deployed site URL and the same `CRON_SECRET` used by the
+Vercel environment in Supabase Vault:
 
 ```sql
 select vault.create_secret('https://your-public-site.example', 'harmony_palette_site_url');
 select vault.create_secret('replace-with-the-vercel-cron-secret', 'harmony_palette_cron_secret');
 
-select cron.schedule(
-  'harmony-palette-official-update-monitor',
-  '*/15 * * * *',
-  $$
-  select net.http_post(
-    url := (select decrypted_secret from vault.decrypted_secrets where name = 'harmony_palette_site_url') || '/api/cron/official-updates',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'harmony_palette_cron_secret')
-    ),
-    body := '{}'::jsonb
-  );
-  $$
-);
 ```
 
-The endpoint checks `next_run_at`, so 15-minute calls normally return without
-fetching the official site. Only changed originals are retained; the default
+After deploying the application, run
+`supabase/operations/ensure-official-monitor-cron.sql` in the production SQL
+editor. Re-running it updates only the existing named official-monitor job;
+Instagram DM and weather jobs are unchanged. It leaves the current monitoring
+settings intact and keeps credentials in Vault. The HTTP timeout is 300 seconds
+to allow the monitor to finish within its Vercel function limit.
+
+The endpoint also rechecks `next_run_at`. A failed scheduled check sets its next
+due date to the next 15-minute tick, within the two slots after the configured
+time (normally at most two retries). After that window it waits for the next
+daily run; success also restores normal daily scheduling. Calls that cannot
+start the handler leave the due date unchanged for the next Cron tick. Manual
+checks remain available. Only changed originals are retained; the default
 internal cap is 150MB and can be adjusted in the admin UI. The cap is calculated
 from the entire private source-document bucket.
 
