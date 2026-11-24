@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export const revalidate = 300;
+export const revalidate = 86_400;
 
 export default async function GuidesPage() {
   let data;

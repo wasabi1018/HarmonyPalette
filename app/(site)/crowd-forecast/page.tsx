@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CrowdForecastCalendar } from "@/components/crowd-forecast/calendar";
 import { SiteEventTracker } from "@/components/site-event-tracker";
 import { readPublicForecast } from "@/lib/crowd-forecast/repository";
-export const revalidate = 300;
+export const revalidate = 86_400;
 export const metadata: Metadata = {
   title: "混雑予想",
   description:

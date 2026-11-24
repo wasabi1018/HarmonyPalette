@@ -3,6 +3,7 @@ import "server-only";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 export const PUBLIC_CACHE_REVALIDATE_SECONDS = 300;
+export const PUBLIC_DAILY_CACHE_REVALIDATE_SECONDS = 86_400;
 export const PUBLIC_ARTICLE_CACHE_REVALIDATE_SECONDS = 86_400;
 
 export const PUBLIC_CACHE_TAGS = {

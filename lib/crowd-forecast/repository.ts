@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { unstable_cache } from "next/cache";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
-import { PUBLIC_CACHE_REVALIDATE_SECONDS, PUBLIC_CACHE_TAGS, revalidatePublicCrowdForecastData } from "@/lib/public-cache";
+import { PUBLIC_DAILY_CACHE_REVALIDATE_SECONDS, PUBLIC_CACHE_TAGS, revalidatePublicCrowdForecastData } from "@/lib/public-cache";
 import {
   emptyState,
   japanDay,
@@ -78,7 +78,7 @@ async function write(
 const getCachedPublicForecastState = unstable_cache(
   async () => (await readForecast()).state,
   ["public-crowd-forecast-state-v1"],
-  { revalidate: PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PUBLIC_CACHE_TAGS.crowdForecast] },
+  { revalidate: PUBLIC_DAILY_CACHE_REVALIDATE_SECONDS, tags: [PUBLIC_CACHE_TAGS.crowdForecast] },
 );
 
 export async function readPublicForecast(now = new Date()) {
