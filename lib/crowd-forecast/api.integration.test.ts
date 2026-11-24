@@ -44,6 +44,24 @@ const client = {
   },
 };
 const moduleUrl = (p: string) => pathToFileURL(resolve(__dirname, p));
+const publicCache = new Map<string, { value: unknown; tags: string[] }>();
+let invalidatedTags: string[] = [], invalidatedPaths: string[] = [];
+mock.module("next/cache", {
+  namedExports: {
+    unstable_cache: (callback: (...args: unknown[]) => Promise<unknown>, keys: string[], options: { tags: string[] }) => async (...args: unknown[]) => {
+      const key = JSON.stringify([keys, args]);
+      if (publicCache.has(key)) return structuredClone(publicCache.get(key)!.value);
+      const value = await callback(...args);
+      publicCache.set(key, { value: structuredClone(value), tags: options.tags });
+      return value;
+    },
+    revalidateTag: (tag: string) => {
+      invalidatedTags.push(tag);
+      for (const [key, entry] of publicCache) if (entry.tags.includes(tag)) publicCache.delete(key);
+    },
+    revalidatePath: (path: string) => { invalidatedPaths.push(path); },
+  },
+});
 mock.module("server-only", { defaultExport: {} });
 mock.module(moduleUrl("../supabase/server.ts"), {
   namedExports: {
@@ -141,6 +159,9 @@ beforeEach(async () => {
   authorized = false;
   external = 0;
   reads = 0;
+  publicCache.clear();
+  invalidatedTags = [];
+  invalidatedPaths = [];
 });
 after(async () => {
   await db.close();
@@ -163,6 +184,8 @@ test("公開GETは保存済みデータだけを読み、取得・計算・DB書
   assert.equal(response.status, 200);
   assert.equal(external, 0);
   assert.equal(reads, 1);
+  await publicRoute.GET(new Request(`https://local.test/api/crowd-forecast?date=${tomorrow}`));
+  assert.equal(reads, 1, "repeat public reads share saved state without another DB query");
   assert.equal(
     (
       await db.query<{ revision: number }>(
@@ -226,6 +249,27 @@ test("旧設定・履歴を読み込み時に変換し、保存前のDBと当日
   assert.equal(saved.state.days[tomorrow].breakdown.fan, 1);
 });
 
+test("共有キャッシュがあっても公開DTOの日本日付・表示月はリクエスト時刻で決まる", async () => {
+  const before = await repository.readPublicForecast(new Date("2026-11-30T14:59:00Z"));
+  const after = await repository.readPublicForecast(new Date("2026-11-30T15:01:00Z"));
+  assert.equal(before.today, "2026-11-30");
+  assert.equal(after.today, "2026-12-01");
+  assert.equal(before.months[0], "2026-11");
+  assert.equal(after.months[0], "2026-12");
+  assert.equal(reads, 1);
+});
+
+test("過去月整理の保存も公開キャッシュを更新し、リース中のスキップでは破棄しない", async () => {
+  await repository.readPublicForecast();
+  await repository.cleanupForecast();
+  assert.deepEqual(invalidatedTags, ["public-crowd-forecast"]);
+  await repository.readPublicForecast();
+  assert.equal(reads, 3);
+  await db.exec("reset role; update public.crowd_forecast_state set lease_until=now()+interval '5 minutes'; set role service_role;");
+  assert.equal((await repository.cleanupForecast()).skipped, true);
+  assert.equal(invalidatedTags.length, 1);
+});
+
 test("未認証の保存・取得・cron、別Originの保存を拒否", async () => {
   assert.equal(
     (await adminRoute.GET(new Request("https://local.test"))).status,
@@ -249,6 +293,7 @@ test("未認証の保存・取得・cron、別Originの保存を拒否", async (
 });
 test("設定プレビュー・保存→SQLの原子的保存→公開API（点数なし）まで確認", async () => {
   authorized = true;
+  assert.equal((await repository.readPublicForecast()).days.length, 0);
   const c = structuredClone(DEFAULT_CONFIG);
   c.overrides = [
     {
@@ -268,6 +313,7 @@ test("設定プレビュー・保存→SQLの原子的保存→公開API（点�
     request({ action: "preview", config: c, revision: 0 }),
   );
   assert.equal(preview.status, 200);
+  assert.deepEqual(invalidatedTags, [], "preview must keep the published cache intact");
   assert.equal(
     (
       await db.query<{ revision: number }>(
@@ -281,6 +327,8 @@ test("設定プレビュー・保存→SQLの原子的保存→公開API（点�
       .status,
     200,
   );
+  assert.deepEqual(invalidatedTags, ["public-crowd-forecast"]);
+  assert.deepEqual(invalidatedPaths, ["/crowd-forecast", "/api/crowd-forecast"]);
   const privateState = (await repository.readForecast()).state;
   assert.equal(privateState.days[tomorrow].input.slots, 24);
   assert.equal(privateState.days[tomorrow].threeRooms, true);
@@ -392,8 +440,10 @@ test("古いrevisionでの設定保存は競合を通知し、公開結果を上
     400,
   );
   assert.equal((await repository.readForecast()).revision, 1);
+  assert.equal(invalidatedTags.length, 1, "a rejected save must not invalidate the public cache");
 });
 test("同時ジョブでも1日1回、同じURLを再取得しない", async () => {
+  assert.equal((await repository.readPublicForecast()).days.length, 0);
   const short = readFileSync(resolve(__dirname, "fixtures/short.xml"), "utf8"),
     weekly = readFileSync(resolve(__dirname, "fixtures/weekly.xml"), "utf8");
   const feed = `<feed>${["VPFD51", "VPFW50"].map((t) => `<entry><id>https://www.data.jma.go.jp/developer/xml/data/20261018000000_0_${t}_440000.xml</id><updated>2026-10-18T00:00:00Z</updated></entry>`).join("")}</feed>`;
@@ -415,6 +465,9 @@ test("同時ジョブでも1日1回、同じURLを再取得しない", async () 
   ]);
   assert.equal(result.filter((r) => r.skipped).length, 1);
   assert.equal(external, 3);
+  assert.deepEqual(invalidatedTags, ["public-crowd-forecast"]);
+  assert.deepEqual(invalidatedPaths, ["/crowd-forecast", "/api/crowd-forecast"]);
+  assert.ok((await repository.readPublicForecast()).days.some((day) => day.date === tomorrow), "weather refresh must replace the already-warmed public cache");
   assert.equal((await repository.updateForecast()).skipped, true);
   assert.equal(external, 3);
   const state = await repository.readForecast();

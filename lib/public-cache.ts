@@ -11,6 +11,7 @@ export const PUBLIC_CACHE_TAGS = {
   characters: "public-characters",
   planOptions: "public-plan-options",
   articles: "public-articles",
+  crowdForecast: "public-crowd-forecast",
 } as const;
 
 function revalidatePaths(paths: string[]) {
@@ -33,6 +34,11 @@ export function revalidatePublicCharacterData() {
 export function revalidatePublicPlanOptions() {
   revalidateTag(PUBLIC_CACHE_TAGS.planOptions);
   revalidatePath("/plan");
+}
+
+export function revalidatePublicCrowdForecastData() {
+  revalidateTag(PUBLIC_CACHE_TAGS.crowdForecast);
+  revalidatePaths(["/crowd-forecast", "/api/crowd-forecast"]);
 }
 
 export function revalidatePublicArticleData(slug?: string) {

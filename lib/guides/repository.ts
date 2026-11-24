@@ -1,4 +1,6 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
+import { PUBLIC_CACHE_REVALIDATE_SECONDS, PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { sanitizeArticleHtml } from "@/lib/articles/validation";
 import { proxyArticleImageSources } from "@/lib/articles/media-url";
 import type { ParkGuideCatalog } from "@/lib/park-guides";
@@ -73,7 +75,7 @@ async function listGuideArticles(adminMode = false): Promise<GuideArticle[]> {
 }
 export async function listPublishedGuideArticles() { return listGuideArticles(false); }
 
-export async function getPublicGuideCatalog(): Promise<ParkGuideCatalog> {
+async function readPublicGuideCatalog(): Promise<ParkGuideCatalog> {
   const { preparing } = await getGuideSettings();
   if (preparing) return { preparing: true, groups: [] };
   const [categories, articles] = await Promise.all([listGuideCategories(), listPublishedGuideArticles()]);
@@ -86,3 +88,11 @@ export async function getPublicGuideCatalog(): Promise<ParkGuideCatalog> {
     })),
   };
 }
+
+// Article saves, publishing and guide configuration changes all invalidate the
+// existing public-articles tag, including the directory and modal data.
+export const getPublicGuideCatalog = unstable_cache(
+  readPublicGuideCatalog,
+  ["public-guide-catalog-v1"],
+  { revalidate: PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PUBLIC_CACHE_TAGS.articles] },
+);

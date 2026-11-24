@@ -52,6 +52,18 @@ class Query implements PromiseLike<{ data: Row[] | Row | null; error: null | { m
 
 const client = { from: (table: string) => new Query(table), rpc: async () => ({ data: null, error: { code: "PGRST202", message: "not installed" } }) };
 const moduleUrl = (file: string) => pathToFileURL(resolve(__dirname, file));
+const publicCache = new Map<string, { value: unknown; tags: string[] }>();
+mock.module("next/cache", { namedExports: {
+  unstable_cache: (callback: (...args: unknown[]) => Promise<unknown>, keys: string[], options: { tags: string[] }) => async (...args: unknown[]) => {
+    const key = JSON.stringify([keys, args]);
+    if (publicCache.has(key)) return structuredClone(publicCache.get(key)!.value);
+    const value = await callback(...args);
+    publicCache.set(key, { value: structuredClone(value), tags: options.tags });
+    return value;
+  },
+  revalidateTag: (tag: string) => { for (const [key, entry] of publicCache) if (entry.tags.includes(tag)) publicCache.delete(key); },
+  revalidatePath: () => {},
+} });
 mock.module("server-only", { defaultExport: {} });
 mock.module(moduleUrl("../supabase/server.ts"), { namedExports: { getSupabaseAdminClient: () => configured ? client : null, getSupabaseReadClient: () => configured ? client : null } });
 
@@ -62,6 +74,7 @@ before(async () => {
   articles = await import(moduleUrl("../articles/repository.ts").href);
 });
 beforeEach(() => {
+  publicCache.clear();
   configured = true; failArticles = false; reads = []; writes = [];
   tables = { guide_settings: [{ id: true, preparing: false, updated_at: "2026-11-21T00:00:00Z" }], guide_categories: [{ id: "22222222-2222-4222-8222-222222222222", name: "園内", display_order: 0 }], articles: [], article_tags: [], article_revisions: [], schedule_items: [] };
 });
@@ -73,6 +86,7 @@ test("preparing and missing configuration never return article bodies", async ()
   assert.deepEqual(await guides.getPublicGuideCatalog(), { preparing: true, groups: [] });
   assert.ok(!reads.includes("articles"));
   configured = false;
+  publicCache.clear();
   assert.deepEqual(await guides.getPublicGuideCatalog(), { preparing: true, groups: [] });
 });
 
@@ -91,7 +105,26 @@ test("all guide bodies are paginated beyond 1000 rows and backend errors remain 
   tables.articles = Array.from({ length: 1001 }, (_, index) => row(`guide-${String(index).padStart(4, "0")}`));
   assert.equal((await guides.getPublicGuideCatalog()).groups[0].guides.length, 1001);
   failArticles = true;
+  publicCache.clear();
   await assert.rejects(guides.getPublicGuideCatalog(), /読み込めません/);
+});
+
+test("guide reads reuse sanitized content and admin article invalidation immediately refreshes it", async () => {
+  const { revalidatePublicArticleData } = await import(moduleUrl("../public-cache.ts").href);
+  tables.articles = [row("visible")];
+  await guides.getPublicGuideCatalog();
+  const originalReadCount = reads.length;
+  tables.articles[0].content_html = "<p>保存後のガイド</p>";
+  const cached = await guides.getPublicGuideCatalog();
+  assert.equal(reads.length, originalReadCount);
+  assert.doesNotMatch(cached.groups[0].guides[0].contentHtml!, /保存後/);
+  revalidatePublicArticleData("visible");
+  const refreshed = await guides.getPublicGuideCatalog();
+  assert.match(refreshed.groups[0].guides[0].contentHtml!, /保存後のガイド/);
+  assert.ok(reads.length > originalReadCount);
+  tables.guide_settings[0].preparing = true;
+  revalidatePublicArticleData();
+  assert.deepEqual(await guides.getPublicGuideCatalog(), { preparing: true, groups: [] });
 });
 
 test("body edits preserve event identity and manager order, including legacy requests and revision restoration", async () => {

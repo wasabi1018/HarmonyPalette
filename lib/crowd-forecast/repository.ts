@@ -1,6 +1,8 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { unstable_cache } from "next/cache";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { PUBLIC_CACHE_REVALIDATE_SECONDS, PUBLIC_CACHE_TAGS, revalidatePublicCrowdForecastData } from "@/lib/public-cache";
 import {
   emptyState,
   japanDay,
@@ -66,11 +68,22 @@ async function write(
     throw new Error(
       "他の更新が行われました。再読み込みしてから保存してください。",
     );
-  return unpack(data[0] as Row);
+  const saved = unpack(data[0] as Row);
+  revalidatePublicCrowdForecastData();
+  return saved;
 }
+
+// Cache the saved state, not the time-dependent public projection: midnight and
+// weather expiry must still be evaluated against the time of each API request.
+const getCachedPublicForecastState = unstable_cache(
+  async () => (await readForecast()).state,
+  ["public-crowd-forecast-state-v1"],
+  { revalidate: PUBLIC_CACHE_REVALIDATE_SECONDS, tags: [PUBLIC_CACHE_TAGS.crowdForecast] },
+);
+
 export async function readPublicForecast(now = new Date()) {
   try {
-    return projectPublic((await readForecast()).state, now);
+    return projectPublic(await getCachedPublicForecastState(), now);
   } catch {
     return projectPublic(emptyState(), now);
   }
