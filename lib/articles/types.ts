@@ -1,4 +1,5 @@
 import type { GuideAssignment } from "@/lib/guides/model";
+import type { ArticleTravel } from "@/lib/travel/spots";
 export type ArticleStatus = "draft" | "scheduled" | "published";
 export type ArticleDestination = "articles" | "guide";
 
@@ -111,6 +112,7 @@ export type ArticleSummary = {
 };
 
 export type ArticleRecord = ArticleSummary & {
+  travel?: ArticleTravel;
   contentJson: Record<string, unknown>;
   contentHtml: string;
 };
@@ -126,6 +128,7 @@ export type ArticleRevision = {
 
 export type ArticleInput = {
   guide?: GuideAssignment | null;
+  travel?: ArticleTravel;
   title: string;
   slug: string;
   excerpt: string;

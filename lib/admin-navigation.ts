@@ -6,6 +6,7 @@ import {
   CalendarDays,
   FileText,
   Home,
+  Hotel,
   Images,
   Instagram,
   Link2,
@@ -28,6 +29,11 @@ type AdminSection = {
 };
 
 export const adminSections: readonly AdminSection[] = [
+  {
+    href: "/admin/hotels", label: "周辺ホテル", icon: Hotel,
+    title: "周辺ホテル管理", description: "ホテル情報、紹介記事、予約リンク、PR掲載を管理",
+    tone: "pink",
+  },
   {
     href: "/admin/guides", label: "攻略ガイド", icon: BookCopy,
     title: "攻略ガイド管理", description: "攻略記事、カテゴリ・表示順、準備中表示を管理",

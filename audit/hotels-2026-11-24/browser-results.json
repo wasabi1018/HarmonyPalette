@@ -1,0 +1,112 @@
+{
+  "localOnly": true,
+  "app": "http://127.0.0.1:3099",
+  "viewports": [
+    1280,
+    390,
+    320
+  ],
+  "checks": [
+    {
+      "name": "six hotels rendered from isolated database",
+      "passed": true
+    },
+    {
+      "name": "unknown travel times displayed honestly",
+      "passed": true
+    },
+    {
+      "name": "booking links sponsored",
+      "passed": true
+    },
+    {
+      "name": "390px layout has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "multiple filters use AND",
+      "passed": true
+    },
+    {
+      "name": "nearest hotel first",
+      "passed": true
+    },
+    {
+      "name": "filters persist in fragment",
+      "passed": true
+    },
+    {
+      "name": "area filter combines with sort",
+      "passed": true
+    },
+    {
+      "name": "detail has sourced travel time",
+      "passed": true
+    },
+    {
+      "name": "390px detail has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "320px list has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "320px admin has no page overflow",
+      "passed": true
+    },
+    {
+      "name": "admin create saved and reloaded",
+      "passed": true
+    },
+    {
+      "name": "delete and restore returns hotel to draft",
+      "passed": true
+    },
+    {
+      "name": "uploaded draft photo stays private; authenticated preview works",
+      "passed": true
+    },
+    {
+      "name": "paid PR has a separate labelled placement",
+      "passed": true
+    },
+    {
+      "name": "PR priority automatically expires without page reload",
+      "passed": true
+    },
+    {
+      "name": "same-origin hotel metrics batch reaches existing API",
+      "passed": true
+    },
+    {
+      "name": "hotel guide entry on /",
+      "passed": true
+    },
+    {
+      "name": "SPA navigation retains source home",
+      "passed": true
+    },
+    {
+      "name": "hotel guide entry on /crowd-forecast",
+      "passed": true
+    },
+    {
+      "name": "SPA navigation retains source crowd",
+      "passed": true
+    },
+    {
+      "name": "hotel guide entry on /plan",
+      "passed": true
+    },
+    {
+      "name": "SPA navigation retains source plan",
+      "passed": true
+    },
+    {
+      "name": "no application JavaScript exceptions",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

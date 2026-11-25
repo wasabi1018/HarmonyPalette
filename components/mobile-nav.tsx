@@ -38,7 +38,7 @@ export function MobileNav() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               {menuItems.map((item) => (
-                <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="flex min-h-12 items-center justify-between rounded-xl bg-[#fff9fb] px-3 py-3 text-xs font-black text-ink">
+                <Link key={item.href} href={item.href} data-hotel-source={item.href === "/hotels" ? "navigation" : undefined} onClick={() => setMenuOpen(false)} className="flex min-h-12 items-center justify-between rounded-xl bg-[#fff9fb] px-3 py-3 text-xs font-black text-ink">
                   <span>{item.label}</span>
                   <ChevronRight size={14} className="text-pink" aria-hidden="true" />
                 </Link>

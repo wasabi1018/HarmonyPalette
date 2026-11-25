@@ -1,0 +1,104 @@
+{
+  "localOnly": true,
+  "checks": [
+    {
+      "name": "near sort restored",
+      "passed": true
+    },
+    {
+      "name": "no mobile overflow",
+      "passed": true
+    },
+    {
+      "name": "booking attributes preserved",
+      "passed": true
+    },
+    {
+      "name": "booking touch targets",
+      "passed": true
+    },
+    {
+      "name": "all conditions open",
+      "passed": true
+    },
+    {
+      "name": "focus restored on close",
+      "passed": true
+    },
+    {
+      "name": "three verified nearby hotels",
+      "passed": true
+    },
+    {
+      "name": "multiple tags AND",
+      "passed": true
+    },
+    {
+      "name": "area filter",
+      "passed": true
+    },
+    {
+      "name": "multiple areas OR",
+      "passed": true
+    },
+    {
+      "name": "empty result recovery",
+      "passed": true
+    },
+    {
+      "name": "sort preserved on clear",
+      "passed": true
+    },
+    {
+      "name": "editorial recommendations expand",
+      "passed": true
+    },
+    {
+      "name": "320px no overflow",
+      "passed": true
+    },
+    {
+      "name": "selected chips fit at 320px",
+      "passed": true
+    },
+    {
+      "name": "tablet no overflow",
+      "passed": true
+    },
+    {
+      "name": "desktop no overflow",
+      "passed": true
+    },
+    {
+      "name": "detail fits mobile",
+      "passed": true
+    },
+    {
+      "name": "catalog styling does not leak to detail",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "consoleMessages": [],
+  "metrics": {
+    "width": 390,
+    "height": 845,
+    "rows": [
+      {
+        "hotel": "fico-hiji",
+        "y": 256.9375,
+        "height": 204.28125
+      },
+      {
+        "hotel": "grand-mercure-beppu-bay",
+        "y": 461.21875,
+        "height": 226.03125
+      },
+      {
+        "hotel": "grandvrio-beppuwan-wakura",
+        "y": 687.25,
+        "height": 204.28125
+      }
+    ]
+  }
+}

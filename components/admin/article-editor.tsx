@@ -56,6 +56,8 @@ import { articleLayouts, createArticleLayoutContent, type ApplyLayoutImage } fro
 import { GuideArticleFields, type GuideFieldValue } from "@/components/admin/guide-article-fields";
 import type { GuideEditorOptions } from "@/lib/guides/model";
 import { ParkGuideDialog } from "@/components/park-guide";
+import { ArticleTravelFields } from "@/components/admin/article-travel-fields";
+import { EMPTY_ARTICLE_TRAVEL } from "@/lib/travel/spots";
 import { ArticleQualityPanel } from "@/components/admin/article-quality-panel";
 import {
   assessArticleQuality,
@@ -311,6 +313,7 @@ export function ArticleEditor({
   );
   const [seriesId, setSeriesId] = useState(initialSeriesId || "");
   const [seriesOrder, setSeriesOrder] = useState(initialSeriesOrder || 1);
+  const [travel, setTravel] = useState(initialArticle?.travel || EMPTY_ARTICLE_TRAVEL);
   const [tagQuery, setTagQuery] = useState("");
   const [saveState, setSaveState] = useState<SaveState>(initialDraft ? "dirty" : "idle");
   const [linkChecks, setLinkChecks] = useState<ArticleLinkCheck[]>([]);
@@ -646,6 +649,7 @@ export function ArticleEditor({
       tagIds: selectedTagIds,
       seriesId: guideFields.enabled ? null : seriesId || null,
       seriesOrder: guideFields.enabled ? null : seriesId ? seriesOrder : null,
+      travel,
     };
 
     try {
@@ -1130,6 +1134,7 @@ export function ArticleEditor({
 
         <aside className="bg-[#fffcfd] px-4 py-6 sm:px-6 xl:px-5">
           <div className="mx-auto max-w-[850px] xl:sticky xl:top-[88px] xl:max-w-none">
+            {!guideFields.enabled && <ArticleTravelFields value={travel} onChange={value => { setTravel(value); markDirty(); }} />}
             <ArticleQualityPanel
               report={qualityReport}
               checkingLinks={checkingLinks}

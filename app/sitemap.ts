@@ -1,3 +1,5 @@
+import { getPublicHotelCatalog } from "@/lib/hotels/repository";
+import { canIndexHotel } from "@/lib/hotels/model";
 import type { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
 import { listPublishedArticles } from "@/lib/articles/repository";
@@ -38,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: siteUrl("/terms"), changeFrequency: "yearly", priority: 0.3 },
   ];
 
-  const [articles, series, guideSettings] = await loadSitemapContent();
+  const [[articles, series, guideSettings], hotelCatalog] = await Promise.all([loadSitemapContent(), getPublicHotelCatalog()]);
   const contentRoutes = articles.length > 0 ? [{
     url: siteUrl("/articles"),
     changeFrequency: "daily" as const,
@@ -49,6 +51,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticRoutes,
     ...contentRoutes,
     ...(!guideSettings.preparing && articles.some((article) => article.guide) ? [{ url: siteUrl("/guides"), changeFrequency: "weekly" as const, priority: 0.8 }] : []),
+    ...(hotelCatalog.hotels.length ? [{ url: siteUrl("/hotels"), changeFrequency: "weekly" as const, priority: 0.8 }] : []),
+    ...hotelCatalog.hotels.filter(h => h.allowIndex && canIndexHotel(h)).map(h => ({ url: siteUrl(`/hotels/${h.slug}`), lastModified: new Date(h.updatedAt), changeFrequency: "weekly" as const, priority: 0.7 })),
     ...articles.map((article) => ({
       url: siteUrl(`/articles/${article.slug}`),
       lastModified: new Date(article.updatedAt),

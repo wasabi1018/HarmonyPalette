@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CrowdForecastCalendar } from "@/components/crowd-forecast/calendar";
 import { SiteEventTracker } from "@/components/site-event-tracker";
+import { HotelGuideCta } from "@/components/hotels/hotel-guide-cta";
 import { readPublicForecast } from "@/lib/crowd-forecast/repository";
 export const revalidate = 86_400;
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default async function CrowdForecastPage() {
     <>
       <SiteEventTracker eventName="crowd_forecast_view" sessionKey="crowd-forecast-view" />
       <CrowdForecastCalendar forecast={forecast} />
+      <HotelGuideCta source="crowd" />
     </>
   );
 }

@@ -13,6 +13,7 @@ export const PUBLIC_CACHE_TAGS = {
   planOptions: "public-plan-options",
   articles: "public-articles",
   crowdForecast: "public-crowd-forecast",
+  hotels: "public-hotels",
 } as const;
 
 function revalidatePaths(paths: string[]) {
@@ -46,4 +47,14 @@ export function revalidatePublicArticleData(slug?: string) {
   revalidateTag(PUBLIC_CACHE_TAGS.articles);
   revalidatePaths(["/", "/articles", "/guides", "/api/guides", "/articles/feed.xml", "/articles/feed.json", "/sitemap.xml"]);
   if (slug) revalidatePath(`/articles/${slug}`);
+}
+
+export function revalidatePublicTravelSpots() {
+  revalidateTag(PUBLIC_CACHE_TAGS.articles);
+  revalidateTag(PUBLIC_CACHE_TAGS.hotels);
+  revalidatePath("/articles/[slug]", "page");
+  revalidatePath("/plan/trips");
+  revalidatePath("/hotels");
+  revalidatePath("/hotels/[slug]", "page");
+  revalidatePath("/sitemap.xml");
 }

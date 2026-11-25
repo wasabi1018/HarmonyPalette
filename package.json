@@ -11,6 +11,7 @@
     "build": "node --version && next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:hotels": "node --import tsx --test lib/hotels/*.test.ts && tsx scripts/test-hotel-migration.ts",
     "test:site-analytics": "node --experimental-test-module-mocks --import tsx --test lib/articles/analytics-repository.integration.test.ts lib/analytics/site-events.integration.test.ts lib/analytics/daily-visitor.test.ts lib/analytics/unique-visitor.test.ts",
     "test:crowd-forecast": "node --experimental-test-module-mocks --import tsx --test lib/crowd-forecast/model.test.ts lib/crowd-forecast/api.integration.test.ts lib/crowd-forecast/daily-adjustments.test.ts",
     "test:birthday": "tsx --test lib/character-birthday.test.ts",

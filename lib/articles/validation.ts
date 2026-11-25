@@ -1,3 +1,4 @@
+import { parseArticleTravel } from "@/lib/travel/spots";
 import "server-only";
 
 import sanitizeHtml from "sanitize-html";
@@ -183,6 +184,7 @@ export function parseArticleInput(value: unknown): ArticleInput {
     tagIds,
     seriesId,
     seriesOrder,
+    ...(Object.hasOwn(input, "travel") ? { travel: parseArticleTravel(input.travel) } : {}),
   };
 }
 

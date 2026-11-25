@@ -1,3 +1,4 @@
+import { HotelGuideCta } from "@/components/hotels/hotel-guide-cta";
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
@@ -221,6 +222,7 @@ export default async function ArticleDetailPage({
         bodyContent={<ArticleRakutenBody html={preparedContent.html} promotion={inlineProducts} />}
         endContent={sharedProducts ? <RakutenPrSection placement={sharedProducts} twoColumns className="" /> : undefined}
       />
+      {article.travel?.showHotelGuide && <HotelGuideCta source="article" />}
       <div className="article-print-hidden mx-auto max-w-[920px] px-4 pb-12 sm:px-7">
         {seriesContext && (
           <section className="mb-10 rounded-[24px] border border-pink/15 bg-white p-5 shadow-soft sm:p-6">

@@ -45,6 +45,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
+                data-hotel-source={item.href === "/hotels" ? "navigation" : undefined}
                 className={`rounded-full px-2.5 py-2 text-[12px] font-bold transition-colors ${isActive ? "bg-pink/10 text-pink" : "text-ink/65 hover:bg-pink/5 hover:text-pink"}`}
               >
                 {item.label}
@@ -73,6 +74,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
+                data-hotel-source={item.href === "/hotels" ? "navigation" : undefined}
                 onClick={() => setIsOpen(false)}
                 className="flex min-h-11 items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-bold text-ink hover:bg-pink/5"
               >

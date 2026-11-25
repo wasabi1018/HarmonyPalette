@@ -1,3 +1,4 @@
+import { articleTravel } from "@/lib/travel/spots-repository";
 import "server-only";
 import { listImportedGuideEvents } from "@/lib/guides/repository";
 import type { GuideAssignment } from "@/lib/guides/model";
@@ -180,6 +181,7 @@ async function createArticleRevision(
 
   const record = mapRecord(article as Row);
   const snapshot: ArticleInput = {
+    travel: (await articleTravel(client, articleId)) ?? undefined,
     title: record.title,
     slug: record.slug,
     excerpt: record.excerpt,
@@ -226,7 +228,7 @@ export async function getAdminArticle(id: string) {
     .is("deleted_at", null)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return data ? mapRecord(data as Row) : null;
+  return data ? { ...mapRecord(data as Row), travel: await articleTravel(client, id) } : null;
 }
 
 export async function listTags() {
@@ -262,9 +264,23 @@ export async function listTags() {
   });
 }
 
+async function assertHotelGuideSchema(client: SupabaseClient, input: ArticleInput) {
+  if (input.travel?.showHotelGuide === undefined) return;
+  const { error } = await client.from("article_travel_metadata").select("show_hotel_guide").limit(1);
+  if (error) throw new Error("ホテル案内の設定を保存するにはホテル機能のMigrationを適用してください。記事は保存していません。");
+}
+
 export async function createArticle(input: ArticleInput, userId: string | null) {
   const client = requireAdminClient();
+  await assertHotelGuideSchema(client, input);
   await validateGuideEvent(input.guide);
+  // Guide fields are saved by the existing guide path, not the legacy travel RPC.
+  if (!input.guide) {
+    const atomic = await client.rpc("save_article_with_travel", { p_id: null, p_input: input, p_user_id: userId });
+    if (!atomic.error) return atomic.data ? getAdminArticle(String(atomic.data)) : null;
+    if (atomic.error.code !== "PGRST202") throw new Error(atomic.error.message);
+  }
+  if (input.travel && (input.travel.disclosure || input.travel.spotIds.length)) throw new Error("記事・ホテル連携のMigrationを適用してください。記事は保存していません。");
   const { tagIds, seriesId, seriesOrder, ...article } = input;
   const { data, error } = await client
     .from("articles")
@@ -301,12 +317,20 @@ export async function updateArticle(
   userId: string | null,
 ) {
   const client = requireAdminClient();
+  await assertHotelGuideSchema(client, input);
   const current = await getAdminArticle(id);
   if (!current) return null;
   const proposedGuide = input.guide === undefined ? current.guide : input.guide;
   const nextGuide = proposedGuide ? { ...proposedGuide, displayOrder: current.guide?.displayOrder ?? proposedGuide.displayOrder } : proposedGuide;
   if (current.guide?.eventKey && nextGuide?.eventKey !== current.guide.eventKey) throw new Error("攻略記事の対象イベントは変更できません。");
   if (!current.guide?.eventKey) await validateGuideEvent(nextGuide);
+  if (!current.guide && !nextGuide) {
+    const atomic = await client.rpc("save_article_with_travel", { p_id: id, p_input: input, p_user_id: userId });
+    if (!atomic.error) return atomic.data ? getAdminArticle(String(atomic.data)) : null;
+    if (atomic.error.code !== "PGRST202") throw new Error(atomic.error.message);
+  }
+  const existingTravel = await articleTravel(client, id);
+  if ((existingTravel && (existingTravel.disclosure || existingTravel.spotIds.length)) || (input.travel && (input.travel.disclosure || input.travel.spotIds.length))) throw new Error("記事・ホテル連携のMigrationを適用してください。記事は保存していません。");
   const { tagIds, seriesId, seriesOrder, ...article } = input;
   const { data, error } = await client
     .from("articles")
@@ -386,9 +410,11 @@ export async function restoreArticleRevision(
     : {};
   const current = await getAdminArticle(articleId);
   if (!current) return null;
+  const restoredSnapshot = { ...snapshot };
+  if (restoredSnapshot.travel == null) delete restoredSnapshot.travel;
   return updateArticle(
     articleId,
-    parseArticleInput({ ...snapshot, guide: current.guide, status: "draft", publishedAt: null }),
+    parseArticleInput({ ...restoredSnapshot, guide: current.guide, status: "draft", publishedAt: null }),
     userId,
   );
 }
@@ -510,6 +536,7 @@ export async function duplicateArticle(id: string, userId: string | null) {
     .maybeSingle();
 
   return createArticle({
+    travel: await articleTravel(client, id),
     title: `${article.title}（コピー）`.slice(0, 160),
     slug,
     excerpt: article.excerpt,
@@ -706,5 +733,5 @@ export async function getPublishedArticle(slug: string) {
     if (error.code === "42P01") return null;
     throw new Error(error.message);
   }
-  return data ? mapRecord(data as Row) : null;
+  return data ? { ...mapRecord(data as Row), travel: await articleTravel(client, String(data.id)) } : null;
 }

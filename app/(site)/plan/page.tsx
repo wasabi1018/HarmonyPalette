@@ -1,3 +1,4 @@
+import { HotelGuideCta } from "@/components/hotels/hotel-guide-cta";
 import type { Metadata } from "next";
 import { DailyPlanBuilder } from "@/components/daily-plan-builder";
 import { RecommendedPlanBuildingGuide } from "@/components/recommended-plan-building-guide";
@@ -51,6 +52,7 @@ export default async function PlanPage({
         initialPlanOptionsError={planOptionsResult.error}
       />
       <RecommendedPlanBuildingGuide />
+      <HotelGuideCta source="plan" />
     </>
   );
 }

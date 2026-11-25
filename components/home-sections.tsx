@@ -1,3 +1,4 @@
+import { HotelGuideCta } from "./hotels/hotel-guide-cta";
 import Link from "next/link";
 import { ArrowRight, BookOpen, CalendarDays } from "lucide-react";
 import type { ArticleSummary } from "@/lib/articles/types";
@@ -84,6 +85,7 @@ export function HomeSections({ latestArticles, instagramPostUrls, guideCards, in
         <Link href="/guides" className="mt-4 inline-flex min-h-11 items-center gap-2 text-[13px] font-bold text-pink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink">すべての攻略ガイドを見る<ArrowRight size={16} aria-hidden="true" /></Link>
       </section>
       <RakutenPrSection placement={rakutenPr} />
+      <HotelGuideCta source="home" compact />
       <section className="mx-auto max-w-[1200px] px-4 pb-6 pt-10 sm:px-6 lg:px-8">
         <InstagramEmbedSection postUrls={instagramPostUrls} />
         <div id="home-about" className="mt-10 rounded-2xl border border-pink/10 bg-white p-5 sm:p-6">

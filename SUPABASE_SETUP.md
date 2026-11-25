@@ -243,3 +243,17 @@ Open `/admin/guides` to create an event guide or a free-title guide, edit catego
 The new migration is additive, but the new article selectors require its columns. Apply it before the application update. Applied to the Harmony Palette hosted project on 2026-11-09 as migration 20261109001036. The local filename matches the version assigned by the Supabase integration. Public API roles have explicit SELECT-only grants on the two new tables, in addition to RLS. See audit/strategy-guides-2026-11-09/release.md for verification.
 
 Run `npm run test:guides` using the Node version required by package.json. See `knowledge/specs/攻略ガイド.md` and `audit/strategy-guides-2026-11-09/qa.md` for behavior and verification scope.
+
+## Hotel guide (local implementation; not applied to the hosted project)
+
+Review `supabase/migrations/20261124044704_hotel_guide.sql` after a backup. Its prerequisite is `20261015141316_travel_plans_spots.sql`; that facility schema is not yet installed on the inspected hosted project. Apply only the reviewed prerequisites and hotel migration after explicit approval. Do not blindly apply unrelated pending migrations.
+
+The hotel migration adds `hotels`, `hotel_areas`, `hotel_tags`, `hotel_images`, `hotel_booking_links`, `hotel_tag_relations`, `hotel_daily_events`, service-role-only save/delete/analytics functions, and the private `hotel-images` bucket. Public RLS allows published, non-deleted hotels and their eligible child data. It also adds `show_hotel_guide` to article travel metadata and wraps the existing article transaction to preserve that flag in revisions. Restore always returns a deleted hotel to draft.
+
+Deploy the application only after the required database changes. In `/admin/hotels`, use **初期6施設を下書き登録** once; it does not overwrite existing records. Review sources, vehicle travel times, photo permissions, real affiliate URLs, and final verification dates before selecting **公開**. Enable search indexing only after the independent travel guidance is complete. Suginoi and Solage travel times remain unverified. Existing link materials are inherited from the user's hotel article draft; review them before publication. No hotel facts or links were written to the hosted project during implementation.
+
+Photos are converted on upload into full and card WebP variants. Keep the bucket private. Delivery checks publication/expiry or authenticated admin preview on every request; image bytes are cached server-side, while client responses are no-store. Removing an image reference does not delete its private binary automatically. Back up Storage files separately; cleanup requires a separately reviewed operation.
+
+Hotel analytics reuse `/api/analytics/event` and store daily aggregates without raw itinerary data. Automatic tracking is disabled in development and preview. Inspect **アクセス・クリック** for 30-day totals and CSV, and do not label clicks as confirmed reservations or earnings. No new Cron or paid API is required.
+
+Run `npm run test:hotels`, `npm run test:site-analytics`, lint, TypeScript, and the production build. Local browser evidence and operational limits are recorded in `audit/hotels-2026-11-24/qa.md`. The test adapter and Chrome profile live only on localhost / under `.tmp` and are not production authentication mechanisms.

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { AdSenseAutoAds } from "@/components/adsense-auto-ads";
 import { DailyUniqueVisitorTracker } from "@/components/daily-unique-visitor-tracker";
 import { SiteShell } from "@/components/site-shell";
+import { HotelTelemetry } from "@/components/hotels/telemetry";
 import { GOOGLE_ADSENSE_ACCOUNT } from "@/lib/site-config";
 
 export default function PublicSiteLayout({
@@ -12,6 +13,7 @@ export default function PublicSiteLayout({
 
   return (
     <>
+      <HotelTelemetry active={analyticsEnabled} />
       <DailyUniqueVisitorTracker enabled={analyticsEnabled} />
       <Suspense fallback={null}>
         <AdSenseAutoAds

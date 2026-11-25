@@ -5,6 +5,7 @@ export const mainNavigation = [
   { label: "マイプラン", href: "/plan" },
   { label: "キャラクター", href: "/characters" },
   { label: "記事", href: "/articles" },
+  { label: "周辺ホテル", href: "/hotels" },
 ];
 
 export const informationNavigation = [
