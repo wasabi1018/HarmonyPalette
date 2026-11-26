@@ -1,0 +1,46 @@
+{
+  "production": false,
+  "phase": "local",
+  "analyticsBlocked": true,
+  "checks": [
+    {
+      "name": "one home hotel button",
+      "passed": true
+    },
+    {
+      "name": "hotel button precedes guide",
+      "passed": true
+    },
+    {
+      "name": "button is immediately before guide",
+      "passed": true
+    },
+    {
+      "name": "hotel and guide destinations preserved",
+      "passed": true
+    },
+    {
+      "name": "390px no overflow",
+      "passed": true
+    },
+    {
+      "name": "1280px no overflow",
+      "passed": true
+    },
+    {
+      "name": "320px no overflow",
+      "passed": true
+    },
+    {
+      "name": "hotel button remains keyboard focusable",
+      "passed": true
+    },
+    {
+      "name": "hotel button opens the six-hotel catalog",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "consoleMessages": [],
+  "expectedWarnings": []
+}

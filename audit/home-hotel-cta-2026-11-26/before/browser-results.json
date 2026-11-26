@@ -1,0 +1,34 @@
+{
+  "production": true,
+  "phase": "before",
+  "analyticsBlocked": true,
+  "checks": [
+    {
+      "name": "one home hotel button",
+      "passed": true
+    },
+    {
+      "name": "baseline button follows guide",
+      "passed": true
+    },
+    {
+      "name": "hotel and guide destinations preserved",
+      "passed": true
+    },
+    {
+      "name": "390px no overflow",
+      "passed": true
+    },
+    {
+      "name": "1280px no overflow",
+      "passed": true
+    },
+    {
+      "name": "320px no overflow",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "consoleMessages": [],
+  "expectedWarnings": []
+}
