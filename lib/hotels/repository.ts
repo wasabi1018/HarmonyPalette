@@ -155,7 +155,7 @@ export async function readHotelCatalog(
 }
 export const getPublicHotelCatalog = unstable_cache(
   () => readHotelCatalog(),
-  ["hotel-catalog-v3-provisioned"],
+  ["hotel-catalog-v4-drive-times"],
   { revalidate: 86400, tags: [HOTEL_CACHE_TAG] },
 );
 export async function saveHotel(value: unknown) {

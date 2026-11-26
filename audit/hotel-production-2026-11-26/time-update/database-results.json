@@ -1,0 +1,23 @@
+{
+  "production": true,
+  "source": "site owner supplied estimates",
+  "date": "2026-11-26",
+  "rows": [
+    {
+      "slug": "suginoi-hotel",
+      "name": "杉乃井ホテル",
+      "drive_minutes": 30,
+      "drive_minutes_max": null,
+      "checked_on": "2026-11-26",
+      "provenance": "2026-11-26に運営者から提供された、ハーモニーランドとの車移動の目安（約30分）。確認元は運営者の提供情報です。登録URLは経路の参考用で、地図サービスでこの分数を検証したものではありません。道路状況・経路によって所要時間は変わります。"
+    },
+    {
+      "slug": "hotel-solage-oita-hiji",
+      "name": "スパ＆リゾート ホテルソラージュ 大分・日出",
+      "drive_minutes": 14,
+      "drive_minutes_max": null,
+      "checked_on": "2026-11-26",
+      "provenance": "2026-11-26に運営者から提供された、ハーモニーランドとの車移動の目安（約14分）。確認元は運営者の提供情報です。登録URLは経路の参考用で、地図サービスでこの分数を検証したものではありません。道路状況・経路によって所要時間は変わります。"
+    }
+  ]
+}
