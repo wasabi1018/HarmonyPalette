@@ -11,6 +11,7 @@ import {
   type Hotel,
   type HotelCatalog,
   type HotelMaster,
+  type HotelArticle,
 } from "./model";
 
 export const HOTEL_CACHE_TAG = PUBLIC_CACHE_TAGS.hotels;
@@ -127,8 +128,26 @@ export async function readHotelCatalog(
       return [];
     }
   });
+  const articleIds = [...new Set(hotels.map((hotel) => hotel.articleId).filter(Boolean))];
+  let articles: HotelArticle[] = [];
+  if (adminMode || articleIds.length) {
+    let query = client.from("articles")
+      .select("id,title,slug,status,published_at")
+      .is("deleted_at", null);
+    if (adminMode) query = query.order("updated_at", { ascending: false }).limit(1000);
+    else query = query.in("id", articleIds)
+      .eq("status", "published")
+      .lte("published_at", new Date().toISOString());
+    const { data, error } = await query;
+    if (error && adminMode) throw new Error("紹介記事を取得できませんでした。時間をおいて再度お試しください。");
+    if (!error) articles = (data ?? []).map((row) => ({
+      id: str(row.id), title: str(row.title), slug: str(row.slug),
+      status: str(row.status), publishedAt: row.published_at ? str(row.published_at) : null,
+    }));
+  }
   return {
     hotels,
+    articles,
     areas: areaRows.map(master).filter((r) => adminMode || r.active),
     tags: tagRows.map(master).filter((r) => adminMode || r.active),
     available: true,
@@ -136,12 +155,18 @@ export async function readHotelCatalog(
 }
 export const getPublicHotelCatalog = unstable_cache(
   () => readHotelCatalog(),
-  ["hotel-catalog-v1"],
+  ["hotel-catalog-v2-articles"],
   { revalidate: 86400, tags: [HOTEL_CACHE_TAG] },
 );
 export async function saveHotel(value: unknown) {
   const hotel = parseHotel(value);
-  const { error } = await admin().rpc("save_hotel", {
+  const client = admin();
+  if (hotel.articleId) {
+    const { data, error } = await client.from("articles")
+      .select("id").eq("id", hotel.articleId).is("deleted_at", null).maybeSingle();
+    if (error || !data) throw new Error("紹介記事が見つかりません。削除されていない記事を選んでください。");
+  }
+  const { error } = await client.rpc("save_hotel", {
     p_input: hotel,
     p_expected_updated_at: hotel.updatedAt || null,
   });

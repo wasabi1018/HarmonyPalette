@@ -17,6 +17,8 @@ import {
   driveLabel,
   filterHotels,
   hotelImageUrl,
+  hotelArticle,
+  hotelArticlePath,
   isActivePr,
   safeHotelUrl,
   type Hotel,
@@ -235,8 +237,9 @@ function HotelCard({
   const tags = catalog.tags.filter(
     (t) => t.id !== "nearby" && hotel.tagIds.includes(t.id),
   );
+  const article = hotelArticle(hotel, catalog.articles);
   return (
-    <article className={css.card} data-hotel={hotel.slug}>
+    <article className={css.card} data-hotel={hotel.slug} id={`hotel-${hotel.slug}`}>
       <div className={css.cardMedia}>
         <HotelMedia
           key={`${currentImages(hotel)[0]?.id}:${currentImages(hotel)[0]?.url || currentImages(hotel)[0]?.path}`}
@@ -251,9 +254,10 @@ function HotelCard({
           <MapPin size={13} aria-hidden="true" />
           {area}
           {placement === "pr" && <span className={css.prLabel}>PR</span>}
+          {hotel.verifiedOn && <time dateTime={hotel.verifiedOn} title="ホテル情報の最終確認日">確認 {hotel.verifiedOn.replace(/-/g, "/")}</time>}
         </p>
         <h3>
-          <Link href={`/hotels/${hotel.slug}`}>{hotel.name}</Link>
+          {article ? <Link href={hotelArticlePath(article)}>{hotel.name}</Link> : hotel.name}
         </h3>
         <p className={css.drive}>
           <CarFront size={17} aria-hidden="true" />
@@ -268,12 +272,14 @@ function HotelCard({
           ))}
         </div>
         <p className={css.cardPoint}>{hotel.highlight || hotel.summary}</p>
+        {hotel.disclosure && <p className={css.cardDisclosure}>{hotel.disclosure}</p>}
       </div>
-      <div className={css.actions}>
-        <Link href={`/hotels/${hotel.slug}`} className={css.detailLink}>
-          詳細を見る
+      <div className={css.actions} data-has-article={!!article}>
+        {article && <Link href={hotelArticlePath(article)} className={css.detailLink}
+          aria-label={`${hotel.name}の紹介記事「${article.title}」を見る`}>
+          記事を見る
           <ArrowRight size={16} aria-hidden="true" />
-        </Link>
+        </Link>}
         <BookingButton hotel={hotel} placement={placement} />
       </div>
     </article>
@@ -477,10 +483,12 @@ export function HotelCatalogView({
             <ChevronDown size={13} aria-hidden="true" />
           </summary>
           <div className={css.featured}>
-            {recommended.map((h) => (
+            {recommended.map((h) => {
+              const article = hotelArticle(h, catalog.articles);
+              return (
               <article key={h.id} className={css.feature}>
                 <small>HARMONY PALETTE PICK</small>
-                <Link href={`/hotels/${h.slug}`}>
+                <Link href={article ? hotelArticlePath(article) : `#hotel-${h.slug}`}>
                   {h.name}
                   <ArrowRight
                     size={12}
@@ -490,7 +498,8 @@ export function HotelCatalogView({
                 </Link>
                 <p>{h.highlight}</p>
               </article>
-            ))}
+              );
+            })}
           </div>
         </details>
       )}

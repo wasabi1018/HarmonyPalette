@@ -45,6 +45,8 @@ export function revalidatePublicCrowdForecastData() {
 
 export function revalidatePublicArticleData(slug?: string) {
   revalidateTag(PUBLIC_CACHE_TAGS.articles);
+  revalidateTag(PUBLIC_CACHE_TAGS.hotels);
+  revalidatePath("/hotels");
   revalidatePaths(["/", "/articles", "/guides", "/api/guides", "/articles/feed.xml", "/articles/feed.json", "/sitemap.xml"]);
   if (slug) revalidatePath(`/articles/${slug}`);
 }
@@ -55,6 +57,5 @@ export function revalidatePublicTravelSpots() {
   revalidatePath("/articles/[slug]", "page");
   revalidatePath("/plan/trips");
   revalidatePath("/hotels");
-  revalidatePath("/hotels/[slug]", "page");
   revalidatePath("/sitemap.xml");
 }

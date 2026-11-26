@@ -148,6 +148,7 @@
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  scroll-margin-top: 80px;
 }
 .photo {
   overflow: hidden;
@@ -909,6 +910,12 @@
   margin-bottom: 3px;
   gap: 4px;
 }
+.card .area time {
+  margin-left: auto;
+  font-size: 9px;
+  white-space: nowrap;
+  color: #756a76;
+}
 .card h3 {
   font-size: 18px;
   line-height: 1.5;
@@ -981,6 +988,7 @@
 .detailLink {
   font-size: 13px;
   gap: 7px;
+  white-space: nowrap;
   min-height: 44px;
   justify-content: center;
   color: #a53660;
@@ -988,6 +996,18 @@
 .detailLink:hover {
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+.cardDisclosure {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #765d3b;
+  margin-top: 6px;
+}
+.actions[data-has-article="false"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.actions[data-has-article="false"] .booking {
+  width: 100%;
 }
 .prBlock {
   background: #fffdf8;
@@ -1153,6 +1173,9 @@
   }
   .card .drive strong {
     font-size: 16px;
+  }
+  .detailLink {
+    gap: 4px;
   }
   .driveCaption {
     position: absolute;

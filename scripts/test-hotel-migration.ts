@@ -21,7 +21,10 @@ async function main() {
     );
   try {
     await db.exec("set role service_role");
+    first.articleId = "8aff0000-0000-4000-8000-000000000011";
+    await db.query("insert into public.articles(id,title,slug,status,published_at) values($1,'Local hotel article','local-hotel-article','published','2026-11-24T00:00:00Z')", [first.articleId]);
     await save(first);
+    assert.equal((await db.query<{ article: string }>("select details->>'articleId' article from public.hotels where id=$1", [first.id])).rows[0].article, first.articleId);
     await save(starterHotels()[1]);
     const original = await version();
     await assert.rejects(save({ ...first, summary: "stale" }));

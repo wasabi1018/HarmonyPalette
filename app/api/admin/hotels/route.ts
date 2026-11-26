@@ -72,7 +72,6 @@ export async function POST(request: Request) {
       );
     revalidateTag(HOTEL_CACHE_TAG);
     revalidatePath("/hotels");
-    revalidatePath("/hotels/[slug]", "page");
     revalidatePath("/sitemap.xml");
     revalidatePath("/plan/trips");
     return Response.json({

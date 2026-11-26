@@ -950,3 +950,15 @@ The selected comparison-list direction has been implemented and visually reviewe
 - P3: if desired, further tune the mobile intro density while preserving the existing recommendation feature and accessible booking target size.
 
 final result: passed
+
+## ホテル一覧から紹介記事への導線 — 2026-11-25
+
+独立したホテル詳細ページへの導線を廃止し、管理画面で選択した公開済みの紹介記事がある場合だけ「記事を見る」を表示する。未設定・下書き・予約公開・削除済みの記事にはボタンを出さず、予約ボタンを全幅にする。既存の白い比較リスト・写真・所要時間・特徴タグ・PR表記を維持し、最終確認日を一覧に表示する。管理画面は紹介記事の選択欄を追加し、旧詳細本文・設備・SEOの入力欄を廃止。旧データは保持する。
+
+最終本番ビルドで390×845、320×845、1280×900を撮影し、一覧と管理画面を目視確認した。320pxで記事リンク末尾が折り返していた点を修正し、1行表示と横幅の収まりを再検証した。追加UIにP0/P1/P2の未解決事項なし。既存のホテル画像の解像度は従来からのP3課題。全ページ画像の固定ナビゲーションは撮影開始時の位置に写るため、ビューポート画像も併用した。
+
+記事の選択保存・記事への遷移・下書き化・再公開・公開日時判定・未公開情報の非送信・旧URLの307/noindex・サイトマップを含むブラウザー20項目と、最終本番ビルドの読み取り7項目が成功。JavaScript例外・最終console error/warningなし。モデル5テスト・隔離PostgreSQL回帰検証・Lint・型検証・production buildが成功した。
+
+検証データはローカル専用。本番ホテル・記事の登録や公開、リモートDB変更、デプロイ、今回の差分のコミットは行っていない。追加マイグレーション不要。操作方法・コスト・検証範囲は `audit/hotel-articles-2026-11-25/qa.md`。最終画像は同ディレクトリの `10-final-mobile.png`、`11-final-desktop.png`、`12-final-admin.png`、`13-final-mobile-320.png`、`16-final-admin-320.png`。
+
+final result: passed

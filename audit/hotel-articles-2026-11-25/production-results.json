@@ -1,0 +1,35 @@
+{
+  "localOnly": true,
+  "checks": [
+    {
+      "name": "production has one article button",
+      "passed": true
+    },
+    {
+      "name": "verification dates remain visible",
+      "passed": true
+    },
+    {
+      "name": "final 320px no overflow",
+      "passed": true
+    },
+    {
+      "name": "article label stays on one line at 320px",
+      "passed": true
+    },
+    {
+      "name": "final desktop no overflow",
+      "passed": true
+    },
+    {
+      "name": "obsolete detail fields removed from admin",
+      "passed": true
+    },
+    {
+      "name": "final 320px admin no overflow",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "consoleMessages": []
+}

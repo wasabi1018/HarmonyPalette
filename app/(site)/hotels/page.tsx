@@ -5,6 +5,7 @@ import { HotelCatalogView } from "@/components/hotels/hotel-catalog";
 import { HotelView } from "@/components/hotels/telemetry";
 import { getPublicHotelCatalog } from "@/lib/hotels/repository";
 import { siteUrl } from "@/lib/site-config";
+import { hotelArticle, hotelArticlePath } from "@/lib/hotels/model";
 import css from "@/components/hotels/hotels.module.css";
 export const revalidate = 86400;
 export async function generateMetadata(): Promise<Metadata> {
@@ -51,12 +52,15 @@ export default async function HotelsPage() {
       {
         "@type": "ItemList",
         name: "ハーモニーランド周辺のホテル",
-        itemListElement: catalog.hotels.map((h, i) => ({
+        itemListElement: catalog.hotels.map((h, i) => {
+          const article = hotelArticle(h, catalog.articles);
+          return ({
           "@type": "ListItem",
           position: i + 1,
           name: h.name,
-          url: siteUrl(`/hotels/${h.slug}`),
-        })),
+          url: siteUrl(article ? hotelArticlePath(article) : `/hotels#hotel-${h.slug}`),
+          });
+        }),
       },
     ],
   };

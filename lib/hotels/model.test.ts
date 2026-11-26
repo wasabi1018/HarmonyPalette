@@ -6,6 +6,8 @@ import {
   filterHotels,
   isActivePr,
   parseHotel,
+  hotelArticle,
+  hotelArticlePath,
 } from "./model";
 import { starterHotels } from "./starters";
 import { parseHotelEvents } from "./events";
@@ -71,7 +73,7 @@ test("PR is active only in its half-open interval and images expire in Japan", (
     0,
   );
 });
-test("rejects unsafe links, mismatched images, incomplete indexing and oversized analytics batches", () => {
+test("rejects unsafe links, mismatched images and oversized analytics batches", () => {
   const hotel = starterHotels()[0];
   assert.throws(() =>
     parseHotel({ ...hotel, officialUrl: "javascript:alert(1)" }),
@@ -82,7 +84,7 @@ test("rejects unsafe links, mismatched images, incomplete indexing and oversized
       images: [{ ...hotel.images[0], url: "https://example.com/photo.jpg" }],
     }),
   );
-  assert.throws(() => parseHotel({ ...hotel, whyStay: "", allowIndex: true }));
+  assert.equal(parseHotel({ ...hotel, whyStay: "", allowIndex: true }).allowIndex, false);
   assert.throws(() => parseHotelEvents(Array(41).fill({})));
   assert.throws(() =>
     parseHotelEvents([
@@ -95,4 +97,28 @@ test("rejects unsafe links, mismatched images, incomplete indexing and oversized
       },
     ]),
   );
+});
+
+test("article buttons require an explicitly selected, already published article", () => {
+  const article = {
+    id: "8aff0000-0000-4000-8000-000000000011",
+    title: "確認用ホテル紹介", slug: "hotel-review",
+    status: "published", publishedAt: "2026-11-24T00:00:00Z",
+  };
+  const hotel = parseHotel({ ...starterHotels()[0], articleId: article.id });
+  const now = Date.parse("2026-11-25T00:00:00Z");
+  assert.equal(hotelArticle(hotel, [article], now)?.id, article.id);
+  assert.equal(hotelArticle({ articleId: "" }, [article], now), undefined);
+  assert.equal(hotelArticle(hotel, [], now), undefined);
+  for (const change of [
+    { status: "draft" }, { status: "scheduled" }, { publishedAt: null },
+    { publishedAt: "2035-01-01T00:00:00Z" }, { publishedAt: "invalid" }, { slug: "" },
+  ]) assert.equal(hotelArticle(hotel, [{ ...article, ...change }], now), undefined);
+  assert.equal(hotelArticlePath(article), "/articles/hotel-review");
+  assert.equal(hotelArticlePath({ slug: "../../external" }), "/articles/..%2F..%2Fexternal");
+  assert.throws(() => parseHotel({ ...hotel, articleId: "https://example.com" }));
+  // Pre-existing records without the new JSON field remain readable.
+  const { articleId: _articleId, ...legacy } = hotel;
+  void _articleId;
+  assert.equal(parseHotel(legacy).articleId, "");
 });

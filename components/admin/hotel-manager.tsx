@@ -18,7 +18,6 @@ import {
   BOOKING_PROVIDERS,
   driveLabel,
   emptyHotel,
-  FACT_LABELS,
   hotelImageUrl,
   prState,
   type Hotel,
@@ -501,11 +500,9 @@ export function HotelManager({
           <div className={css.tabs} role="group" aria-label="ホテルの編集項目">
             {[
               ["basic", "基本・アクセス"],
-              ["editorial", "旅行者目線の解説"],
-              ["facts", "子連れ・設備"],
               ["images", "写真"],
               ["booking", "予約リンク"],
-              ["publish", "公開・SEO・PR"],
+              ["publish", "公開・PR"],
               ["preview", "プレビュー"],
             ].map(([id, label]) => (
               <button
@@ -581,6 +578,25 @@ export function HotelManager({
                   value={hotel.highlight}
                   onChange={(highlight) => update({ highlight })}
                 />
+                <h2>紹介記事</h2>
+                <label className={css.field}>
+                  <span>「記事を見る」のリンク先</span>
+                  <select value={hotel.articleId} onChange={(event) => update({ articleId: event.target.value })}>
+                    <option value="">設定しない</option>
+                    {hotel.articleId && !(catalog.articles ?? []).some((article) => article.id === hotel.articleId) && (
+                      <option value={hotel.articleId}>登録済みの記事が見つかりません（選び直してください）</option>
+                    )}
+                    {(catalog.articles ?? []).map((article) => (
+                      <option key={article.id} value={article.id}>
+                        {article.title}（{article.status === "published" ? "公開" : article.status === "scheduled" ? "予約公開" : "下書き"}）
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className={css.note}>
+                  このホテルを紹介する記事を選んでください。記事が公開済みで公開日時を迎えている場合だけ、一覧に「記事を見る」が表示されます。下書き・非公開・削除された記事へのボタンは表示しません。
+                </p>
+                {hotel.articleId && <Link className={css.textButton} href={`/admin/articles/${hotel.articleId}`} target="_blank" rel="noopener noreferrer">選択した記事を編集する<ExternalLink size={13} aria-hidden="true" /></Link>}
                 <h2>ハーモニーランドまでの所要時間</h2>
                 <p className={css.note}>
                   未確認の場合は空欄にします。車での目安時間には出典と確認日が必要です。
@@ -645,122 +661,6 @@ export function HotelManager({
                 <p className={css.note}>
                   「近い」は確認済みの所要時間が20分以内の場合に自動判定します。「リーズナブル」は比較条件・根拠を確認して付与してください。
                 </p>
-              </>
-            )}
-            {editTab === "editorial" && (
-              <>
-                <h2>ハーモニーランド旅行者目線の解説</h2>
-                <p className={css.note}>
-                  公式事実と編集上の提案を区別し、未体験の宿泊を体験談として記載しないでください。
-                </p>
-                {[
-                  ["whyStay", "ハーモニーランド旅行におすすめする理由"],
-                  ["familyNotes", "子連れ旅行のメリット・注意点"],
-                  ["morningNotes", "開園時間に合わせた朝の移動"],
-                  ["nightNotes", "ナイト営業後の宿泊の利便性・注意点"],
-                  ["audience", "どのような旅行者におすすめか"],
-                ].map(([key, label]) => (
-                  <Field
-                    key={key}
-                    label={label}
-                    multiline
-                    value={hotel[key as keyof Hotel] as string}
-                    onChange={(value) => update({ [key]: value })}
-                  />
-                ))}
-                <h2>確認元</h2>
-                {hotel.sources.map((source, i) => (
-                  <div className={css.itemBox} key={i}>
-                    <Field
-                      label="出典名"
-                      value={source.label}
-                      onChange={(label) =>
-                        update({
-                          sources: hotel.sources.map((s, index) =>
-                            index === i ? { ...s, label } : s,
-                          ),
-                        })
-                      }
-                    />
-                    <Field
-                      label="出典URL"
-                      type="url"
-                      value={source.url}
-                      onChange={(url) =>
-                        update({
-                          sources: hotel.sources.map((s, index) =>
-                            index === i ? { ...s, url } : s,
-                          ),
-                        })
-                      }
-                    />
-                    <Field
-                      label="出典の確認日"
-                      type="date"
-                      value={source.checkedOn}
-                      onChange={(checkedOn) =>
-                        update({
-                          sources: hotel.sources.map((s, index) =>
-                            index === i ? { ...s, checkedOn } : s,
-                          ),
-                        })
-                      }
-                    />
-                    <button
-                      type="button"
-                      className={css.textButton}
-                      onClick={() =>
-                        update({
-                          sources: hotel.sources.filter(
-                            (_, index) => index !== i,
-                          ),
-                        })
-                      }
-                    >
-                      この出典を外す
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className={css.secondary}
-                  disabled={hotel.sources.length >= 20}
-                  onClick={() =>
-                    update({
-                      sources: [
-                        ...hotel.sources,
-                        { label: "", url: "", checkedOn: "" },
-                      ],
-                    })
-                  }
-                >
-                  <Plus size={14} />
-                  出典を追加
-                </button>
-              </>
-            )}
-            {editTab === "facts" && (
-              <>
-                <h2>子連れ・設備・食事</h2>
-                <p className={css.note}>
-                  未確認は空欄にします。「なし」とは区別して公開します。年齢・人数・料金・貸出条件も記載できます。
-                </p>
-                {(
-                  Object.entries(FACT_LABELS) as [
-                    keyof typeof FACT_LABELS,
-                    string,
-                  ][]
-                ).map(([key, label]) => (
-                  <Field
-                    key={key}
-                    label={label}
-                    multiline
-                    value={hotel.facts[key]}
-                    onChange={(value) =>
-                      update({ facts: { ...hotel.facts, [key]: value } })
-                    }
-                  />
-                ))}
               </>
             )}
             {editTab === "booking" && (
@@ -1086,25 +986,8 @@ export function HotelManager({
                   checked={hotel.recommended}
                   onChange={(recommended) => update({ recommended })}
                 />
-                <h2>SEO</h2>
-                <Field
-                  label="検索タイトル"
-                  value={hotel.seoTitle}
-                  onChange={(seoTitle) => update({ seoTitle })}
-                />
-                <Field
-                  label="検索説明文"
-                  multiline
-                  value={hotel.seoDescription}
-                  onChange={(seoDescription) => update({ seoDescription })}
-                />
-                <CheckField
-                  label="内容を確認し、検索エンジンの索引対象にする"
-                  checked={hotel.allowIndex}
-                  onChange={(allowIndex) => update({ allowIndex })}
-                />
                 <p className={css.note}>
-                  独自解説・注意点・出典・確認日が不足するページは索引対象にできません。
+                  詳しい紹介と検索向けのタイトル・説明文は、紐付けた記事の編集画面で設定してください。ホテル専用の詳細ページは作成しません。
                 </p>
                 <h2>有料PRの優先掲載</h2>
                 <CheckField
@@ -1321,7 +1204,7 @@ function HotelAnalytics({
       <div className={css.metrics}>
         {[
           ["hotel_list_view", "一覧閲覧"],
-          ["hotel_view", "詳細閲覧"],
+          ["hotel_view", "旧ホテル詳細の閲覧"],
           ["booking_click", "予約リンククリック"],
           ["hotel_guide_click", "ホテルガイドへの遷移"],
           ["pr_impression", "PR表示"],

@@ -39,6 +39,7 @@ export type HotelSource = { label: string; url: string; checkedOn: string };
 export type Hotel = {
   id: string;
   slug: string;
+  articleId: string;
   name: string;
   areaId: string;
   address: string;
@@ -80,7 +81,33 @@ export type HotelCatalog = {
   areas: HotelMaster[];
   tags: HotelMaster[];
   available: boolean;
+  articles?: HotelArticle[];
 };
+export type HotelArticle = {
+  id: string;
+  title: string;
+  slug: string;
+  status: string;
+  publishedAt: string | null;
+};
+
+export function hotelArticle(
+  hotel: Pick<Hotel, "articleId">,
+  articles: HotelArticle[] = [],
+  now = Date.now(),
+) {
+  if (!hotel.articleId) return undefined;
+  return articles.find((article) =>
+    article.id === hotel.articleId &&
+    article.status === "published" &&
+    article.slug &&
+    article.publishedAt &&
+    Date.parse(article.publishedAt) <= now,
+  );
+}
+export function hotelArticlePath(article: Pick<HotelArticle, "slug">) {
+  return `/articles/${encodeURIComponent(article.slug)}`;
+}
 export const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const KEY_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -96,6 +123,7 @@ export function emptyHotel(id: string): Hotel {
   return {
     id,
     slug: "",
+    articleId: "",
     name: "",
     areaId: "hiji",
     address: "",
@@ -209,6 +237,7 @@ function id(value: unknown) {
 export function parseHotel(value: unknown): Hotel {
   const v = object(value);
   const result = emptyHotel(id(v.id));
+  result.articleId = v.articleId == null || v.articleId === "" ? "" : id(v.articleId);
   result.slug = text(v.slug, 100, true);
   if (!KEY_RE.test(result.slug))
     throw new Error("ホテルURLは半角英数字とハイフンで入力してください。");
@@ -260,6 +289,8 @@ export function parseHotel(value: unknown): Hotel {
       throw new Error("設定値を確認してください。");
     result[key] = v[key];
   }
+  // Legacy detail-page SEO fields remain readable, but hotel content now lives in articles.
+  result.allowIndex = false;
   result.prStartsAt = instant(v.prStartsAt);
   result.prEndsAt = instant(v.prEndsAt);
   if (
@@ -362,25 +393,7 @@ export function parseHotel(value: unknown): Hotel {
     throw new Error(
       "公開には紹介文・おすすめポイント・公式URL・最終確認日が必要です。",
     );
-  if (result.allowIndex && !canIndexHotel(result))
-    throw new Error(
-      "検索対象にするには、独自解説・注意点・出典・確認日を揃えてください。",
-    );
   return result;
-}
-export function canIndexHotel(h: Hotel) {
-  return Boolean(
-    h.summary &&
-      h.highlight &&
-      h.whyStay &&
-      h.familyNotes &&
-      h.morningNotes &&
-      h.nightNotes &&
-      h.audience &&
-      h.verifiedOn &&
-      h.sources.length &&
-      h.officialUrl,
-  );
 }
 export function isActivePr(h: Hotel, now: number) {
   return (

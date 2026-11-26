@@ -6,10 +6,31 @@ import { starterHotels } from "../lib/hotels/starters";
 import { parseHotel } from "../lib/hotels/model";
 async function main() {
   const db = await createHotelTestDatabase();
+  const articleFixtures = process.argv.includes("--article-links");
+  if (articleFixtures) {
+    // Support the existing guide-aware article reader without contacting a hosted database.
+    await db.exec("alter table public.articles add column is_strategy_guide boolean not null default false, add column guide_event_key text, add column guide_category_id uuid, add column guide_display_order integer");
+    for (const [index, status] of ["published", "draft", "scheduled", "published"].entries()) {
+      await db.query("insert into public.articles(id,title,slug,excerpt,seo_title,seo_description,content_json,content_html,status,destination,published_at) values($1,$2,$3,'','','',$4::jsonb,$5,$6,'articles',$7)", [
+        `8aff0000-0000-4000-8000-${String(index + 11).padStart(12, "0")}`,
+        `ローカル検証専用ホテル記事 ${index + 1}`,
+        `local-hotel-article-${index + 1}`,
+        JSON.stringify({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "本番には登録しないローカル確認用の本文です。" }] }] }),
+        "<p>本番には登録しないローカル確認用の本文です。</p>", status,
+        status === "scheduled" ? "2035-01-01T00:00:00Z" : "2026-11-24T00:00:00Z",
+      ]);
+      if (index === 3) await db.query("update public.articles set deleted_at=now() where id=$1", ["8aff0000-0000-4000-8000-000000000014"]);
+    }
+  }
   for (const starter of starterHotels())
     await db.query("select public.save_hotel($1::jsonb,null)", [
       JSON.stringify(
-        parseHotel({ ...starter, status: "published", allowIndex: true }),
+        parseHotel({ ...starter, status: "published", articleId: articleFixtures
+          ? starter.slug === "fico-hiji" ? "8aff0000-0000-4000-8000-000000000011"
+            : starter.slug === "grand-mercure-beppu-bay" ? "8aff0000-0000-4000-8000-000000000012"
+            : starter.slug === "grandvrio-beppuwan-wakura" ? "8aff0000-0000-4000-8000-000000000013"
+            : starter.slug === "kamenoi-hotel-beppu" ? "8aff0000-0000-4000-8000-000000000014" : ""
+          : "" }),
       ),
     ]);
   const user = {
@@ -131,6 +152,10 @@ async function main() {
         }
         const name = url.pathname.split("/").at(-1);
         const functions: Record<string, [string, unknown[]]> = {
+          save_article_with_travel: [
+            "select public.save_article_with_travel($1::uuid,$2::jsonb,$3::uuid) result",
+            [body.p_id, JSON.stringify(body.p_input), body.p_user_id],
+          ],
           save_hotel: [
             "select public.save_hotel($1::jsonb,$2::timestamptz) result",
             [JSON.stringify(body.p_input), body.p_expected_updated_at],
