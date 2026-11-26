@@ -15,8 +15,8 @@ export async function createHotelTestDatabase() {
     grant usage on schema public to anon,authenticated,service_role;
     grant select on public.articles to anon,authenticated; grant all on all tables in schema public to service_role;`);
   for (const filename of [
-    "20261015141316_travel_plans_spots.sql",
-    "20261124044704_hotel_guide.sql",
+    "20261126132102_travel_plans_spots.sql",
+    "20261126132743_hotel_guide.sql",
   ])
     await db.exec(await readFile(`supabase/migrations/${filename}`, "utf8"));
   return db;
