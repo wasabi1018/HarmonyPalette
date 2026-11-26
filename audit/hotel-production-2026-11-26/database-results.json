@@ -1,0 +1,170 @@
+{
+  "production": true,
+  "project": "Harmony Palette",
+  "migrations": [
+    {
+      "version": "20261126132102",
+      "name": "travel_plans_spots"
+    },
+    {
+      "version": "20261126132743",
+      "name": "hotel_guide"
+    }
+  ],
+  "before": [
+    {
+      "inspection": {
+        "tables": [
+          {
+            "name": "article_tags",
+            "rls": true
+          },
+          {
+            "name": "article_revisions",
+            "rls": true
+          },
+          {
+            "name": "articles",
+            "rls": true
+          }
+        ],
+        "functions": [],
+        "buckets": [],
+        "article_count": 29,
+        "published_articles": 26,
+        "guides": 6
+      }
+    }
+  ],
+  "schema": [
+    {
+      "verification": {
+        "tables": [
+          {
+            "name": "travel_spot_private",
+            "rls": true
+          },
+          {
+            "name": "article_travel_metadata",
+            "rls": true
+          },
+          {
+            "name": "article_spots",
+            "rls": true
+          },
+          {
+            "name": "travel_spots",
+            "rls": true
+          },
+          {
+            "name": "hotel_areas",
+            "rls": true
+          },
+          {
+            "name": "hotel_tags",
+            "rls": true
+          },
+          {
+            "name": "hotels",
+            "rls": true
+          },
+          {
+            "name": "hotel_images",
+            "rls": true
+          },
+          {
+            "name": "hotel_booking_links",
+            "rls": true
+          },
+          {
+            "name": "hotel_tag_relations",
+            "rls": true
+          },
+          {
+            "name": "hotel_daily_events",
+            "rls": true
+          }
+        ],
+        "hotel_count": 0,
+        "article_count": 29,
+        "published_articles": 26,
+        "guides": 6,
+        "buckets": [
+          {
+            "id": "travel-spot-images",
+            "public": false
+          },
+          {
+            "id": "hotel-images",
+            "public": false
+          }
+        ],
+        "rpc_permissions": [
+          {
+            "name": "record_hotel_events",
+            "security_definer": false,
+            "anon_execute": false,
+            "authenticated_execute": false,
+            "service_execute": true
+          },
+          {
+            "name": "save_article_with_travel",
+            "security_definer": false,
+            "anon_execute": false,
+            "authenticated_execute": false,
+            "service_execute": true
+          },
+          {
+            "name": "save_article_with_travel_base",
+            "security_definer": false,
+            "anon_execute": false,
+            "authenticated_execute": false,
+            "service_execute": true
+          },
+          {
+            "name": "save_hotel",
+            "security_definer": false,
+            "anon_execute": false,
+            "authenticated_execute": false,
+            "service_execute": true
+          },
+          {
+            "name": "save_travel_spot",
+            "security_definer": false,
+            "anon_execute": false,
+            "authenticated_execute": false,
+            "service_execute": true
+          },
+          {
+            "name": "set_hotel_deleted",
+            "security_definer": false,
+            "anon_execute": false,
+            "authenticated_execute": false,
+            "service_execute": true
+          }
+        ],
+        "public_write_grants": []
+      }
+    }
+  ],
+  "publication": [
+    {
+      "hotel_id": "8a800000-0000-4000-8000-000000000001"
+    },
+    {
+      "hotel_id": "8a800000-0000-4000-8000-000000000002"
+    },
+    {
+      "hotel_id": "8a800000-0000-4000-8000-000000000003"
+    },
+    {
+      "hotel_id": "8a800000-0000-4000-8000-000000000004"
+    },
+    {
+      "hotel_id": "8a800000-0000-4000-8000-000000000005"
+    },
+    {
+      "hotel_id": "8a800000-0000-4000-8000-000000000006"
+    }
+  ]
+}

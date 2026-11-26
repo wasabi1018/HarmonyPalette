@@ -1,0 +1,78 @@
+{
+  "production": true,
+  "analyticsBlocked": true,
+  "checks": [
+    {
+      "name": "six production hotels visible",
+      "passed": true
+    },
+    {
+      "name": "unassigned articles have no article/detail link",
+      "passed": true
+    },
+    {
+      "name": "six issued sponsored booking links",
+      "passed": true
+    },
+    {
+      "name": "verification dates current",
+      "passed": true
+    },
+    {
+      "name": "four sourced drive times and two unknown",
+      "passed": true
+    },
+    {
+      "name": "mobile has no overflow",
+      "passed": true
+    },
+    {
+      "name": "canonical and indexing",
+      "passed": true
+    },
+    {
+      "name": "family filter works on production",
+      "passed": true
+    },
+    {
+      "name": "clearing filter restores six hotels",
+      "passed": true
+    },
+    {
+      "name": "320px no overflow",
+      "passed": true
+    },
+    {
+      "name": "desktop no overflow",
+      "passed": true
+    },
+    {
+      "name": "production sitemap includes catalog and excludes hotel detail URLs",
+      "passed": true
+    },
+    {
+      "name": "legacy URL redirects with noindex",
+      "passed": true
+    },
+    {
+      "name": "hotel administration rejects anonymous requests",
+      "passed": true
+    }
+  ],
+  "responses": [
+    {
+      "status": 200,
+      "vercelCache": "HIT",
+      "nextCache": null,
+      "cacheControl": "public, max-age=0, must-revalidate"
+    },
+    {
+      "status": 200,
+      "vercelCache": "HIT",
+      "nextCache": null,
+      "cacheControl": "public, max-age=0, must-revalidate"
+    }
+  ],
+  "errors": [],
+  "consoleMessages": []
+}

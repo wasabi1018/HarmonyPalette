@@ -970,3 +970,13 @@ final result: passed
 ホテル5件＋隔離DB、ガイド22件、アクセス解析18件、ブラウザー20項目、Lint、型検査込みproduction buildが成功。連続2回のHTTPキャッシュHITと `s-maxage=86400` を確認。記事上で出る既存AdSenseの属性警告は結果に記録し、他の警告・例外はなし。証跡・本番との境界は `audit/hotel-master-release-2026-11-26/qa.md`。本番DBのマイグレーション・ホテル登録・記事公開は行っていない。
 
 final result: passed (existing AdSense warning recorded)
+
+## ホテル初期6施設の本番公開 — 2026-11-26
+
+本番DBへ施設・ホテル用マイグレーションを適用し、初期6施設を公開。初回公開前の空データを残さないようキャッシュキーを一度更新し、24時間TTLと管理更新時の失効を維持した。
+
+本番の390・320・1280pxで、6施設・4施設の所要時間・2施設の未確認表示・最終確認日・写真・予約ボタン・記事未設定時の表示を確認。子連れ絞り込み、canonical、サイトマップ、旧URL転送、匿名管理API拒否など14項目成功。連続2回のCDN HIT、JavaScript例外・console warning/errorなし。目視でP0/P1/P2の未解決事項なし。低解像度の既存楽天写真はP3のまま。解析送信を止めて撮影し、予約リンクのクリックは行っていない。
+
+証跡は `audit/hotel-production-2026-11-26/`。DB権限・実際のマイグレーション番号・公開内容・既存記事の維持・運用手順は同ディレクトリの `release.md`。紹介記事とPRは未設定。
+
+final result: passed
