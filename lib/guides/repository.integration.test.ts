@@ -50,7 +50,12 @@ class Query implements PromiseLike<{ data: Row[] | Row | null; error: null | { m
   }
 }
 
-const client = { from: (table: string) => new Query(table), rpc: async () => ({ data: null, error: { code: "PGRST202", message: "not installed" } }) };
+let travelRpcAvailable = false;
+let travelRpcCalls = 0;
+const client = { from: (table: string) => new Query(table), rpc: async () => {
+  travelRpcCalls++;
+  return travelRpcAvailable ? { data: "legacy-travel-result", error: null } : { data: null, error: { code: "PGRST202", message: "not installed" } };
+} };
 const moduleUrl = (file: string) => pathToFileURL(resolve(__dirname, file));
 const publicCache = new Map<string, { value: unknown; tags: string[] }>();
 mock.module("next/cache", { namedExports: {
@@ -76,6 +81,7 @@ before(async () => {
 beforeEach(() => {
   publicCache.clear();
   configured = true; failArticles = false; reads = []; writes = [];
+  travelRpcAvailable = false; travelRpcCalls = 0;
   tables = { guide_settings: [{ id: true, preparing: false, updated_at: "2026-11-21T00:00:00Z" }], guide_categories: [{ id: "22222222-2222-4222-8222-222222222222", name: "園内", display_order: 0 }], articles: [], article_tags: [], article_revisions: [], schedule_items: [] };
 });
 
@@ -141,4 +147,23 @@ test("body edits preserve event identity and manager order, including legacy req
   await articles.restoreArticleRevision(id, String(revision.id), null);
   assert.equal(tables.articles[0].guide_display_order, 17);
   assert.equal(tables.articles[0].status, "draft");
+});
+
+test("installed hotel travel RPC does not discard guide assignments when creating or editing a guide", async () => {
+  travelRpcAvailable = true;
+  const input = {
+    title: "ホテル機能導入後のガイド", slug: "guide-with-hotels", excerpt: "", seoTitle: "", seoDescription: "",
+    contentJson: { type: "doc", content: [{ type: "paragraph" }] }, contentHtml: "<p>ガイドの本文</p>", coverImageUrl: "",
+    status: "draft" as const, destination: "articles" as const, publishedAt: null, tagIds: [], seriesId: null, seriesOrder: null,
+    guide: { eventKey: null, categoryId: "22222222-2222-4222-8222-222222222222", displayOrder: 9 },
+    travel: { disclosure: "", spotIds: [] },
+  };
+  const created = await articles.createArticle(input, null);
+  assert.ok(created);
+  assert.equal(created.guide?.displayOrder, 9);
+  const updated = await articles.updateArticle(created.id, { ...input, title: "更新後のガイド", guide: { ...input.guide, displayOrder: 99 } }, null);
+  assert.equal(updated?.title, "更新後のガイド");
+  assert.equal(updated?.guide?.categoryId, input.guide.categoryId);
+  assert.equal(updated?.guide?.displayOrder, 9);
+  assert.equal(travelRpcCalls, 0);
 });

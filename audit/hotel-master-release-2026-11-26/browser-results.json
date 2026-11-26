@@ -1,0 +1,98 @@
+{
+  "localOnly": true,
+  "checks": [
+    {
+      "name": "no standalone detail links",
+      "passed": true
+    },
+    {
+      "name": "only the published article gets a button",
+      "passed": true
+    },
+    {
+      "name": "draft, scheduled, deleted and unset articles have no link",
+      "passed": true
+    },
+    {
+      "name": "no unpublished article metadata in public page",
+      "passed": true
+    },
+    {
+      "name": "booking buttons remain available",
+      "passed": true
+    },
+    {
+      "name": "unlinked booking button fills row",
+      "passed": true
+    },
+    {
+      "name": "390px no overflow",
+      "passed": true
+    },
+    {
+      "name": "sitemap has catalog only, no hotel detail URLs",
+      "passed": true
+    },
+    {
+      "name": "legacy URL redirects: fico-hiji",
+      "passed": true
+    },
+    {
+      "name": "legacy URL redirects: grand-mercure-beppu-bay",
+      "passed": true
+    },
+    {
+      "name": "admin can select draft article",
+      "passed": true
+    },
+    {
+      "name": "saved article association reaches public catalog",
+      "passed": true
+    },
+    {
+      "name": "returning article to draft removes every linked button",
+      "passed": true
+    },
+    {
+      "name": "legacy URL redirects: fico-hiji",
+      "passed": true
+    },
+    {
+      "name": "republishing restores article buttons",
+      "passed": true
+    },
+    {
+      "name": "future publication stays hidden",
+      "passed": true
+    },
+    {
+      "name": "no obsolete hotel detail indexing control",
+      "passed": true
+    },
+    {
+      "name": "nonexistent article cannot be saved",
+      "passed": true
+    },
+    {
+      "name": "320px no overflow",
+      "passed": true
+    },
+    {
+      "name": "1280px no overflow",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "consoleMessages": [
+    {
+      "type": "warning",
+      "text": "AdSense head tag doesn't support data-nscript attribute."
+    }
+  ],
+  "expectedWarnings": [
+    {
+      "type": "warning",
+      "text": "AdSense head tag doesn't support data-nscript attribute."
+    }
+  ]
+}

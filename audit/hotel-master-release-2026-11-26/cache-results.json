@@ -1,0 +1,15 @@
+{
+  "localOnly": true,
+  "responses": [
+    {
+      "status": 200,
+      "cache": "HIT",
+      "cacheControl": "s-maxage=86400, stale-while-revalidate=31449600"
+    },
+    {
+      "status": 200,
+      "cache": "HIT",
+      "cacheControl": "s-maxage=86400, stale-while-revalidate=31449600"
+    }
+  ]
+}

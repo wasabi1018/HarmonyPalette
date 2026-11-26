@@ -962,3 +962,11 @@ final result: passed
 検証データはローカル専用。本番ホテル・記事の登録や公開、リモートDB変更、デプロイ、今回の差分のコミットは行っていない。追加マイグレーション不要。操作方法・コスト・検証範囲は `audit/hotel-articles-2026-11-25/qa.md`。最終画像は同ディレクトリの `10-final-mobile.png`、`11-final-desktop.png`、`12-final-admin.png`、`13-final-mobile-320.png`、`16-final-admin-320.png`。
 
 final result: passed
+
+## ホテル機能のmaster統合 — 2026-11-26
+
+最新masterへホテル比較・記事リンクを統合し、既存の攻略ガイド、記事レイアウト、共通管理ナビ、楽天表示、1日キャッシュを維持した。統合後の本番ビルドで390px一覧、320px一覧、1280px一覧と紹介記事選択を再確認した。公開記事のみの導線、未設定時の全幅予約ボタン、所要時間・確認日表示を保持し、今回のUIにP0/P1/P2の未解決事項なし。既存画像の解像度はP3。
+
+ホテル5件＋隔離DB、ガイド22件、アクセス解析18件、ブラウザー20項目、Lint、型検査込みproduction buildが成功。連続2回のHTTPキャッシュHITと `s-maxage=86400` を確認。記事上で出る既存AdSenseの属性警告は結果に記録し、他の警告・例外はなし。証跡・本番との境界は `audit/hotel-master-release-2026-11-26/qa.md`。本番DBのマイグレーション・ホテル登録・記事公開は行っていない。
+
+final result: passed (existing AdSense warning recorded)

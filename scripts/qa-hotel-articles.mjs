@@ -263,7 +263,12 @@ try {
   await screenshot("08-desktop-full.png");
   // A very short fixture article exposes the existing footer logo above the fold.
   // Record that development-only Next image hint rather than changing production footer loading.
-  const expectedWarnings=consoleMessages.filter(message=>message.type==='warning'&&message.text.startsWith('Image with src "/logo-compact.png" was detected as the Largest Contentful Paint'));
+  // Current master also loads the existing AdSense component on the fixture article.
+  // Preserve its known Next Script attribute warning in the report; fail on other messages.
+  const expectedWarnings=consoleMessages.filter(message=>message.type==='warning'&&(
+    message.text.startsWith('Image with src "/logo-compact.png" was detected as the Largest Contentful Paint')||
+    message.text==="AdSense head tag doesn't support data-nscript attribute."
+  ));
   const unexpected=consoleMessages.filter(message=>!expectedWarnings.includes(message));
   await writeFile(evidence+"/browser-results.json",JSON.stringify({localOnly:true,checks,errors,consoleMessages,expectedWarnings},null,2));
   assert.deepEqual(errors,[]);
