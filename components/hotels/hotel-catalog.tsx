@@ -248,6 +248,16 @@ function HotelCard({
           card
           preview={preview}
         />
+        {article && (
+          <Link
+            href={hotelArticlePath(article)}
+            className={css.detailLink}
+            aria-label={`${hotel.name}の紹介記事「${article.title}」を見る`}
+          >
+            記事を見る
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        )}
       </div>
       <div className={css.cardInfo}>
         <p className={css.area}>
@@ -275,11 +285,6 @@ function HotelCard({
         {hotel.disclosure && <p className={css.cardDisclosure}>{hotel.disclosure}</p>}
       </div>
       <div className={css.actions} data-has-article={!!article}>
-        {article && <Link href={hotelArticlePath(article)} className={css.detailLink}
-          aria-label={`${hotel.name}の紹介記事「${article.title}」を見る`}>
-          記事を見る
-          <ArrowRight size={16} aria-hidden="true" />
-        </Link>}
         <BookingButton hotel={hotel} placement={placement} />
       </div>
     </article>

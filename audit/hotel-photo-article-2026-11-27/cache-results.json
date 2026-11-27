@@ -1,0 +1,12 @@
+[
+  {
+    "status": 200,
+    "nextCache": "HIT",
+    "cacheControl": "s-maxage=86400, stale-while-revalidate=31449600"
+  },
+  {
+    "status": 200,
+    "nextCache": "HIT",
+    "cacheControl": "s-maxage=86400, stale-while-revalidate=31449600"
+  }
+]

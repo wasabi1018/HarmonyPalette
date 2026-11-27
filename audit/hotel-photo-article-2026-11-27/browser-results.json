@@ -1,0 +1,156 @@
+{
+  "localOnly": true,
+  "checks": [
+    {
+      "name": "no standalone detail links",
+      "passed": true
+    },
+    {
+      "name": "only the published article gets a button",
+      "passed": true
+    },
+    {
+      "name": "draft, scheduled, deleted and unset articles have no link",
+      "passed": true
+    },
+    {
+      "name": "no unpublished article metadata in public page",
+      "passed": true
+    },
+    {
+      "name": "booking buttons remain available",
+      "passed": true
+    },
+    {
+      "name": "unlinked booking button fills row",
+      "passed": true
+    },
+    {
+      "name": "390px no overflow",
+      "passed": true
+    },
+    {
+      "name": "390px comments show full text",
+      "passed": true
+    },
+    {
+      "name": "390px article links are under photo credits left of comments",
+      "passed": true
+    },
+    {
+      "name": "390px no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "390px all booking buttons fill their rows",
+      "passed": true
+    },
+    {
+      "name": "390px sponsored attributes and photo credits remain",
+      "passed": true
+    },
+    {
+      "name": "keyboard reaches article link with visible focus",
+      "passed": true
+    },
+    {
+      "name": "sitemap has catalog only, no hotel detail URLs",
+      "passed": true
+    },
+    {
+      "name": "legacy URL redirects: fico-hiji",
+      "passed": true
+    },
+    {
+      "name": "legacy URL redirects: grand-mercure-beppu-bay",
+      "passed": true
+    },
+    {
+      "name": "photo article link opens the selected published article",
+      "passed": true
+    },
+    {
+      "name": "admin can select draft article",
+      "passed": true
+    },
+    {
+      "name": "saved article association reaches public catalog",
+      "passed": true
+    },
+    {
+      "name": "returning article to draft removes every linked button",
+      "passed": true
+    },
+    {
+      "name": "legacy URL redirects: fico-hiji",
+      "passed": true
+    },
+    {
+      "name": "republishing restores article buttons",
+      "passed": true
+    },
+    {
+      "name": "future publication stays hidden",
+      "passed": true
+    },
+    {
+      "name": "no obsolete hotel detail indexing control",
+      "passed": true
+    },
+    {
+      "name": "nonexistent article cannot be saved",
+      "passed": true
+    },
+    {
+      "name": "320px comments show full text",
+      "passed": true
+    },
+    {
+      "name": "320px article links are under photo credits left of comments",
+      "passed": true
+    },
+    {
+      "name": "320px no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "320px all booking buttons fill their rows",
+      "passed": true
+    },
+    {
+      "name": "320px sponsored attributes and photo credits remain",
+      "passed": true
+    },
+    {
+      "name": "320px no overflow",
+      "passed": true
+    },
+    {
+      "name": "1280px comments show full text",
+      "passed": true
+    },
+    {
+      "name": "1280px article links are under photo credits left of comments",
+      "passed": true
+    },
+    {
+      "name": "1280px no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "1280px sponsored attributes and photo credits remain",
+      "passed": true
+    },
+    {
+      "name": "1280px no overflow",
+      "passed": true
+    },
+    {
+      "name": "two catalog cache HITs with 86400-second revalidation",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "consoleMessages": [],
+  "expectedWarnings": []
+}

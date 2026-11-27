@@ -884,8 +884,15 @@
   padding: 24px 0;
 }
 .cardMedia {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
   min-width: 0;
   padding-top: 3px;
+}
+.cardMedia .detailLink {
+  width: 100%;
+  margin-top: auto;
 }
 .cardMedia .photo {
   border-radius: 2px;
@@ -964,10 +971,7 @@
   line-height: 1.8;
   color: #625963;
   margin-top: 6px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 .actions {
   display: flex;
@@ -1003,10 +1007,7 @@
   color: #765d3b;
   margin-top: 6px;
 }
-.actions[data-has-article="false"] {
-  grid-template-columns: minmax(0, 1fr);
-}
-.actions[data-has-article="false"] .booking {
+.actions .booking {
   width: 100%;
 }
 .prBlock {
@@ -1037,7 +1038,7 @@
   .actions {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: 110px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
 }
@@ -1139,11 +1140,6 @@
     font-size: 12px;
     line-height: 1.7;
     margin-top: 4px;
-    -webkit-line-clamp: 1;
-  }
-  .actions {
-    grid-template-columns: 100px minmax(0, 1fr);
-    gap: 13px;
   }
   .actions .booking {
     font-size: 11px;
@@ -1166,8 +1162,7 @@
     font-size: 11px;
     padding-inline: 8px;
   }
-  .card,
-  .actions {
+  .card {
     grid-template-columns: 82px minmax(0, 1fr);
     column-gap: 11px;
   }
@@ -1183,9 +1178,6 @@
     height: 1px;
     overflow: hidden;
     clip-path: inset(50%);
-  }
-  .cardPoint {
-    -webkit-line-clamp: 2;
   }
   .toolbar {
     gap: 4px;
